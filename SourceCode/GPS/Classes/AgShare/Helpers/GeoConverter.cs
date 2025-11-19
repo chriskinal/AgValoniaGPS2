@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace AgOpenGPS.Classes.AgShare.Helpers
 {
+    // NOTE: Cross-platform version available in AgOpenGPS.Core.Models.Base.GeoConversion
+    // New code should use GeoConversion, BoundaryUtils, CurveUtils, and GeoCalculations from Core
+    // This WinForms version maintained for backward compatibility
+
     // Converts between WGS84 lat/lon and local NE coordinates using CNMEA projection
     public class GeoConverter
     {
