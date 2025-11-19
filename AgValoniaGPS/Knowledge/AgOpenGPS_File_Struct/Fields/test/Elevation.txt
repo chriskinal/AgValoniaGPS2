@@ -1,0 +1,9 @@
+2024-March-02 08:41:36 PM
+$FieldDir
+Elevation
+$Offsets
+0,0
+Convergence
+0
+StartFix
+32.5904346981667,-87.1804373758333

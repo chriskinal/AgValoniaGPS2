@@ -1,0 +1,202 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AgValoniaGPS.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="700"
+        x:Class="AgValoniaGPS.Desktop.Views.DataIODialog"
+        x:DataType="vm:MainViewModel"
+        Title="Data I/O Configuration"
+        Width="600" Height="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C3E50"
+        CanResize="False">
+
+    <Window.Styles>
+        <!-- Modern Panel Style -->
+        <Style Selector="Border.Panel">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+        <!-- Modern Button Style -->
+        <Style Selector="Button.ModernButton">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pointerover">
+            <Setter Property="Background" Value="#2980B9"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pressed">
+            <Setter Property="Background" Value="#21618C"/>
+        </Style>
+
+        <!-- Modern TextBox Style -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#1E2930"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#4A5F73"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+
+        <!-- Label Style -->
+        <Style Selector="TextBlock.Label">
+            <Setter Property="Foreground" Value="#BDC3C7"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <!-- Header Style -->
+        <Style Selector="TextBlock.Header">
+            <Setter Property="Foreground" Value="#3498DB"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+    </Window.Styles>
+
+    <ScrollViewer>
+        <StackPanel Margin="20">
+            <!-- UDP Communication Section -->
+            <Border Classes="Panel">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="Header" Text="UDP Communication"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Network Status:" Width="140"/>
+                        <TextBlock Text="{Binding NetworkStatus}" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Module Connections Section -->
+            <Border Classes="Panel">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="Header" Text="Module Connections"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="AutoSteer:" Width="140"/>
+                        <Ellipse Width="12" Height="12"
+                                 Fill="{Binding IsAutoSteerDataOk, Converter={StaticResource BoolToColorConverter}}"/>
+                        <TextBlock Text="{Binding IsAutoSteerDataOk, Converter={StaticResource BoolToStatusConverter}}"
+                                   Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Machine:" Width="140"/>
+                        <Ellipse Width="12" Height="12"
+                                 Fill="{Binding IsMachineDataOk, Converter={StaticResource BoolToColorConverter}}"/>
+                        <TextBlock Text="{Binding IsMachineDataOk, Converter={StaticResource BoolToStatusConverter}}"
+                                   Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="IMU:" Width="140"/>
+                        <Ellipse Width="12" Height="12"
+                                 Fill="{Binding IsImuDataOk, Converter={StaticResource BoolToColorConverter}}"/>
+                        <TextBlock Text="{Binding IsImuDataOk, Converter={StaticResource BoolToStatusConverter}}"
+                                   Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- NTRIP Configuration Section -->
+            <Border Classes="Panel">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="Header" Text="RTK Corrections (NTRIP)"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Caster:" Width="140"/>
+                        <TextBox Text="{Binding NtripCasterAddress}" Width="180"/>
+                        <TextBlock Classes="Label" Text="Port:" Margin="10,0,0,0"/>
+                        <TextBox Text="{Binding NtripCasterPort}" Width="60"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Mount Point:" Width="140"/>
+                        <TextBox Text="{Binding NtripMountPoint}" Width="180"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Username:" Width="140"/>
+                        <TextBox Text="{Binding NtripUsername}" Width="180"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Password:" Width="140"/>
+                        <TextBox Text="{Binding NtripPassword}" Width="180" PasswordChar="*"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,10,0,0">
+                        <Button Name="BtnNtripConnect" Classes="ModernButton" Content="Connect"
+                                Click="BtnNtripConnect_Click" Width="100"/>
+                        <Button Name="BtnNtripDisconnect" Classes="ModernButton" Content="Disconnect"
+                                Click="BtnNtripDisconnect_Click" Width="100"/>
+                    </StackPanel>
+
+                    <Separator Background="#4A5F73" Height="1" Margin="0,10"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Status:" Width="140"/>
+                        <Ellipse Width="12" Height="12"
+                                 Fill="{Binding IsNtripConnected, Converter={StaticResource BoolToColorConverter}}"/>
+                        <TextBlock Text="{Binding NtripStatus}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="RTCM Data Received:" Width="140"/>
+                        <TextBlock Text="{Binding NtripBytesReceived}" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- GPS Data Section -->
+            <Border Classes="Panel">
+                <StackPanel Spacing="10">
+                    <TextBlock Classes="Header" Text="GPS Data"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Status:" Width="140"/>
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Fix Quality:" Width="140"/>
+                        <TextBlock Text="{Binding FixQuality}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Satellites:" Width="140"/>
+                        <TextBlock Text="{Binding SatelliteCount}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Latitude:" Width="140"/>
+                        <TextBlock Text="{Binding Latitude, StringFormat='{}{0:F6}°'}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Longitude:" Width="140"/>
+                        <TextBlock Text="{Binding Longitude, StringFormat='{}{0:F6}°'}" Foreground="White"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Classes="Label" Text="Speed:" Width="140"/>
+                        <TextBlock Text="{Binding Speed, StringFormat='{}{0:F2} m/s'}" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Close Button -->
+            <Button Classes="ModernButton" Content="Close" Click="BtnClose_Click"
+                    HorizontalAlignment="Right" Width="100"/>
+        </StackPanel>
+    </ScrollViewer>
+
+</Window>

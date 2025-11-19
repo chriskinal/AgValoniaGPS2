@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ISO11783_TaskData DataTransferOrigin="1" ManagementSoftwareManufacturer="AgOpenGPS" ManagementSoftwareVersion="1.4.0" VersionMajor="3" VersionMinor="3">
+  <PFD A="PFD-1" C="Machine Test" D="0" />
+</ISO11783_TaskData>

@@ -1,0 +1,80 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="350"
+        x:Class="AgValoniaGPS.Desktop.Views.NewFieldDialog"
+        Title="New Field"
+        Width="500" Height="350"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C3E50"
+        CanResize="False">
+
+    <Window.Styles>
+        <Style Selector="Button.ModernButton">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pointerover">
+            <Setter Property="Background" Value="#2980B9"/>
+        </Style>
+
+        <Style Selector="TextBlock.Label">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#7F8C8D"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,20">
+            <TextBlock Text="Create New Field" FontSize="20" FontWeight="Bold" Foreground="White"/>
+            <TextBlock Text="Enter field details and origin coordinates" Foreground="#BDC3C7" FontSize="12"/>
+        </StackPanel>
+
+        <!-- Form -->
+        <StackPanel Grid.Row="1" Spacing="15">
+            <!-- Field Name -->
+            <StackPanel>
+                <TextBlock Classes="Label" Text="Field Name:"/>
+                <TextBox x:Name="TxtFieldName" Watermark="Enter field name"/>
+            </StackPanel>
+
+            <!-- Origin Latitude -->
+            <StackPanel>
+                <TextBlock Classes="Label" Text="Origin Latitude (decimal degrees):"/>
+                <TextBox x:Name="TxtLatitude" Watermark="e.g., 32.5904365"/>
+            </StackPanel>
+
+            <!-- Origin Longitude -->
+            <StackPanel>
+                <TextBlock Classes="Label" Text="Origin Longitude (decimal degrees):"/>
+                <TextBox x:Name="TxtLongitude" Watermark="e.g., -87.1804022"/>
+            </StackPanel>
+
+            <!-- Helper text -->
+            <TextBlock Text="💡 Tip: Use current GPS position or enter coordinates manually"
+                       Foreground="#95A5A6"
+                       FontSize="11"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,20,0,0">
+            <Button Classes="ModernButton" Content="Create" Click="BtnCreate_Click"/>
+            <Button Classes="ModernButton" Content="Cancel" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,114 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+        x:Class="AgValoniaGPS.Desktop.Views.FieldSelectionDialog"
+        Title="Field Selection"
+        Width="600" Height="450"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C3E50"
+        CanResize="True">
+
+    <Window.Styles>
+        <Style Selector="Button.ModernButton">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pointerover">
+            <Setter Property="Background" Value="#2980B9"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pressed">
+            <Setter Property="Background" Value="#21618C"/>
+        </Style>
+
+        <Style Selector="Button.DangerButton">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.DangerButton:pointerover">
+            <Setter Property="Background" Value="#C0392B"/>
+        </Style>
+
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#3498DB"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#34495E"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,20">
+            <TextBlock Text="Field Selection" FontSize="24" FontWeight="Bold" Foreground="White"/>
+            <TextBlock Text="Select or create a field to begin working" Foreground="#BDC3C7" FontSize="14"/>
+        </StackPanel>
+
+        <!-- Fields List -->
+        <Border Grid.Row="1"
+                Background="#34495E"
+                CornerRadius="8"
+                Padding="1"
+                Margin="0,0,0,20">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Fields Directory -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="10,10,10,0">
+                    <TextBlock Text="Fields Directory:" Foreground="White" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TxtFieldsDirectory"
+                             Width="300"
+                             Watermark="C:\AgOpenGPS\Fields"
+                             Background="#2C3E50"
+                             Foreground="White"
+                             BorderBrush="#7F8C8D"
+                             CornerRadius="4"/>
+                    <Button Classes="ModernButton" Content="Browse..." Click="BtnBrowse_Click"/>
+                    <Button Classes="ModernButton" Content="Refresh" Click="BtnRefresh_Click"/>
+                </StackPanel>
+
+                <!-- Fields List -->
+                <ScrollViewer Grid.Row="1" Margin="10">
+                    <ListBox x:Name="FieldsList"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             SelectionMode="Single"
+                             SelectionChanged="FieldsList_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding}"
+                                               Foreground="White"
+                                               FontSize="16"
+                                               FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Action Buttons -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                <Button Classes="DangerButton" Content="Delete Field" Click="BtnDeleteField_Click"/>
+            </StackPanel>
+
+            <Button Grid.Column="1" Classes="ModernButton" Content="New Field..." Click="BtnNewField_Click" Margin="0,0,10,0"/>
+            <Button Grid.Column="2" Classes="ModernButton" Content="Open" Click="BtnOpen_Click" Margin="0,0,10,0"/>
+            <Button Grid.Column="3" Classes="ModernButton" Content="Cancel" Click="BtnCancel_Click"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+   <Document>
+      <Folder>
+         <name>Field Stats</name>
+         <description>Field: Machine Test
+Total Hectares: 0.00
+Worked Hectares: 0.00
+Missing Hectares: 0.00
+Total Acres: 0.00
+Worked Acres: 0.00
+Missing Acres: 0.00
+Tool Width: 1.8288345646373
+Sections: 6
+Section Overlap: 0
+</description>
+      </Folder>
+      <Folder>
+         <name>Boundaries</name>
+      </Folder>
+      <Folder>
+         <name>AB_Lines</name>
+         <visibility>0</visibility>
+      </Folder>
+      <Folder>
+         <name>Curve_Lines</name>
+         <visibility>0</visibility>
+      </Folder>
+      <Folder>
+         <name>Recorded Path</name>
+         <visibility>1</visibility>
+         <Placemark>
+            <visibility>1</visibility>
+            <name>Path 1</name>
+            <Style>
+               <LineStyle>
+                  <color>ff44ffff</color>
+                  <width>2</width>
+               </LineStyle>
+            </Style>
+            <LineString>
+               <tessellate>1</tessellate>
+               <coordinates></coordinates>
+            </LineString>
+         </Placemark>
+      </Folder>
+      <Folder>
+         <name>Flags</name>
+      </Folder>
+      <Folder>
+         <name>Sections</name>
+      </Folder>
+   </Document>
+</kml>

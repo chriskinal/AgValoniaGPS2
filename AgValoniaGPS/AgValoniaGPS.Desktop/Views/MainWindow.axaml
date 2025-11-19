@@ -1,0 +1,247 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AgValoniaGPS.ViewModels"
+        xmlns:controls="using:AgValoniaGPS.Desktop.Controls"
+        mc:Ignorable="d" d:DesignWidth="1366" d:DesignHeight="768"
+        x:Class="AgValoniaGPS.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="AgValoniaGPS"
+        Width="1366" Height="768"
+        WindowState="Maximized"
+        Background="#1a1a1a">
+
+    <Window.Styles>
+        <!-- Floating Panel Style -->
+        <Style Selector="Border.FloatingPanel">
+            <Setter Property="Background" Value="#DD2C3E50"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="BoxShadow" Value="0 4 16 2 #40000000"/>
+        </Style>
+
+        <!-- Modern Button Style -->
+        <Style Selector="Button.ModernButton">
+            <Setter Property="Background" Value="#3498DB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pointerover">
+            <Setter Property="Background" Value="#2980B9"/>
+        </Style>
+        <Style Selector="Button.ModernButton:pressed">
+            <Setter Property="Background" Value="#21618C"/>
+        </Style>
+
+        <!-- Icon Button Style -->
+        <Style Selector="Button.IconButton">
+            <Setter Property="Background" Value="#DD34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="20"/>
+        </Style>
+        <Style Selector="Button.IconButton:pointerover">
+            <Setter Property="Background" Value="#DD475A6E"/>
+        </Style>
+
+        <!-- Status Indicator Style -->
+        <Style Selector="Border.StatusBox">
+            <Setter Property="Background" Value="#DD1E2930"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+    </Window.Styles>
+
+    <!-- Main Grid with OpenGL as background -->
+    <Grid>
+        <!-- OpenGL Map Render Area (fills entire window) -->
+        <controls:OpenGLMapControl x:Name="MapControl" ZIndex="0" />
+
+        <!-- Transparent overlay to capture mouse events for OpenGL control -->
+        <Panel ZIndex="1" Background="Transparent"
+               PointerPressed="MapOverlay_PointerPressed"
+               PointerMoved="MapOverlay_PointerMoved"
+               PointerReleased="MapOverlay_PointerReleased"
+               PointerWheelChanged="MapOverlay_PointerWheelChanged" />
+
+        <!-- TOP STATUS BAR: RTK Status -->
+        <Border Classes="FloatingPanel"
+                ZIndex="10"
+                Margin="20"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                IsHitTestVisible="True">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="RTK Status" Foreground="#3498DB" FontSize="14" FontWeight="Bold"/>
+                <Ellipse Width="12" Height="12"
+                         Fill="{Binding FixQuality, Converter={StaticResource FixQualityToColorConverter}}"/>
+                <TextBlock Text="{Binding FixQuality}" Foreground="White" FontSize="14" FontWeight="Bold"/>
+            </StackPanel>
+        </Border>
+
+        <!-- TOP-RIGHT PANEL: Quick Actions -->
+        <Border Classes="FloatingPanel"
+                ZIndex="10"
+                Margin="20"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                IsHitTestVisible="True">
+            <StackPanel Spacing="8">
+                <!-- GPS Status Button (shows fix quality color) -->
+                <Button Width="48" Height="48"
+                        CornerRadius="8"
+                        Padding="0"
+                        BorderThickness="0"
+                        Background="{Binding FixQuality, Converter={StaticResource FixQualityToColorConverter}}"
+                        ToolTip.Tip="Data I/O Configuration"
+                        Click="BtnDataIO_Click">
+                    <TextBlock Text="GPS" FontSize="12" FontWeight="Bold" Foreground="Black"/>
+                </Button>
+
+                <Separator Height="1" Background="#444" Margin="4,4"/>
+                <Button Classes="IconButton" Content="⚙️" ToolTip.Tip="Settings"/>
+                <Button Classes="IconButton" Content="📁" ToolTip.Tip="Fields" Click="BtnFields_Click"/>
+                <Button Classes="IconButton" Content="🎬" ToolTip.Tip="Toggle 2D/3D View (F3)" Click="Btn3DToggle_Click"/>
+                <Separator Height="1" Background="#444" Margin="4,4"/>
+                <Button Classes="IconButton" Content="+" ToolTip.Tip="Zoom In"/>
+                <Button Classes="IconButton" Content="-" ToolTip.Tip="Zoom Out"/>
+            </StackPanel>
+        </Border>
+
+        <!-- LEFT SIDEBAR: Navigation Menu (vertical) -->
+        <Border Classes="FloatingPanel"
+                ZIndex="10"
+                Margin="20"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                IsHitTestVisible="True">
+            <StackPanel Spacing="8">
+                <Button Classes="IconButton" Content="🗺️" ToolTip.Tip="Navigation Settings" Command="{Binding ToggleNavigationPanelCommand}"/>
+                <Button Classes="IconButton" Content="🔧" ToolTip.Tip="Config"/>
+                <Button Classes="IconButton" Content="📐" ToolTip.Tip="Boundaries"/>
+                <Button Classes="IconButton" Content="🚜" ToolTip.Tip="Vehicle"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Navigation Settings Panel (floating, toggleable) -->
+        <Border Classes="FloatingPanel"
+                ZIndex="15"
+                Margin="90,100,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                IsVisible="{Binding IsNavigationPanelVisible}"
+                IsHitTestVisible="True">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" MinWidth="180">
+                <!-- Row 0: Camera Tilt -->
+                <Button Grid.Row="0" Grid.Column="0" Margin="2" Padding="8"
+                        Content="Tilt ▼" Command="{Binding DecreaseCameraPitchCommand}"
+                        ToolTip.Tip="Tilt camera down"/>
+                <Button Grid.Row="0" Grid.Column="1" Margin="2" Padding="8"
+                        Content="Tilt ▲" Command="{Binding IncreaseCameraPitchCommand}"
+                        ToolTip.Tip="Tilt camera up"/>
+
+                <!-- Row 1: 2D/3D View Mode -->
+                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Padding="8"
+                        Content="2D/3D" Command="{Binding Toggle2D3DCommand}"
+                        ToolTip.Tip="Toggle between 2D overhead and 3D perspective view"/>
+
+                <!-- Row 2: North-Up & Grid -->
+                <Button Grid.Row="2" Grid.Column="0" Margin="2" Padding="8"
+                        Content="North" Command="{Binding ToggleNorthUpCommand}"
+                        ToolTip.Tip="Toggle north-up/track-up mode"/>
+                <Button Grid.Row="2" Grid.Column="1" Margin="2" Padding="8"
+                        Content="Grid" Command="{Binding ToggleGridCommand}"
+                        ToolTip.Tip="Toggle grid display"/>
+
+                <!-- Row 3: Day/Night Mode & GPS Hz -->
+                <Button Grid.Row="3" Grid.Column="0" Margin="2" Padding="8"
+                        Content="Day/Night"
+                        Command="{Binding ToggleDayNightCommand}"
+                        ToolTip.Tip="Toggle day/night mode"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Margin="2" Padding="8"
+                           Text="10 Hz" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="White" FontWeight="Bold" FontSize="12"/>
+
+                <!-- Row 4: Brightness Controls -->
+                <Button Grid.Row="4" Grid.Column="0" Margin="2" Padding="8"
+                        Content="{Binding BrightnessDisplay, StringFormat='Bright- {0}'}"
+                        Command="{Binding DecreaseBrightnessCommand}"
+                        ToolTip.Tip="Decrease brightness"/>
+                <Button Grid.Row="4" Grid.Column="1" Margin="2" Padding="8"
+                        Content="Bright+" Command="{Binding IncreaseBrightnessCommand}"
+                        ToolTip.Tip="Increase brightness"/>
+            </Grid>
+        </Border>
+
+        <!-- BOTTOM BAR: Function Buttons (horizontal) -->
+        <Border Classes="FloatingPanel"
+                ZIndex="10"
+                Margin="20"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                IsHitTestVisible="True">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="ModernButton" Content="🎯 Auto" Width="80"/>
+                <Button Classes="ModernButton" Content="📍 Mark" Width="80"/>
+                <Button Classes="ModernButton" Content="🔄 Reset" Width="80"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Draggable Section Control (using Canvas for absolute positioning) -->
+        <Canvas>
+        <Border x:Name="SectionControlPanel"
+                ZIndex="10"
+                Canvas.Left="900" Canvas.Top="600"
+                Classes="FloatingPanel"
+                Cursor="Hand"
+                PointerPressed="SectionControl_PointerPressed"
+                PointerMoved="SectionControl_PointerMoved"
+                PointerReleased="SectionControl_PointerReleased">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="≡" Foreground="#888" FontSize="16" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="0,0,4,0" ToolTip.Tip="Drag to move"/>
+                <TextBlock Text="Sections" Foreground="White" FontSize="12" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                <!-- Section Buttons in single horizontal row -->
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="3" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="4" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="5" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                    <Border Background="#E74C3C" CornerRadius="4" Height="32" Width="45">
+                        <TextBlock Text="6" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="14"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        </Canvas>
+    </Grid>
+</Window>

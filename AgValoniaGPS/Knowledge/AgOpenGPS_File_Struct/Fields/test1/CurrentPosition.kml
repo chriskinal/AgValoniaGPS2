@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>     
+<kml xmlns="http://www.opengis.net/kml/2.2"> 
+<Document>
+  <Placemark>                                  
+<Style> <IconStyle>
+<color>ff4400ff</color>
+</IconStyle> </Style>
+ <name> Your Current Position </name>
+<Point><coordinates> -87.1777821879624,32.5919752709808,0</coordinates> </Point> 
+  </Placemark>                                 
+</Document>
+</kml>                                         
