@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace AgOpenGPS
 {
+    // NOTE: Cross-platform version available in AgOpenGPS.Core.Models.Guidance.HeadlandLine
+    // New code should use HeadlandLine and HeadlandPath from Core for cross-platform compatibility
+    // This WinForms version maintained for backward compatibility
+
     public class CHeadLine
     {
         //pointers to mainform controls
