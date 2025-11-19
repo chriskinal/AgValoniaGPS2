@@ -1,129 +1,70 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.Guidance;
 
 namespace AgOpenGPS
 {
-    // NOTE: Cross-platform version available in AgOpenGPS.Core.Models.Guidance.CurveProcessing
-    // New code should use CurveProcessing from Core for cross-platform compatibility
-    // This WinForms version maintained for backward compatibility
-
     /// <summary>
-    /// This class helps converting a Curve to the CABCurve format.
-    /// We use this class temporarily until we decouple the CABCurve functionality from the UI.
+    /// WinForms wrapper for CurveProcessing from AgOpenGPS.Core.
+    /// Delegates to Core implementation using implicit type conversions.
     /// </summary>
     public static class CurveCABTools
     {
-        // Full pipeline: minimum spacing -> interpolate -> headings
+        /// <summary>
+        /// Full preprocessing pipeline: minimum spacing → interpolation → heading calculation
+        /// </summary>
         public static List<vec3> Preprocess(List<vec3> points, double minSpacing, double interpolationSpacing)
         {
-            points = MakePointMinimumSpacing(points, minSpacing);
-            points = InterpolatePoints(points, interpolationSpacing);
-            points = CalculateHeadings(points);
-            return points;
+            // Convert to Core Vec3 using implicit conversion
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+
+            // Use Core implementation
+            var result = CurveProcessing.Preprocess(corePoints, minSpacing, interpolationSpacing);
+
+            // Convert back to WinForms vec3
+            return result.Select(p => (vec3)p).ToList();
         }
 
-        // Step 1: Ensure minimum spacing between points
-        private static List<vec3> MakePointMinimumSpacing(List<vec3> points, double minSpacing)
+        /// <summary>
+        /// Ensures minimum spacing between consecutive points
+        /// </summary>
+        public static List<vec3> MakePointMinimumSpacing(List<vec3> points, double minSpacing)
         {
-            if (points == null || points.Count < 2) return points;
-
-            var spaced = new List<vec3>(points.Count);
-            vec3 last = points[0];
-            spaced.Add(last);
-
-            double minSq = minSpacing * minSpacing;
-
-            for (int i = 1; i < points.Count; i++)
-            {
-                double dx = points[i].easting - last.easting;
-                double dy = points[i].northing - last.northing;
-                if ((dx * dx + dy * dy) >= minSq)
-                {
-                    spaced.Add(points[i]);
-                    last = points[i];
-                }
-            }
-
-            // Always add the original last point
-            vec3 final = points[points.Count - 1];
-            vec3 compare = spaced[spaced.Count - 1];
-            if (glm.DistanceSquared(final, compare) > 1e-10)
-                spaced.Add(final);
-
-            return spaced;
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+            var result = CurveProcessing.EnsureMinimumSpacing(corePoints, minSpacing);
+            return result.Select(p => (vec3)p).ToList();
         }
 
-        // Step 2: Interpolate points at fixed spacing
-        private static List<vec3> InterpolatePoints(List<vec3> points, double spacingMeters)
+        /// <summary>
+        /// Interpolates additional points at fixed spacing
+        /// </summary>
+        public static List<vec3> InterpolatePoints(List<vec3> points, double spacingMeters)
         {
-            if (points == null || points.Count < 2) return points;
-
-            var result = new List<vec3>(points.Count * 2);
-
-            for (int i = 0; i < points.Count - 1; i++)
-            {
-                vec3 a = points[i];
-                vec3 b = points[i + 1];
-                result.Add(a);
-
-                double dx = b.easting - a.easting;
-                double dy = b.northing - a.northing;
-                double distance = Math.Sqrt(dx * dx + dy * dy);
-
-                int steps = (int)(distance / spacingMeters);
-                for (int j = 1; j < steps; j++)
-                {
-                    double t = (double)j / steps;
-                    double x = a.easting + dx * t;
-                    double y = a.northing + dy * t;
-                    result.Add(new vec3(x, y, 0));
-                }
-            }
-
-            result.Add(points[points.Count - 1]);
-            return result;
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+            var result = CurveProcessing.InterpolatePoints(corePoints, spacingMeters);
+            return result.Select(p => (vec3)p).ToList();
         }
 
-        // Step 3: Calculate headings
+        /// <summary>
+        /// Calculates heading angles for each point
+        /// </summary>
         public static List<vec3> CalculateHeadings(List<vec3> points)
         {
-            if (points == null || points.Count < 2) return points;
-
-            for (int i = 0; i < points.Count - 1; i++)
-            {
-                double dx = points[i + 1].easting - points[i].easting;
-                double dy = points[i + 1].northing - points[i].northing;
-                var pt = points[i];
-                pt.heading = Math.Atan2(dx, dy);
-                if (pt.heading < 0) pt.heading += glm.twoPI;
-                points[i] = pt;
-            }
-
-            // Copy last heading from the second last
-            var last = points[points.Count - 1];
-            last.heading = points[points.Count - 2].heading;
-            points[points.Count - 1] = last;
-
-            return points;
+            // Core method modifies in place, so we need to work with a mutable list
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+            var result = CurveProcessing.CalculateHeadings(corePoints);
+            return result.Select(p => (vec3)p).ToList();
         }
 
-        // Step 4: Compute circular mean heading
+        /// <summary>
+        /// Computes circular mean of heading angles
+        /// </summary>
         public static double ComputeAverageHeading(List<vec3> points)
         {
-            if (points == null || points.Count == 0) return 0;
-
-            double cx = 0, sy = 0;
-            for (int i = 0; i < points.Count; i++)
-            {
-                cx += Math.Cos(points[i].heading);
-                sy += Math.Sin(points[i].heading);
-            }
-            cx /= points.Count;
-            sy /= points.Count;
-
-            double avg = Math.Atan2(sy, cx);
-            if (avg < 0) avg += glm.twoPI;
-            return avg;
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+            return CurveProcessing.ComputeAverageHeading(corePoints);
         }
     }
 }

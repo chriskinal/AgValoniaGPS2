@@ -1,53 +1,45 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.Base;
 
 namespace AgOpenGPS.IO
 {
-    // NOTE: Cross-platform version available in AgOpenGPS.Core.Utilities.FileIoUtils
-    // New code should use FileIoUtils from Core for cross-platform compatibility
-    // This WinForms version maintained for backward compatibility
-
+    /// <summary>
+    /// WinForms wrapper for FileIoUtils from AgOpenGPS.Core.
+    /// Delegates to Core implementation using implicit type conversions.
+    /// </summary>
     public static class FileIoUtils
     {
-        // ---- Formatting helper ----
+        /// <summary>
+        /// Formats a double value to a specific number of decimal places using invariant culture
+        /// </summary>
         public static string FormatDouble(double value, int decimals)
         {
-            return Math.Round(value, decimals).ToString(CultureInfo.InvariantCulture);
+            return Core.Utilities.FileIoUtils.FormatDouble(value, decimals);
         }
 
-        // ---- Parsing helpers ----
-
+        /// <summary>
+        /// Safely parses an integer from a string, returning 0 if parsing fails
+        /// </summary>
         public static int ParseIntSafe(string line)
         {
-            int v;
-            if (!string.IsNullOrWhiteSpace(line) &&
-                int.TryParse(line.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out v))
-            {
-                return v;
-            }
-            return 0;
+            return Core.Utilities.FileIoUtils.ParseIntSafe(line);
         }
 
+        /// <summary>
+        /// Reads a block of Vec3 points from a StreamReader in CSV format
+        /// </summary>
         public static List<vec3> ReadVec3Block(StreamReader r, int count)
         {
-            var list = new List<vec3>(count > 0 ? count : 0);
-            for (int i = 0; i < count && !r.EndOfStream; i++)
-            {
-                var words = (r.ReadLine() ?? string.Empty).Split(',');
-                if (words.Length < 3) continue;
+            // Use Core implementation
+            var coreResult = Core.Utilities.FileIoUtils.ReadVec3Block(r, count);
 
-                double e, n, h;
-                if (double.TryParse(words[0], NumberStyles.Float, CultureInfo.InvariantCulture, out e) &&
-                    double.TryParse(words[1], NumberStyles.Float, CultureInfo.InvariantCulture, out n) &&
-                    double.TryParse(words[2], NumberStyles.Float, CultureInfo.InvariantCulture, out h))
-                {
-                    list.Add(new vec3(e, n, h));
-                }
-            }
-            return list;
+            // Convert back to WinForms vec3
+            return coreResult.Select(p => (vec3)p).ToList();
         }
     }
 }
