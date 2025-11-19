@@ -6,6 +6,10 @@ using AgOpenGPS.Core.Models;
 
 namespace AgOpenGPS.IO
 {
+    // NOTE: Cross-platform version available in AgOpenGPS.Core.Utilities.FileIoUtils
+    // New code should use FileIoUtils from Core for cross-platform compatibility
+    // This WinForms version maintained for backward compatibility
+
     public static class FileIoUtils
     {
         // ---- Formatting helper ----
