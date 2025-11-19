@@ -19,6 +19,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **GPS Data Models** | Core/Models/GPS/ | ✅ Position, GpsData |
 | **Field Statistics** | Core/Services/FieldStatisticsService.cs | ✅ IFieldStatisticsService, FieldStatisticsService, FieldStatistics |
 | **Headland Line** | Core/Models/Guidance/HeadlandLine.cs | ✅ HeadlandLine, HeadlandPath |
+| **Curve Processing** | Core/Models/Guidance/CurveProcessing.cs | ✅ CurveProcessing (spacing, interpolation, headings) |
 
 ---
 
@@ -34,7 +35,7 @@ These services have minimal dependencies, no UI coupling, and provide immediate 
 | 1.4 | **CGLM** (math only) | Classes/CGLM.cs | 421 | Distance and angle calculations | None | ✅ |
 | 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ |
 | 1.6 | **CHeadLine** | Classes/CHeadLine.cs | 35 | Headland guidance line data model | vec2 | ✅ |
-| 1.7 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | 📋 |
+| 1.7 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | ✅ |
 | 1.8 | **FileIoUtils** | IO/FileIOUtils.cs | 50 | File I/O utility functions | None | 📋 |
 | 1.9 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | GeoCoord | 📋 |
 
@@ -233,8 +234,8 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 9 (24%)
-**Phase 1 Targets:** 9 services (6 complete)
+**Migrated:** 10 (26%)
+**Phase 1 Targets:** 9 services (7 complete)
 **Phase 2 Targets:** 5 services
 **Phase 2.5 Targets:** 3 services (Protocol)
 **Phase 3 Targets:** 9 services

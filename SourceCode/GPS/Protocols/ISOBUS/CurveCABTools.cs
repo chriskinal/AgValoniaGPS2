@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace AgOpenGPS
 {
+    // NOTE: Cross-platform version available in AgOpenGPS.Core.Models.Guidance.CurveProcessing
+    // New code should use CurveProcessing from Core for cross-platform compatibility
+    // This WinForms version maintained for backward compatibility
+
     /// <summary>
     /// This class helps converting a Curve to the CABCurve format.
     /// We use this class temporarily until we decouple the CABCurve functionality from the UI.
