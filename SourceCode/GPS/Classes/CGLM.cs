@@ -3,12 +3,21 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using AgOpenGPS.Core.Models.Base;
+using GMath = AgOpenGPS.Core.Models.Base.GeometryMath;
 
 namespace AgOpenGPS
 {
-
+    /// <summary>
+    /// WinForms wrapper for GeometryMath from AgOpenGPS.Core
+    /// Pure math functions delegate to Core, OpenGL rendering stays here
+    /// </summary>
     public static class glm
     {
+        // NOTE: Pure math functions also available in AgOpenGPS.Core.Models.Base.GeometryMath
+        // New code should use GeometryMath for cross-platform compatibility
+        // This WinForms-specific version is maintained for backward compatibility
+
         public static bool InRangeBetweenAB(double start_x, double start_y, double end_x, double end_y,
           double point_x, double point_y)
         {
