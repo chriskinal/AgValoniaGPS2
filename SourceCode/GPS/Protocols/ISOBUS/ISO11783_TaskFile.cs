@@ -1,11 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AgOpenGPS.Core.Models;
-using Dev4Agriculture.ISO11783.ISOXML.TaskFile;
-using Dev4Agriculture.ISO11783.ISOXML;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.IsoXml;
+using AgOpenGPS.Core.Services.IsoXml;
 using System;
 
 namespace AgOpenGPS.Protocols.ISOBUS
 {
+    /// <summary>
+    /// WinForms adapter for exporting field data to ISO 11783 XML format.
+    /// Converts WinForms types to Core types and delegates to Core IsoXmlExporter.
+    /// </summary>
     public class ISO11783_TaskFile
     {
         public enum Version { V3, V4 }
@@ -22,267 +28,111 @@ namespace AgOpenGPS.Protocols.ISOBUS
             if (!Enum.IsDefined(typeof(Version), version))
                 throw new ArgumentOutOfRangeException(nameof(version), version, "Invalid version");
 
-            var isoxml = ISOXML.Create(directoryName);
+            // Convert WinForms types to Core types
+            var coreBoundaries = ConvertBoundaries(bndList);
+            var coreHeadlandLines = ConvertHeadlandLines(bndList);
+            var coreGuidanceLines = ConvertGuidanceLines(trk);
+            var coreVersion = version == Version.V3 ? IsoXmlExporter.IsoXmlVersion.V3 : IsoXmlExporter.IsoXmlVersion.V4;
 
-            SetFileInformation(isoxml, version);
-            AddPartfield(isoxml, designator, area, bndList, localPlane, trk, version);
-
-            isoxml.Save();
+            // Delegate to Core exporter
+            IsoXmlExporter.Export(
+                directoryName,
+                designator,
+                area,
+                coreBoundaries,
+                coreHeadlandLines,
+                coreGuidanceLines,
+                localPlane,
+                coreVersion,
+                Program.Version
+            );
         }
 
-        private static void SetFileInformation(ISOXML isoxml, Version version)
+        // Convert WinForms boundaries to Core boundaries
+        private static List<IsoXmlBoundary> ConvertBoundaries(List<CBoundaryList> bndList)
         {
-            isoxml.DataTransferOrigin = ISO11783TaskDataFileDataTransferOrigin.FMIS;
-            isoxml.ManagementSoftwareManufacturer = "AgOpenGPS";
-            isoxml.ManagementSoftwareVersion = Program.Version;
+            var coreBoundaries = new List<IsoXmlBoundary>();
 
-            switch (version)
+            foreach (var bnd in bndList)
             {
-                case Version.V3:
-                    isoxml.VersionMajor = ISO11783TaskDataFileVersionMajor.Version3;
-                    isoxml.VersionMinor = ISO11783TaskDataFileVersionMinor.Item3;
-                    break;
-
-                case Version.V4:
-                    isoxml.VersionMajor = ISO11783TaskDataFileVersionMajor.Version4;
-                    isoxml.VersionMinor = ISO11783TaskDataFileVersionMinor.Item2;
-                    break;
-            }
-        }
-
-        private static void AddPartfield(
-            ISOXML isoxml,
-            string designator,
-            int area,
-            List<CBoundaryList> bndList,
-            LocalPlane localPlane,
-            CTrack trk,
-            Version version)
-        {
-            var partfield = new ISOPartfield();
-            isoxml.IdTable.AddObjectAndAssignIdIfNone(partfield);
-            partfield.PartfieldDesignator = designator;
-            partfield.PartfieldArea = (ulong)area;
-
-            AddBoundary(partfield, bndList, localPlane);
-            AddHeadland(partfield, bndList, localPlane);
-            AddTracks(isoxml, partfield, trk, localPlane, version);
-
-            isoxml.Data.Partfield.Add(partfield);
-        }
-
-        private static void AddBoundary(ISOPartfield partfield, List<CBoundaryList> bndList, LocalPlane localPlane)
-        {
-            for (int i = 0; i < bndList.Count; i++)
-            {
-                var polygon = new ISOPolygon
+                var coreBoundary = new IsoXmlBoundary
                 {
-                    PolygonType = i == 0 ? ISOPolygonType.PartfieldBoundary : ISOPolygonType.Obstacle
+                    Area = bnd.area,
+                    IsDriveThru = bnd.isDriveThru
                 };
 
-                var lineString = new ISOLineString
+                // Use fenceLineEar if available (vec2), otherwise use fenceLine (vec3)
+                if (bnd.fenceLineEar.Count > 0)
                 {
-                    LineStringType = ISOLineStringType.PolygonExterior
-                };
-
-                foreach (vec2 v2 in bndList[i].fenceLineEar)
-                {
-                    Wgs84 latLon = localPlane.ConvertGeoCoordToWgs84(v2.ToGeoCoord());
-                    lineString.Point.Add(new ISOPoint
+                    foreach (vec2 v2 in bnd.fenceLineEar)
                     {
-                        PointType = ISOPointType.other,
-                        PointNorth = (decimal)latLon.Latitude,
-                        PointEast = (decimal)latLon.Longitude
-                    });
-                }
-
-                polygon.LineString.Add(lineString);
-
-                partfield.PolygonnonTreatmentZoneonly.Add(polygon);
-            }
-        }
-
-        private static void AddHeadland(ISOPartfield partfield, List<CBoundaryList> bndList, LocalPlane localPlane)
-        {
-            foreach (CBoundaryList boundaryList in bndList)
-            {
-                if (boundaryList.hdLine.Count < 1) continue;
-
-                var polygon = new ISOPolygon
-                {
-                    PolygonType = ISOPolygonType.Headland
-                };
-
-                var lineString = new ISOLineString
-                {
-                    LineStringType = ISOLineStringType.PolygonExterior
-                };
-
-                foreach (vec3 v3 in boundaryList.hdLine)
-                {
-                    Wgs84 latLon = localPlane.ConvertGeoCoordToWgs84(v3.ToGeoCoord());
-                    lineString.Point.Add(new ISOPoint
-                    {
-                        PointType = ISOPointType.other,
-                        PointNorth = (decimal)latLon.Latitude,
-                        PointEast = (decimal)latLon.Longitude
-                    });
-                }
-
-                polygon.LineString.Add(lineString);
-
-                partfield.PolygonnonTreatmentZoneonly.Add(polygon);
-            }
-        }
-
-        private static void AddTracks(ISOXML isoxml, ISOPartfield partfield, CTrack trk, LocalPlane localPlane, Version version)
-        {
-            if (trk.gArr == null) return;
-
-            foreach (CTrk track in trk.gArr)
-            {
-                if (track.mode != TrackMode.AB && track.mode != TrackMode.Curve) continue;
-
-                switch (version)
-                {
-                    case Version.V3:
-                        {
-                            ISOLineString lineString = CreateLineString(track, localPlane, version);
-                            lineString.LineStringDesignator = track.name;
-                            partfield.LineString.Add(lineString);
-                        }
-                        break;
-
-                    case Version.V4:
-                        {
-                            var guidanceGroup = new ISOGuidanceGroup
-                            {
-                                GuidanceGroupDesignator = track.name
-                            };
-                            isoxml.IdTable.AddObjectAndAssignIdIfNone(guidanceGroup);
-
-                            var guidancePattern = new ISOGuidancePattern
-                            {
-                                GuidancePatternId = guidanceGroup.GuidanceGroupId,
-                                GuidancePatternPropagationDirection = ISOGuidancePatternPropagationDirection.Bothdirections,
-                                GuidancePatternExtension = ISOGuidancePatternExtension.Frombothfirstandlastpoint,
-                                GuidancePatternGNSSMethod = ISOGuidancePatternGNSSMethod.Desktopgenerateddata
-                            };
-
-                            ISOLineString lineString = CreateLineString(track, localPlane, version);
-
-                            switch (track.mode)
-                            {
-                                case TrackMode.AB:
-                                    guidancePattern.GuidancePatternType = ISOGuidancePatternType.AB;
-                                    break;
-
-                                case TrackMode.Curve:
-                                    guidancePattern.GuidancePatternType = ISOGuidancePatternType.Curve;
-                                    break;
-
-                                default:
-                                    throw new InvalidOperationException("Track mode is invalid");
-                            }
-
-                            guidancePattern.LineString.Add(lineString);
-
-                            guidanceGroup.GuidancePattern.Add(guidancePattern);
-
-                            partfield.GuidanceGroup.Add(guidanceGroup);
-                        }
-                        break;
-                }
-            }
-        }
-
-        private static ISOLineString CreateLineString(CTrk track, LocalPlane localPlane, Version version)
-        {
-            switch (track.mode)
-            {
-                case TrackMode.AB:
-                    return CreateABLineString(track, localPlane, version);
-
-                case TrackMode.Curve:
-                    return CreateCurveLineString(track, localPlane, version);
-
-                default:
-                    throw new InvalidOperationException("Track mode is invalid");
-            }
-        }
-
-
-        private static ISOLineString CreateABLineString(CTrk track, LocalPlane localPlane, Version version)
-        {
-            var lineString = new ISOLineString
-            {
-                LineStringType = ISOLineStringType.GuidancePattern
-            };
-
-            GeoCoord pointA = track.ptA.ToGeoCoord();
-            GeoDir heading = new GeoDir(track.heading);
-            Wgs84 latLon = localPlane.ConvertGeoCoordToWgs84(pointA - 1000.0 * heading);
-
-            lineString.Point.Add(new ISOPoint
-            {
-                PointType = version == Version.V4 ? ISOPointType.GuidanceReferenceA : ISOPointType.other,
-                PointNorth = (decimal)latLon.Latitude,
-                PointEast = (decimal)latLon.Longitude
-            });
-
-            latLon = localPlane.ConvertGeoCoordToWgs84(pointA + 1000.0 * heading);
-
-            lineString.Point.Add(new ISOPoint
-            {
-                PointType = version == Version.V4 ? ISOPointType.GuidanceReferenceB : ISOPointType.other,
-                PointNorth = (decimal)latLon.Latitude,
-                PointEast = (decimal)latLon.Longitude
-            });
-
-            return lineString;
-        }
-
-        private static ISOLineString CreateCurveLineString(CTrk track, LocalPlane localPlane, Version version)
-        {
-            var lineString = new ISOLineString
-            {
-                LineStringType = ISOLineStringType.GuidancePattern
-            };
-
-            for (int j = 0; j < track.curvePts.Count; j++)
-            {
-                Wgs84 latLon = localPlane.ConvertGeoCoordToWgs84(track.curvePts[j].ToGeoCoord());
-
-                var point = new ISOPoint
-                {
-                    PointNorth = (decimal)latLon.Latitude,
-                    PointEast = (decimal)latLon.Longitude
-                };
-
-                if (version == Version.V4)
-                {
-                    if (j == 0)
-                    {
-                        point.PointType = ISOPointType.GuidanceReferenceA;
-                    }
-                    else if (j == track.curvePts.Count - 1)
-                    {
-                        point.PointType = ISOPointType.GuidanceReferenceB;
-                    }
-                    else
-                    {
-                        point.PointType = ISOPointType.GuidancePoint;
+                        coreBoundary.FenceLine.Add(new Vec3(v2.northing, v2.easting, 0));
                     }
                 }
                 else
                 {
-                    point.PointType = ISOPointType.other;
+                    foreach (vec3 v3 in bnd.fenceLine)
+                    {
+                        coreBoundary.FenceLine.Add(v3);  // Implicit conversion
+                    }
                 }
 
-                lineString.Point.Add(point);
+                coreBoundaries.Add(coreBoundary);
             }
 
-            return lineString;
+            return coreBoundaries;
+        }
+
+        // Convert WinForms headland lines to Core headland lines
+        private static List<List<Vec3>> ConvertHeadlandLines(List<CBoundaryList> bndList)
+        {
+            var coreHeadlandLines = new List<List<Vec3>>();
+
+            foreach (var bnd in bndList)
+            {
+                var coreHeadland = new List<Vec3>();
+                foreach (var v3 in bnd.hdLine)
+                {
+                    coreHeadland.Add(v3);  // Implicit conversion from vec3 to Vec3
+                }
+                coreHeadlandLines.Add(coreHeadland);
+            }
+
+            return coreHeadlandLines;
+        }
+
+        // Convert WinForms guidance lines to Core guidance lines
+        private static List<IsoXmlTrack> ConvertGuidanceLines(CTrack trk)
+        {
+            var coreGuidanceLines = new List<IsoXmlTrack>();
+
+            if (trk?.gArr == null) return coreGuidanceLines;
+
+            foreach (var track in trk.gArr)
+            {
+                if (track.mode != TrackMode.AB && track.mode != TrackMode.Curve) continue;
+
+                var coreTrack = new IsoXmlTrack
+                {
+                    Name = track.name,
+                    Heading = track.heading,
+                    Mode = (IsoXmlTrackMode)(int)track.mode,  // Enum cast
+                    IsVisible = track.isVisible,
+                    NudgeDistance = track.nudgeDistance,
+                    PtA = track.ptA,  // Implicit conversion from vec2 to Vec2
+                    PtB = track.ptB   // Implicit conversion from vec2 to Vec2
+                };
+
+                // Convert curve points
+                foreach (var pt in track.curvePts)
+                {
+                    coreTrack.CurvePoints.Add(pt);  // Implicit conversion from vec3 to Vec3
+                }
+
+                coreGuidanceLines.Add(coreTrack);
+            }
+
+            return coreGuidanceLines;
         }
     }
 }

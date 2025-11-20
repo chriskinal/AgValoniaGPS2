@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dev4Agriculture.ISO11783.ISOXML" Version="0.23.1.1" />
     <PackageReference Include="OpenTK" Version="3.3.3" />
     <PackageReference Include="System.Memory" Version="4.6.0" />
     <ProjectReference Include="..\AgLibrary\AgLibrary.csproj" />
