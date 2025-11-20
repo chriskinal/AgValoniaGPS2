@@ -63,7 +63,7 @@ Configuration and state management services with clear data models.
 | 2.2 | **CAHRS** | Classes/CAHRS.cs | 53 | IMU/AHRS sensor configuration | Settings | ✅ | ✅ WinForms delegates to Core AhrsConfiguration |
 | 2.3 | **CSection** | Classes/CSection.cs | 76 | Section state data holder | vec2 | ✅ | ✅ WinForms delegates to Core SectionControl |
 | 2.4 | **CTool** (config) | Classes/CTool.cs | 323 | Tool width, offset, section positions | Settings, Section | ✅ | ✅ WinForms delegates to Core ToolConfiguration |
-| 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | 📋 | - |
+| 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | ✅ | ✅ WinForms delegates to Core VehicleConfig |
 | 2.6 | **FieldParser** | AgShare/Helpers/FieldParser.cs | ? | Parse field file formats | Core models | 📋 | - |
 
 **Notes:**
@@ -243,9 +243,9 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 15 (39%)
+**Migrated:** 16 (42%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
-**Phase 2 Targets:** 6 services (4 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅)
+**Phase 2 Targets:** 6 services (5 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅)
 **Phase 2.5 Targets:** 3 services (Protocol)
 **Phase 3 Targets:** 9 services
 **Phase 4 Targets:** 5 services
