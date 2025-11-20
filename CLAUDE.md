@@ -14,6 +14,7 @@ Both solutions are independent and maintained in parallel. The Avalonia version 
 ## Quick Start
 
 ### Working with Legacy SourceCode (Windows Forms)
+
 ```bash
 # Build entire solution
 dotnet build SourceCode/AgOpenGPS.sln
@@ -28,6 +29,7 @@ dotnet publish SourceCode/AgOpenGPS.sln
 **Key files**: See `SourceCode/CLAUDE.md` for detailed guidance
 
 ### Working with AgValoniaGPS (Modern Avalonia)
+
 ```bash
 # Navigate to modern solution
 cd AgValoniaGPS
@@ -42,11 +44,20 @@ dotnet run --project AgValoniaGPS.Desktop/AgValoniaGPS.Desktop.csproj
 dotnet build AgValoniaGPS.sln
 ```
 
+## Process
+
+-**Migrate service from WinForms AgOpenGPS to AgOpenGPS.Core**
+-**Refactor AgOpenGPS to use the new service from AgOpenGPS.Core**
+-**Build AgOpenGPS**
+-**User tests AgOpenGPS**
+-**Commit working state**
+
 **Key files**: See `AgValoniaGPS/CONTINUATION_GUIDE.md` and `AgValoniaGPS/MIGRATION_ACHIEVEMENTS.md` for detailed guidance
 
 ## Architecture Comparison
 
 ### SourceCode Solution (Legacy)
+
 - **Framework**: .NET Framework 4.8 + Windows Forms
 - **Architecture**: Monolithic FormGPS.cs (~47,000 lines) + MVP-pattern library (AgOpenGPS.Core)
 - **Graphics**: OpenTK.GLControl (OpenGL desktop)
@@ -55,6 +66,7 @@ dotnet build AgValoniaGPS.sln
 - **Entry Point**: `SourceCode/GPS/Program.cs`
 
 ### AgValoniaGPS Solution (Modern)
+
 - **Framework**: .NET 8 + Avalonia UI
 - **Architecture**: Clean MVVM with ReactiveUI, dependency injection, service layer
 - **Graphics**: Silk.NET.OpenGL (OpenGL ES 3.0 with ANGLE)
@@ -65,6 +77,7 @@ dotnet build AgValoniaGPS.sln
 ## Solution Structure
 
 ### SourceCode/ - Windows Forms Solution
+
 ```
 SourceCode/
 ├── AgOpenGPS.sln                    # Main solution (14 projects)
@@ -85,6 +98,7 @@ SourceCode/
 ```
 
 ### AgValoniaGPS/ - Modern Avalonia Solution
+
 ```
 AgValoniaGPS/
 ├── AgValoniaGPS.sln                 # Modern solution (5 projects)
@@ -112,6 +126,7 @@ AgValoniaGPS/
 ## Technology Stack
 
 ### SourceCode Technologies
+
 - **.NET Framework 4.8** (Windows-only)
 - **Windows Forms** (GPS app) + **WPF** (newer components)
 - **OpenTK.GLControl 3.3.3** - OpenGL rendering
@@ -121,6 +136,7 @@ AgValoniaGPS/
 - **NUnit 4.3.2** - Testing
 
 ### AgValoniaGPS Technologies
+
 - **.NET 8.0** (cross-platform)
 - **Avalonia 11.3.6** - UI framework with Fluent theme
 - **ReactiveUI 20.1.1** - MVVM with reactive extensions
@@ -132,12 +148,14 @@ AgValoniaGPS/
 ## Key Architectural Patterns
 
 ### SourceCode Patterns
+
 - **MVP (Model-View-Presenter)** - Separation layer in AgOpenGPS.Core
 - **Monolithic Main Form** - FormGPS.cs handles UI, rendering, communication, calculations
 - **Settings Management** - Registry + XML file persistence
 - **Hardware Communication** - UDP packet-based protocol with PGN numbers
 
 ### AgValoniaGPS Patterns
+
 - **MVVM (Model-View-ViewModel)** - ReactiveUI throughout
 - **Dependency Injection** - Constructor injection with Microsoft.Extensions.DI
 - **Service Layer Abstraction** - Interfaces for all services (IUdpCommunicationService, IGpsService, etc.)
@@ -149,6 +167,7 @@ AgValoniaGPS/
 Both solutions share the same UDP-based communication protocol:
 
 ### UDP Ports
+
 - **9999** - Primary GPS/AutoSteer data (NMEA input, PGN messages)
 - **8888** - Machine module communication
 - **7777** - IMU data
@@ -156,6 +175,7 @@ Both solutions share the same UDP-based communication protocol:
 - **2233** - NTRIP RTCM data forwarding to GPS modules
 
 ### PGN Message System
+
 - **PGN 126** - GPS module hello
 - **PGN 127** - Machine module hello
 - **PGN 128** - AutoSteer module hello
@@ -165,6 +185,7 @@ Both solutions share the same UDP-based communication protocol:
 - **PGN 254** - Machine data
 
 ### Module Status Tracking
+
 - **Hello-based** - Machine/IMU modules (periodic hello packets)
 - **Data-flow based** - AutoSteer/GPS modules (detect incoming data)
 - **3-second timeout** - Module marked as disconnected if no data
@@ -172,11 +193,13 @@ Both solutions share the same UDP-based communication protocol:
 ## GPS & Coordinate Systems
 
 ### NMEA Sentences
+
 - **$GPGGA** - Position, altitude, fix quality, satellites
 - **$GPVTG** - Speed and course over ground
 - **$GPRMC** - Recommended minimum specific GPS/Transit data
 
 ### Coordinate Conversions
+
 - **Input**: WGS84 (latitude/longitude in degrees)
 - **Processing**: UTM (Universal Transverse Mercator) in meters
 - **Output**: OpenGL coordinates for rendering
@@ -187,12 +210,14 @@ Both solutions share the same UDP-based communication protocol:
 ## OpenGL Rendering
 
 ### SourceCode Approach
+
 - **OpenTK.GLControl** - Desktop OpenGL (version 3.3+)
 - **Fixed-function pipeline** - Legacy GL calls mixed with modern shaders
 - **Texture loading** - OpenTK utilities
 - **Rendering location**: Integrated into FormGPS.cs
 
 ### AgValoniaGPS Approach
+
 - **Silk.NET.OpenGL** - OpenGL ES 3.0 via ANGLE
 - **Modern shader-based** - All rendering via GLSL ES 3.0 shaders
 - **Texture loading** - StbImageSharp
@@ -203,12 +228,14 @@ Both solutions share the same UDP-based communication protocol:
 ## Development Workflows
 
 ### Adding Features to SourceCode
+
 1. **Business logic** → `AgOpenGPS.Core/Models/` or `GPS/Classes/`
 2. **UI components** → `GPS/Forms/` (Windows Forms) or `AgOpenGPS.WpfApp/` (WPF)
 3. **Shared utilities** → `AgLibrary/`
 4. **Tests** → `AgLibrary.Tests/` or `AgOpenGPS.Core.Tests/` (NUnit, AAA pattern)
 
 ### Adding Features to AgValoniaGPS
+
 1. **Create service interface** → `AgValoniaGPS.Services/Interfaces/IYourService.cs`
 2. **Implement service** → `AgValoniaGPS.Services/YourService.cs`
 3. **Register in DI** → `AgValoniaGPS.Desktop/DependencyInjection/ServiceCollectionExtensions.cs`
@@ -217,6 +244,7 @@ Both solutions share the same UDP-based communication protocol:
 6. **Wire up events** → Subscribe to service events in ViewModel
 
 ### Testing Hardware Communication
+
 - **Simulator**: Use `SourceCode/ModSim/` project to simulate GPS/modules
 - **Real hardware**: Arduino-based modules on UDP network (AutoSteer, Machine, IMU)
 - **NTRIP testing**: Free casters at rtk2go.com (port 2101)
@@ -228,6 +256,7 @@ Both solutions share the same UDP-based communication protocol:
 **CRITICAL**: Previous migration attempts using "big-bang" rewrites **failed**. The successful strategy is **incremental feature-by-feature migration**.
 
 #### Failed Approaches (Don't Do This)
+
 ```
 ❌ Extract ALL business logic → Build complete Avalonia UI → Connect everything
 ❌ Rewrite FormGPS.cs entirely before testing
@@ -235,6 +264,7 @@ Both solutions share the same UDP-based communication protocol:
 ```
 
 **Problems with big-bang rewrites:**
+
 - FormGPS.cs has ~47,000 lines of tightly coupled UI + business logic
 - Business logic deeply intertwined with WinForms controls and event handlers
 - Overwhelming scope - hard to know where to start
@@ -243,6 +273,7 @@ Both solutions share the same UDP-based communication protocol:
 - High risk of abandonment
 
 #### Successful Approach: Strangler Fig Pattern (Do This)
+
 ```
 ✅ Build foundation → Add one feature at a time → Test each feature → Repeat
 ✅ Each feature corresponds to a button/panel in FormGPS.cs
@@ -250,6 +281,7 @@ Both solutions share the same UDP-based communication protocol:
 ```
 
 **Benefits:**
+
 - Working application from Day 1 (even if minimal)
 - Each feature is self-contained and testable
 - Can reference FormGPS.cs as you implement each feature
@@ -262,24 +294,30 @@ Both solutions share the same UDP-based communication protocol:
 When adding the next feature from FormGPS.cs to AgValoniaGPS, follow this process:
 
 #### Step 1: Identify the Feature in FormGPS.cs
+
 Find the button/panel/menu item in `SourceCode/GPS/Forms/FormGPS.cs`:
+
 - Look for button click handlers (e.g., `btnFieldBoundary_Click`)
 - Find related UI controls and their event handlers
 - Trace data flow - what gets displayed, what gets saved
 - Identify timers, update loops, render calls
 
 **Example**: Field boundary feature
+
 - Button: `btnFieldBoundary_Click`
 - Rendering: Look for boundary drawing in OpenGL render loop
 - Data: Find boundary point storage (lists, arrays)
 - Save/Load: Find field file I/O code
 
 #### Step 2: Extract Business Logic
+
 Separate the business logic from UI code:
+
 - **Business logic**: Calculations, algorithms, data transformations, validations
 - **UI logic**: Button clicks, control updates, display formatting
 
 Create a new service in AgValoniaGPS:
+
 ```csharp
 // AgValoniaGPS.Services/Interfaces/IFieldBoundaryService.cs
 public interface IFieldBoundaryService
@@ -299,7 +337,9 @@ public class FieldBoundaryService : IFieldBoundaryService
 ```
 
 #### Step 3: Create Models
+
 Add data models to `AgValoniaGPS.Models/`:
+
 ```csharp
 public class BoundaryPoint
 {
@@ -310,13 +350,17 @@ public class BoundaryPoint
 ```
 
 #### Step 4: Register Service in DI
+
 Add to `AgValoniaGPS.Desktop/DependencyInjection/ServiceCollectionExtensions.cs`:
+
 ```csharp
 services.AddSingleton<IFieldBoundaryService, FieldBoundaryService>();
 ```
 
 #### Step 5: Update ViewModel
+
 Add to existing ViewModel or create new one:
+
 ```csharp
 // AgValoniaGPS.ViewModels/MainViewModel.cs
 private readonly IFieldBoundaryService _fieldBoundaryService;
@@ -331,7 +375,9 @@ public ReactiveCommand<Unit, Unit> StartBoundaryRecordingCommand { get; }
 ```
 
 #### Step 6: Create/Update UI
+
 Add controls to existing view or create new dialog:
+
 ```xml
 <!-- AgValoniaGPS.Desktop/Views/MainWindow.axaml -->
 <Button Content="Record Boundary"
@@ -339,7 +385,9 @@ Add controls to existing view or create new dialog:
 ```
 
 #### Step 7: Add Rendering (if needed)
+
 Update `OpenGLMapControl.cs` to render the feature:
+
 ```csharp
 // OnOpenGLRender() in OpenGLMapControl.cs
 private void RenderBoundary()
@@ -349,12 +397,14 @@ private void RenderBoundary()
 ```
 
 #### Step 8: Test Incrementally
+
 - Build and run the application
 - Test the new feature in isolation
 - Verify it works with existing features
 - Test with real/simulated GPS data
 
 #### Step 9: Mark Phase Complete
+
 - Update `MIGRATION_ACHIEVEMENTS.md` with what was accomplished
 - Update `CONTINUATION_GUIDE.md` with current status
 - Commit the working code
@@ -362,29 +412,32 @@ private void RenderBoundary()
 ### Current Migration Progress
 
 #### ✅ Completed Features (Phases 1-7)
-| Phase | FormGPS.cs Feature | AgValoniaGPS Implementation | Status |
-|-------|-------------------|---------------------------|--------|
-| 1-2 | Foundation | Project structure, DI, OpenGL setup | ✅ Complete |
-| 3 | Module status indicators | UdpCommunicationService + status panels | ✅ Complete |
-| 4 | NTRIP connection button/dialog | NtripClientService + DataIODialog | ✅ Complete |
-| 5 | GPS position display | GpsService + status panel | ✅ Complete |
-| 6 | Map pan/zoom (mouse) | OpenGLMapControl mouse handlers | ✅ Complete |
-| 7 | Vehicle rendering | Textured quad with GPS heading | ✅ Complete |
+
+| Phase | FormGPS.cs Feature             | AgValoniaGPS Implementation             | Status     |
+| ----- | ------------------------------ | --------------------------------------- | ---------- |
+| 1-2   | Foundation                     | Project structure, DI, OpenGL setup     | ✅ Complete |
+| 3     | Module status indicators       | UdpCommunicationService + status panels | ✅ Complete |
+| 4     | NTRIP connection button/dialog | NtripClientService + DataIODialog       | ✅ Complete |
+| 5     | GPS position display           | GpsService + status panel               | ✅ Complete |
+| 6     | Map pan/zoom (mouse)           | OpenGLMapControl mouse handlers         | ✅ Complete |
+| 7     | Vehicle rendering              | Textured quad with GPS heading          | ✅ Complete |
 
 #### ❌ Remaining Features (Phases 8-12)
-| Phase | FormGPS.cs Feature | What to Migrate | Complexity |
-|-------|-------------------|----------------|------------|
-| 8 | Field boundary tools | Recording, editing, saving boundaries | Medium |
-| 9 | Guidance line buttons | AB line, curve, contour creation/editing | High |
-| 10 | Section control panel | Section on/off, width config, mapping | Medium |
-| 11 | AutoSteer engage button | Engage/disengage, steering parameters | Medium |
-| 12 | Settings/config dialogs | Vehicle config, app settings, persistence | Low |
+
+| Phase | FormGPS.cs Feature      | What to Migrate                           | Complexity |
+| ----- | ----------------------- | ----------------------------------------- | ---------- |
+| 8     | Field boundary tools    | Recording, editing, saving boundaries     | Medium     |
+| 9     | Guidance line buttons   | AB line, curve, contour creation/editing  | High       |
+| 10    | Section control panel   | Section on/off, width config, mapping     | Medium     |
+| 11    | AutoSteer engage button | Engage/disengage, steering parameters     | Medium     |
+| 12    | Settings/config dialogs | Vehicle config, app settings, persistence | Low        |
 
 ### Finding Code in FormGPS.cs
 
 **FormGPS.cs is huge** (~47,000 lines). Here's how to find what you need:
 
 #### Search for Event Handlers
+
 ```csharp
 // Button clicks
 private void btnABLine_Click(...)
@@ -400,7 +453,9 @@ private void tmrWatchdog_tick(...)  // Main update loop
 ```
 
 #### Search for Rendering Code
+
 Look in the OpenGL render method:
+
 ```csharp
 private void OpenGL_Draw(...)
 {
@@ -410,6 +465,7 @@ private void OpenGL_Draw(...)
 ```
 
 #### Search for Data Structures
+
 ```csharp
 // Field boundaries
 public List<CBoundary> boundaries;
@@ -422,6 +478,7 @@ public CContour contour;
 ```
 
 #### Search for File I/O
+
 ```csharp
 // Saving
 private void FileSaveBoundary(...)
@@ -453,6 +510,7 @@ private void FileOpenField(...)
 ### Example: How GPS Service Was Migrated
 
 **FormGPS.cs code** (UI-coupled):
+
 ```csharp
 private void ParseNMEA(string sentence)
 {
@@ -464,6 +522,7 @@ private void ParseNMEA(string sentence)
 ```
 
 **AgValoniaGPS approach** (clean separation):
+
 ```csharp
 // Service (pure business logic)
 public class GpsService : IGpsService
@@ -491,6 +550,7 @@ public class MainViewModel
 ## AgValoniaGPS Current Status (Phase 7 Complete)
 
 ### Working Features
+
 - ✅ Cross-platform Avalonia UI with floating status panels
 - ✅ OpenGL ES 3.0 map rendering with textured vehicle
 - ✅ UDP communication on all required ports (9999/8888/7777/5544)
@@ -501,6 +561,7 @@ public class MainViewModel
 - ✅ Real-time vehicle position and heading visualization
 
 ### Not Yet Implemented (Future Phases)
+
 - ❌ Field boundary management (Phase 8)
 - ❌ Guidance lines (AB lines, curves, contour) (Phase 9)
 - ❌ Section control (Phase 10)
@@ -512,12 +573,14 @@ public class MainViewModel
 ## Important Code Locations
 
 ### SourceCode Critical Files
+
 - `GPS/Program.cs` - Main entry point with single-instance enforcement
 - `GPS/Forms/FormGPS.cs` - Monolithic main form (~47,000 lines)
 - `AgOpenGPS.Core/ApplicationCore.cs` - MVP composition root
 - `AgLibrary/Settings/` - Configuration persistence
 
 ### AgValoniaGPS Critical Files
+
 - `AgValoniaGPS.Desktop/Program.cs` - Application entry point
 - `AgValoniaGPS.Desktop/App.axaml.cs` - DI configuration and startup
 - `AgValoniaGPS.Desktop/Views/MainWindow.axaml` - Main UI window
@@ -528,6 +591,7 @@ public class MainViewModel
 ## Contributing
 
 Per README.md:
+
 - **Development branch**: `develop` (submit PRs here)
 - **Stable branch**: `master`
 - **Translation**: Via Weblate (https://hosted.weblate.org/engage/agopengps)
@@ -535,11 +599,13 @@ Per README.md:
 ## Debugging Tips
 
 ### SourceCode Debugging
+
 - Set GPS project as startup in Visual Studio
 - AgIO logs show hardware communication issues
 - Use ModSim for hardware simulation
 
 ### AgValoniaGPS Debugging
+
 - Check console for OpenGL shader compilation errors
 - Use Wireshark to monitor UDP traffic on ports 9999/8888/7777/5544
 - Enable debug logging in services for packet analysis
@@ -549,16 +615,19 @@ Per README.md:
 ## Version Management
 
 ### SourceCode
+
 - **GitVersion** handles semantic versioning automatically
 - **Manual version file**: `./sys/version.h` for patch increments
 
 ### AgValoniaGPS
+
 - **Assembly version**: `Program.cs` static property
 - **Semantic versioning**: Parsed from `Application.ProductVersion`
 
 ## Common Commands
 
 ### SourceCode
+
 ```bash
 # Build
 dotnet build SourceCode/AgOpenGPS.sln
@@ -571,6 +640,7 @@ dotnet publish SourceCode/AgOpenGPS.sln
 ```
 
 ### AgValoniaGPS
+
 ```bash
 # Build
 dotnet build AgValoniaGPS/AgValoniaGPS.sln
