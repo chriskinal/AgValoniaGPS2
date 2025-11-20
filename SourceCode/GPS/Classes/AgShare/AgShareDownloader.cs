@@ -199,8 +199,8 @@ namespace AgOpenGPS
                     ptA = ab.CurvePoints[0];
                     ptB = ab.CurvePoints[ab.CurvePoints.Count - 1];
                     heading = GeoConverter.HeadingFromPoints(
-                        new Vec2(ptA.Easting, ptA.Northing),
-                        new Vec2(ptB.Easting, ptB.Northing)
+                        (ptA.Easting, ptA.Northing),
+                        (ptB.Easting, ptB.Northing)
                     );
                 }
 

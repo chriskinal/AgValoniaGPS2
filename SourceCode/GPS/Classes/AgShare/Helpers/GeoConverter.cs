@@ -1,147 +1,109 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using AgOpenGPS.Core.Models.AgShare;
+using AgOpenGPS.Core.Models.Base;
+using GeoCore = AgOpenGPS.Core.Models.Base.GeoConversion;
+using BoundaryCore = AgOpenGPS.Core.Models.Base.BoundaryUtils;
+using CurveCore = AgOpenGPS.Core.Models.Base.CurveUtils;
+using GeoCalc = AgOpenGPS.Core.Models.Base.GeoCalculations;
 
 namespace AgOpenGPS.Classes.AgShare.Helpers
 {
-    // NOTE: Cross-platform version available in AgOpenGPS.Core.Models.Base.GeoConversion
-    // New code should use GeoConversion, BoundaryUtils, CurveUtils, and GeoCalculations from Core
-    // This WinForms version maintained for backward compatibility
-
-    // Converts between WGS84 lat/lon and local NE coordinates using CNMEA projection
+    /// <summary>
+    /// WinForms wrapper for GeoConversion from AgOpenGPS.Core
+    /// All coordinate conversion functions delegate to Core
+    /// </summary>
     public class GeoConverter
     {
-        private readonly double lat0Rad;
-        private readonly double lat0Deg;
-        private readonly double lon0;
-        private readonly double metersPerDegLat;
-        private readonly double metersPerDegLon;
+        private readonly GeoCore _coreConverter;
 
         public GeoConverter(double originLat, double originLon)
         {
-            lat0Deg = originLat;
-            lat0Rad = DegToRad(originLat);
-            lon0 = originLon;
-
-            // CNMEA meters-per-degree conversion formulas
-            metersPerDegLat = 111132.92
-                            - 559.82 * Math.Cos(2 * lat0Rad)
-                            + 1.175 * Math.Cos(4 * lat0Rad)
-                            - 0.0023 * Math.Cos(6 * lat0Rad);
-
-            metersPerDegLon = 111412.84 * Math.Cos(lat0Rad)
-                            - 93.5 * Math.Cos(3 * lat0Rad)
-                            + 0.118 * Math.Cos(5 * lat0Rad);
+            _coreConverter = new GeoCore(originLat, originLon);
         }
 
-        // Convert WGS84 lat/lon to local easting/northing
-        public Vec2 ToLocal(double lat, double lon)
+        /// <summary>
+        /// Convert WGS84 lat/lon to local easting/northing
+        /// Returns a simple struct for backward compatibility
+        /// </summary>
+        public (double Easting, double Northing) ToLocal(double lat, double lon)
         {
-            double deltaLat = lat - lat0Deg;
-            double deltaLon = lon - lon0;
-
-            double northing = deltaLat * metersPerDegLat;
-            double easting = deltaLon * metersPerDegLon;
-
-            return new Vec2(easting, northing);
+            var result = _coreConverter.ToLocal(lat, lon);
+            return (result.Easting, result.Northing);
         }
 
-        // Calculate heading from two local coordinates (in radians, 0-2π)
-        public static double HeadingFromPoints(Vec2 a, Vec2 b)
+        /// <summary>
+        /// Calculate heading from two local coordinates (in radians, 0-2π)
+        /// </summary>
+        public static double HeadingFromPoints((double Easting, double Northing) a, (double Easting, double Northing) b)
         {
-            double angle = Math.Atan2(b.Easting - a.Easting, b.Northing - a.Northing);
-            return (angle + 2 * Math.PI) % (2 * Math.PI);
-        }
-
-        private static double DegToRad(double deg) => deg * Math.PI / 180.0;
-    }
-
-    // Simple struct to store local easting/northing
-    public struct Vec2
-    {
-        public double Easting;
-        public double Northing;
-
-        public Vec2(double e, double n)
-        {
-            Easting = e;
-            Northing = n;
+            var vecA = new Vec2(a.Easting, a.Northing);
+            var vecB = new Vec2(b.Easting, b.Northing);
+            return GeoCore.HeadingFromPoints(vecA, vecB);
         }
     }
+    /// <summary>
+    /// WinForms wrapper for BoundaryUtils from AgOpenGPS.Core
+    /// </summary>
     public static class BoundaryHelper
     {
         /// <summary>
         /// Calculate heading for each boundary point based on the direction to the next point (last → first is closed loop)
+        /// Delegates to Core BoundaryUtils
         /// </summary>
         public static List<LocalPoint> WithHeadings(List<LocalPoint> points)
         {
-            var result = new List<LocalPoint>();
-            if (points == null || points.Count < 2) return result;
+            if (points == null || points.Count < 2) return new List<LocalPoint>();
 
-            for (int i = 0; i < points.Count; i++)
-            {
-                var curr = points[i];
-                var next = points[(i + 1) % points.Count]; // closed ring
-                double dx = next.Easting - curr.Easting;
-                double dy = next.Northing - curr.Northing;
-                double heading = Math.Atan2(dx, dy);
-                result.Add(new LocalPoint(curr.Easting, curr.Northing, heading));
-            }
+            // Convert to Core Vec3 and delegate
+            var corePoints = points.Select(p => (Vec3)p).ToList();
+            var result = BoundaryCore.WithHeadings(corePoints);
 
-            return result;
+            // Convert back to LocalPoint
+            return result.Select(v => (LocalPoint)v).ToList();
         }
     }
 
+    /// <summary>
+    /// WinForms wrapper for CurveUtils from AgOpenGPS.Core
+    /// </summary>
     public static class CurveHelper
     {
         /// <summary>
-        /// Calculate Heading for CurvePoints   
+        /// Calculate Heading for CurvePoints
+        /// Delegates to Core CurveUtils
         /// </summary>
         public static List<vec3> CalculateHeadings(List<vec3> inputPoints)
         {
-            var output = new List<vec3>();
-
             if (inputPoints == null || inputPoints.Count < 2)
-                return output;
+                return new List<vec3>();
 
-            for (int i = 0; i < inputPoints.Count - 1; i++)
-            {
-                var p1 = inputPoints[i];
-                var p2 = inputPoints[i + 1];
+            // Convert to Core Vec3 and delegate
+            var corePoints = inputPoints.Select(p => (Vec3)p).ToList();
+            var result = CurveCore.CalculateHeadings(corePoints);
 
-                var dx = p2.easting - p1.easting;
-                var dy = p2.northing - p1.northing;
-
-                var heading = Math.Atan2(dx, dy);
-
-                output.Add(new vec3(p1.easting, p1.northing, heading));
-            }
-            var last = inputPoints[inputPoints.Count - 1];
-            var lastHeading = output[output.Count - 1].heading;
-            output.Add(new vec3(last.easting, last.northing, lastHeading));
-
-            return output;
+            // Convert back to WinForms vec3
+            return result.Select(v => (vec3)v).ToList();
         }
     }
+    /// <summary>
+    /// WinForms wrapper for GeoCalculations from AgOpenGPS.Core
+    /// </summary>
     public static class GeoUtils
     {
-        // Calculates approximate area of a lat/lon polygon in hectares
+        /// <summary>
+        /// Calculates approximate area of a lat/lon polygon in hectares
+        /// Delegates to Core GeoCalculations
+        /// </summary>
         public static double CalculateAreaInHa(List<CoordinateDto> coords)
         {
             if (coords == null || coords.Count < 3)
                 return 0;
 
-            double area = 0;
-            for (int i = 0, j = coords.Count - 1; i < coords.Count; j = i++)
-            {
-                double xi = coords[i].Longitude;
-                double yi = coords[i].Latitude;
-                double xj = coords[j].Longitude;
-                double yj = coords[j].Latitude;
-                area += (xj + xi) * (yj - yi);
-            }
-
-            return Math.Abs(area * 111.32 * 111.32 / 2.0) / 10000.0;
+            // Convert to Core coordinate format and delegate
+            var coreCoords = coords.Select(c => (c.Latitude, c.Longitude)).ToList();
+            return GeoCalc.CalculateAreaInHectares(coreCoords);
         }
     }
 }

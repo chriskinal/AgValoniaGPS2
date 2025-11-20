@@ -35,7 +35,7 @@ These services have minimal dependencies, no UI coupling, and provide immediate 
 | 1.2 | **CFlag** | Classes/CFlag.cs | 40 | Field flag/marker data model | GeoCoord | ✅ | ⚠️ Not yet integrated |
 | 1.3 | **vec3/vec2** | Classes/vec3.cs | 173 | Vector math structures and operations | GeoCoord | ✅ | ⚠️ Has implicit conversions, WinForms uses own version |
 | 1.4 | **CGLM** (math only) | Classes/CGLM.cs | 421 | Distance and angle calculations | None | ✅ | ✅ WinForms delegates to Core |
-| 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ | ⚠️ WinForms has own version, not delegating |
+| 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ | ✅ WinForms delegates to Core |
 | 1.6 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | ✅ | ✅ WinForms delegates to Core |
 | 1.7 | **FileIoUtils** | IO/FileIOUtils.cs | 50 | File I/O utility functions | None | ✅ | ✅ WinForms delegates to Core |
 | 1.8 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | Vec3 | ✅ | ✅ WinForms uses Core directly |
