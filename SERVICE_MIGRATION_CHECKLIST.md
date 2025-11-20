@@ -84,7 +84,7 @@ ISO standard protocol support for field data interoperability.
 |----------|---------|----------|-------|-------------|--------------|--------|---------------------|
 | 2.7 | **IsoXmlFieldImporter** | Protocols/ISOBUS/IsoXmlFieldImporter.cs | 99 | ISO XML field import service | Core models | ✅ | ✅ WinForms adapter converts Core→WinForms types |
 | 2.8 | **IsoXmlParserHelpers** | Protocols/ISOBUS/IsoXmlParserHelpers.cs | 326 | ISO XML parsing algorithms | Core models | ✅ | ✅ Moved to Core.Services.IsoXml |
-| 2.9 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 200 | ISO ISOXML export service | Field data models | 📋 | - |
+| 2.9 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 134 | ISO ISOXML export service | Field data models | ✅ | ✅ WinForms adapter converts WinForms→Core types |
 
 **Notes:**
 - High-value services for interoperability with other agricultural software
@@ -92,6 +92,8 @@ ISO standard protocol support for field data interoperability.
 - Critical for standards compliance
 - IsoXmlFieldImporter and IsoXmlParserHelpers migrated together (tightly coupled)
 - Created Core models: IsoXmlBoundary, IsoXmlTrack, IsoXmlField, IsoXmlTrackMode
+- ISO11783_TaskFile: Core IsoXmlExporter handles V3/V4 export, WinForms converts types
+- Added Dev4Agriculture.ISO11783.ISOXML package reference to Core project
 
 ---
 
@@ -246,10 +248,10 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 19 (50%)
+**Migrated:** 20 (53%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
 **Phase 2 Targets:** 6 services (6 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅, FieldParser ✅) - PHASE 2 COMPLETE ✅
-**Phase 2.5 Targets:** 3 services (2 complete - IsoXmlFieldImporter ✅, IsoXmlParserHelpers ✅)
+**Phase 2.5 Targets:** 3 services (3 complete - IsoXmlFieldImporter ✅, IsoXmlParserHelpers ✅, ISO11783_TaskFile ✅) - PHASE 2.5 COMPLETE ✅
 **Phase 3 Targets:** 9 services
 **Phase 4 Targets:** 5 services
 **Phase 5 Targets:** 6 services
