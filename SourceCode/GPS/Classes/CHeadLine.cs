@@ -8,88 +8,308 @@ namespace AgOpenGPS
 {
     /// <summary>
     /// WinForms wrapper for HeadlandLine from AgOpenGPS.Core
-    /// Maintains backward compatibility while enabling Core integration
+    /// Delegates all operations to Core HeadlandLine instance
     /// </summary>
     public class CHeadLine
     {
-        public List<CHeadPath> tracksArr = new List<CHeadPath>();
+        private readonly HeadlandLine _core;
+        private readonly List<CHeadPath> _trackWrappers;
+        private readonly List<vec3> _desListWrapper;
 
-        public int idx;
+        /// <summary>
+        /// WinForms list that wraps Core Tracks
+        /// </summary>
+        public List<CHeadPath> tracksArr
+        {
+            get => _trackWrappers;
+        }
 
-        public List<vec3> desList = new List<vec3>();
+        /// <summary>
+        /// Current track index - delegates to Core
+        /// </summary>
+        public int idx
+        {
+            get => _core.CurrentIndex;
+            set => _core.CurrentIndex = value;
+        }
+
+        /// <summary>
+        /// Desired line points - delegates to Core with vec3 conversion
+        /// </summary>
+        public List<vec3> desList
+        {
+            get => _desListWrapper;
+        }
 
         public CHeadLine()
         {
-            // FormGPS dependency removed - no longer couples to UI
+            _core = new HeadlandLine();
+            _trackWrappers = new TracksListWrapper(_core.Tracks);
+            _desListWrapper = new DesiredPointsListWrapper(_core.DesiredPoints);
         }
 
         /// <summary>
-        /// Convert this WinForms CHeadLine to Core HeadlandLine for serialization/cross-platform use
+        /// Get the underlying Core HeadlandLine instance
         /// </summary>
-        public HeadlandLine ToCoreHeadlandLine()
+        public HeadlandLine CoreHeadlandLine => _core;
+
+        /// <summary>
+        /// Wrapper list that keeps CHeadPath wrappers synchronized with Core Tracks
+        /// </summary>
+        private class TracksListWrapper : List<CHeadPath>
         {
-            return new HeadlandLine
+            private readonly List<HeadlandPath> _coreTracks;
+
+            public TracksListWrapper(List<HeadlandPath> coreTracks)
             {
-                Tracks = tracksArr.Select(t => t.ToCoreHeadlandPath()).ToList(),
-                CurrentIndex = idx,
-                DesiredPoints = desList.Select(v => (Vec3)v).ToList()
-            };
+                _coreTracks = coreTracks;
+                SyncFromCore();
+            }
+
+            private void SyncFromCore()
+            {
+                Clear();
+                base.AddRange(_coreTracks.Select(t => new CHeadPath(t)));
+            }
+
+            public new void Add(CHeadPath item)
+            {
+                _coreTracks.Add(item.CorePath);
+                base.Add(item);
+            }
+
+            public new void AddRange(IEnumerable<CHeadPath> collection)
+            {
+                foreach (var item in collection)
+                {
+                    Add(item);
+                }
+            }
+
+            public new void Clear()
+            {
+                _coreTracks.Clear();
+                base.Clear();
+            }
+
+            public new void RemoveAt(int index)
+            {
+                _coreTracks.RemoveAt(index);
+                base.RemoveAt(index);
+            }
+
+            public new bool Remove(CHeadPath item)
+            {
+                var coreItem = item.CorePath;
+                var removed = _coreTracks.Remove(coreItem);
+                if (removed) base.Remove(item);
+                return removed;
+            }
         }
 
         /// <summary>
-        /// Create WinForms CHeadLine from Core HeadlandLine
+        /// Wrapper list that keeps vec3 points synchronized with Core DesiredPoints
         /// </summary>
-        public static CHeadLine FromCoreHeadlandLine(HeadlandLine core)
+        private class DesiredPointsListWrapper : List<vec3>
         {
-            return new CHeadLine
+            private readonly List<Vec3> _corePoints;
+
+            public DesiredPointsListWrapper(List<Vec3> corePoints)
             {
-                tracksArr = core.Tracks.Select(CHeadPath.FromCoreHeadlandPath).ToList(),
-                idx = core.CurrentIndex,
-                desList = core.DesiredPoints.Select(v => (vec3)v).ToList()
-            };
+                _corePoints = corePoints;
+                SyncFromCore();
+            }
+
+            private void SyncFromCore()
+            {
+                Clear();
+                base.AddRange(_corePoints.Select(v => (vec3)v));
+            }
+
+            public new void Add(vec3 item)
+            {
+                _corePoints.Add((Vec3)item);
+                base.Add(item);
+            }
+
+            public new void AddRange(IEnumerable<vec3> collection)
+            {
+                foreach (var item in collection)
+                {
+                    Add(item);
+                }
+            }
+
+            public new void Clear()
+            {
+                _corePoints.Clear();
+                base.Clear();
+            }
+
+            public new void RemoveAt(int index)
+            {
+                _corePoints.RemoveAt(index);
+                base.RemoveAt(index);
+            }
+
+            public new bool Remove(vec3 item)
+            {
+                var coreItem = (Vec3)item;
+                var removed = _corePoints.Remove(coreItem);
+                if (removed) base.Remove(item);
+                return removed;
+            }
+
+            public new vec3 this[int index]
+            {
+                get => base[index];
+                set
+                {
+                    _corePoints[index] = (Vec3)value;
+                    base[index] = value;
+                }
+            }
         }
     }
 
     /// <summary>
     /// WinForms wrapper for HeadlandPath from AgOpenGPS.Core
-    /// Maintains backward compatibility while enabling Core integration
+    /// Delegates all operations to Core HeadlandPath instance
     /// </summary>
     public class CHeadPath
     {
-        public List<vec3> trackPts = new List<vec3>();
-        public string name = "";
-        public double moveDistance = 0;
-        public int mode = 0;
-        public int a_point = 0;
+        private readonly HeadlandPath _corePath;
+        private readonly List<vec3> _trackPtsWrapper;
 
         /// <summary>
-        /// Convert this WinForms CHeadPath to Core HeadlandPath for serialization/cross-platform use
+        /// Track points - delegates to Core with vec3 conversion
         /// </summary>
-        public HeadlandPath ToCoreHeadlandPath()
+        public List<vec3> trackPts
         {
-            return new HeadlandPath
-            {
-                TrackPoints = trackPts.Select(v => (Vec3)v).ToList(),
-                Name = name,
-                MoveDistance = moveDistance,
-                Mode = mode,
-                APointIndex = a_point
-            };
+            get => _trackPtsWrapper;
         }
 
         /// <summary>
-        /// Create WinForms CHeadPath from Core HeadlandPath
+        /// Name - delegates to Core
         /// </summary>
-        public static CHeadPath FromCoreHeadlandPath(HeadlandPath core)
+        public string name
         {
-            return new CHeadPath
+            get => _corePath.Name;
+            set => _corePath.Name = value;
+        }
+
+        /// <summary>
+        /// Move distance - delegates to Core
+        /// </summary>
+        public double moveDistance
+        {
+            get => _corePath.MoveDistance;
+            set => _corePath.MoveDistance = value;
+        }
+
+        /// <summary>
+        /// Mode - delegates to Core
+        /// </summary>
+        public int mode
+        {
+            get => _corePath.Mode;
+            set => _corePath.Mode = value;
+        }
+
+        /// <summary>
+        /// A-point index - delegates to Core
+        /// </summary>
+        public int a_point
+        {
+            get => _corePath.APointIndex;
+            set => _corePath.APointIndex = value;
+        }
+
+        /// <summary>
+        /// Create wrapper around new Core HeadlandPath
+        /// </summary>
+        public CHeadPath()
+        {
+            _corePath = new HeadlandPath();
+            _trackPtsWrapper = new TrackPointsListWrapper(_corePath.TrackPoints);
+        }
+
+        /// <summary>
+        /// Create wrapper around existing Core HeadlandPath
+        /// </summary>
+        internal CHeadPath(HeadlandPath corePath)
+        {
+            _corePath = corePath;
+            _trackPtsWrapper = new TrackPointsListWrapper(_corePath.TrackPoints);
+        }
+
+        /// <summary>
+        /// Get the underlying Core HeadlandPath instance
+        /// </summary>
+        internal HeadlandPath CorePath => _corePath;
+
+        /// <summary>
+        /// Wrapper list that keeps vec3 track points synchronized with Core TrackPoints
+        /// </summary>
+        private class TrackPointsListWrapper : List<vec3>
+        {
+            private readonly List<Vec3> _corePoints;
+
+            public TrackPointsListWrapper(List<Vec3> corePoints)
             {
-                trackPts = core.TrackPoints.Select(v => (vec3)v).ToList(),
-                name = core.Name,
-                moveDistance = core.MoveDistance,
-                mode = core.Mode,
-                a_point = core.APointIndex
-            };
+                _corePoints = corePoints;
+                SyncFromCore();
+            }
+
+            private void SyncFromCore()
+            {
+                Clear();
+                base.AddRange(_corePoints.Select(v => (vec3)v));
+            }
+
+            public new void Add(vec3 item)
+            {
+                _corePoints.Add((Vec3)item);
+                base.Add(item);
+            }
+
+            public new void AddRange(IEnumerable<vec3> collection)
+            {
+                foreach (var item in collection)
+                {
+                    Add(item);
+                }
+            }
+
+            public new void Clear()
+            {
+                _corePoints.Clear();
+                base.Clear();
+            }
+
+            public new void RemoveAt(int index)
+            {
+                _corePoints.RemoveAt(index);
+                base.RemoveAt(index);
+            }
+
+            public new bool Remove(vec3 item)
+            {
+                var coreItem = (Vec3)item;
+                var removed = _corePoints.Remove(coreItem);
+                if (removed) base.Remove(item);
+                return removed;
+            }
+
+            public new vec3 this[int index]
+            {
+                get => base[index];
+                set
+                {
+                    _corePoints[index] = (Vec3)value;
+                    base[index] = value;
+                }
+            }
         }
     }
 }

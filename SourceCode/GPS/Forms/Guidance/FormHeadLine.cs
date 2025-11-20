@@ -783,9 +783,10 @@ namespace AgOpenGPS
                     pt3 = new vec3(mf.hdl.desList[0]);
                     mf.hdl.desList.Add(pt3);
 
-                    //make sure point distance isn't too big 
-                    mf.curve.MakePointMinimumSpacing(ref mf.hdl.desList, 1.2);
-                    mf.curve.CalculateHeadings(ref mf.hdl.desList);
+                    //make sure point distance isn't too big
+                    var desList = mf.hdl.desList;
+                    mf.curve.MakePointMinimumSpacing(ref desList, 1.2);
+                    mf.curve.CalculateHeadings(ref desList);
 
                     mf.bnd.bndList[0].hdLine.Clear();
 
