@@ -80,16 +80,18 @@ Configuration and state management services with clear data models.
 
 ISO standard protocol support for field data interoperability.
 
-| Priority | Service | Location | Lines | Description | Dependencies | Status |
-|----------|---------|----------|-------|-------------|--------------|--------|
-| 2.7 | **IsoXmlFieldImporter** | Protocols/ISOBUS/IsoXmlFieldImporter.cs | 35 | ISO XML field import service | Core models | 📋 |
-| 2.8 | **IsoXmlParserHelpers** | Protocols/ISOBUS/IsoXmlParserHelpers.cs | 300 | ISO XML parsing algorithms | Core models | 📋 |
-| 2.9 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 200 | ISO ISOXML export service | Field data models | 📋 |
+| Priority | Service | Location | Lines | Description | Dependencies | Status | WinForms Uses Core? |
+|----------|---------|----------|-------|-------------|--------------|--------|---------------------|
+| 2.7 | **IsoXmlFieldImporter** | Protocols/ISOBUS/IsoXmlFieldImporter.cs | 99 | ISO XML field import service | Core models | ✅ | ✅ WinForms adapter converts Core→WinForms types |
+| 2.8 | **IsoXmlParserHelpers** | Protocols/ISOBUS/IsoXmlParserHelpers.cs | 326 | ISO XML parsing algorithms | Core models | ✅ | ✅ Moved to Core.Services.IsoXml |
+| 2.9 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 200 | ISO ISOXML export service | Field data models | 📋 | - |
 
 **Notes:**
 - High-value services for interoperability with other agricultural software
 - Already well-structured with minimal UI dependencies
 - Critical for standards compliance
+- IsoXmlFieldImporter and IsoXmlParserHelpers migrated together (tightly coupled)
+- Created Core models: IsoXmlBoundary, IsoXmlTrack, IsoXmlField, IsoXmlTrackMode
 
 ---
 
@@ -244,10 +246,10 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 17 (45%)
+**Migrated:** 19 (50%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
 **Phase 2 Targets:** 6 services (6 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅, FieldParser ✅) - PHASE 2 COMPLETE ✅
-**Phase 2.5 Targets:** 3 services (Protocol)
+**Phase 2.5 Targets:** 3 services (2 complete - IsoXmlFieldImporter ✅, IsoXmlParserHelpers ✅)
 **Phase 3 Targets:** 9 services
 **Phase 4 Targets:** 5 services
 **Phase 5 Targets:** 6 services
