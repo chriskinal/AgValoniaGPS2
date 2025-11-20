@@ -21,6 +21,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Headland Line Data** | Core/Models/Guidance/HeadlandLine.cs | ✅ HeadlandLine, HeadlandPath (data models only) |
 | **Curve Processing** | Core/Models/Guidance/CurveProcessing.cs | ✅ CurveProcessing (WinForms delegates to Core) |
 | **File I/O Utils** | Core/Utilities/FileIoUtils.cs | ✅ FileIoUtils (WinForms delegates to Core) |
+| **LocalFieldModel** | Core/Models/AgShare/LocalFieldModel.cs | ✅ LocalFieldModel, LocalPoint, AbLineLocal (with implicit conversions) |
 
 ---
 
@@ -37,7 +38,7 @@ These services have minimal dependencies, no UI coupling, and provide immediate 
 | 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ |
 | 1.6 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | ✅ |
 | 1.7 | **FileIoUtils** | IO/FileIOUtils.cs | 50 | File I/O utility functions | None | ✅ |
-| 1.8 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | GeoCoord | 📋 |
+| 1.8 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | Vec3 | ✅ |
 
 **Notes:**
 - vec3/vec2 are fundamental types used by many other services - migrate early
@@ -236,8 +237,8 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 10 (26%)
-**Phase 1 Targets:** 8 services (7 complete)
+**Migrated:** 11 (29%)
+**Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
 **Phase 2 Targets:** 6 services (1 partial - data models only)
 **Phase 2.5 Targets:** 3 services (Protocol)
 **Phase 3 Targets:** 9 services
