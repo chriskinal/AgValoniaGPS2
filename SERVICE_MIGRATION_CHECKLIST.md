@@ -59,8 +59,8 @@ Configuration and state management services with clear data models.
 
 | Priority | Service | Location | Lines | Description | Dependencies | Status | WinForms Uses Core? |
 |----------|---------|----------|-------|-------------|--------------|--------|---------------------|
-| 2.1 | **CHeadLine** (service) | Classes/CHeadLine.cs | 95 | Headland line state management | vec3 | ✅ | ✅ WinForms provides Core conversion methods |
-| 2.2 | **CAHRS** | Classes/CAHRS.cs | 53 | IMU/AHRS sensor configuration | Settings | 📋 | - |
+| 2.1 | **CHeadLine** (service) | Classes/CHeadLine.cs | 95 | Headland line state management | vec3 | ✅ | ✅ WinForms wraps Core with full delegation |
+| 2.2 | **CAHRS** | Classes/CAHRS.cs | 53 | IMU/AHRS sensor configuration | Settings | ✅ | ✅ WinForms delegates to Core AhrsConfiguration |
 | 2.3 | **CSection** | Classes/CSection.cs | 76 | Section state data holder | vec2 | 📋 | - |
 | 2.4 | **CTool** (config) | Classes/CTool.cs | 323 | Tool width, offset, section positions | Settings, Section | 📋 | - |
 | 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | 📋 | - |
@@ -243,9 +243,9 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 12 (32%)
+**Migrated:** 13 (34%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
-**Phase 2 Targets:** 6 services (1 complete - CHeadLine ✅)
+**Phase 2 Targets:** 6 services (2 complete - CHeadLine ✅, CAHRS ✅)
 **Phase 2.5 Targets:** 3 services (Protocol)
 **Phase 3 Targets:** 9 services
 **Phase 4 Targets:** 5 services
