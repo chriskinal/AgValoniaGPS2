@@ -29,21 +29,27 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 
 These services have minimal dependencies, no UI coupling, and provide immediate value.
 
-| Priority | Service | Location | Lines | Description | Dependencies | Status |
-|----------|---------|----------|-------|-------------|--------------|--------|
-| 1.1 | **CFieldData** | Classes/CFieldData.cs | 160 | Field statistics and area calculations | Tool (width), avgSpeed | ✅ |
-| 1.2 | **CFlag** | Classes/CFlag.cs | 40 | Field flag/marker data model | GeoCoord | ✅ |
-| 1.3 | **vec3/vec2** | Classes/vec3.cs | 173 | Vector math structures and operations | GeoCoord | ✅ |
-| 1.4 | **CGLM** (math only) | Classes/CGLM.cs | 421 | Distance and angle calculations | None | ✅ |
-| 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ |
-| 1.6 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | ✅ |
-| 1.7 | **FileIoUtils** | IO/FileIOUtils.cs | 50 | File I/O utility functions | None | ✅ |
-| 1.8 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | Vec3 | ✅ |
+| Priority | Service | Location | Lines | Description | Dependencies | Status | WinForms Uses Core? |
+|----------|---------|----------|-------|-------------|--------------|--------|---------------------|
+| 1.1 | **CFieldData** | Classes/CFieldData.cs | 160 | Field statistics and area calculations | Tool (width), avgSpeed | ✅ | ✅ Via FieldStatisticsService |
+| 1.2 | **CFlag** | Classes/CFlag.cs | 40 | Field flag/marker data model | GeoCoord | ✅ | ⚠️ Not yet integrated |
+| 1.3 | **vec3/vec2** | Classes/vec3.cs | 173 | Vector math structures and operations | GeoCoord | ✅ | ⚠️ Has implicit conversions, WinForms uses own version |
+| 1.4 | **CGLM** (math only) | Classes/CGLM.cs | 421 | Distance and angle calculations | None | ✅ | ⚠️ WinForms has own version, not delegating |
+| 1.5 | **GeoConverter** | AgShare/Helpers/GeoConverter.cs | 142 | Coordinate conversion utilities | Core models | ✅ | ⚠️ WinForms has own version, not delegating |
+| 1.6 | **CurveCABTools** | Protocols/ISOBUS/CurveCABTools.cs | 150 | Curve preprocessing algorithms | None | ✅ | ✅ WinForms delegates to Core |
+| 1.7 | **FileIoUtils** | IO/FileIOUtils.cs | 50 | File I/O utility functions | None | ✅ | ✅ WinForms delegates to Core |
+| 1.8 | **LocalFieldModel** | AgShare/Helpers/LocalFieldModel.cs | 45 | Field representation data model | Vec3 | ✅ | ✅ WinForms uses Core directly |
+
+**WinForms Integration Status:**
+- ✅ = WinForms uses Core implementation (proven by real usage)
+- ⚠️ = Migrated to Core but WinForms still uses its own version (needs refactoring)
+- ❌ = Not yet integrated
 
 **Notes:**
 - vec3/vec2 are fundamental types used by many other services - migrate early
 - CGLM has some OpenGL rendering - only migrate pure math functions
 - CFieldData provides live field statistics - valuable for both UIs
+- **Next refactoring targets**: CGLM, GeoConverter (make WinForms delegate to Core)
 
 ---
 
@@ -51,14 +57,14 @@ These services have minimal dependencies, no UI coupling, and provide immediate 
 
 Configuration and state management services with clear data models.
 
-| Priority | Service | Location | Lines | Description | Dependencies | Status |
-|----------|---------|----------|-------|-------------|--------------|--------|
-| 2.1 | **CHeadLine** (service) | Classes/CHeadLine.cs | 35 | Headland line state management | FormGPS, vec3 | 📋 |
-| 2.2 | **CAHRS** | Classes/CAHRS.cs | 53 | IMU/AHRS sensor configuration | Settings | 📋 |
-| 2.3 | **CSection** | Classes/CSection.cs | 76 | Section state data holder | vec2 | 📋 |
-| 2.4 | **CTool** (config) | Classes/CTool.cs | 323 | Tool width, offset, section positions | Settings, Section | 📋 |
-| 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | 📋 |
-| 2.5 | **FieldParser** | AgShare/Helpers/FieldParser.cs | ? | Parse field file formats | Core models | 📋 |
+| Priority | Service | Location | Lines | Description | Dependencies | Status | WinForms Uses Core? |
+|----------|---------|----------|-------|-------------|--------------|--------|---------------------|
+| 2.1 | **CHeadLine** (service) | Classes/CHeadLine.cs | 35 | Headland line state management | FormGPS, vec3 | 📋 | ⚠️ Data models in Core, service needs refactoring |
+| 2.2 | **CAHRS** | Classes/CAHRS.cs | 53 | IMU/AHRS sensor configuration | Settings | 📋 | - |
+| 2.3 | **CSection** | Classes/CSection.cs | 76 | Section state data holder | vec2 | 📋 | - |
+| 2.4 | **CTool** (config) | Classes/CTool.cs | 323 | Tool width, offset, section positions | Settings, Section | 📋 | - |
+| 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | 📋 | - |
+| 2.6 | **FieldParser** | AgShare/Helpers/FieldParser.cs | ? | Parse field file formats | Core models | 📋 | - |
 
 **Notes:**
 - CHeadLine: Data models (HeadlandLine, HeadlandPath) migrated to Core ✅, but service wrapper with FormGPS coupling needs refactoring
