@@ -1,107 +1,281 @@
-﻿//Please, if you use this, share the improvements
-
 using AgOpenGPS.Core.Drawing;
 using AgOpenGPS.Core.DrawLib;
 using AgOpenGPS.Core.Models;
 using OpenTK.Graphics.OpenGL;
 using System;
 
+//Please, if you use this, share the improvements
+
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for VehicleConfig from AgOpenGPS.Core
+    /// Delegates configuration/state to Core, keeps OpenGL rendering in WinForms
+    /// </summary>
     public class CVehicle
     {
         private readonly FormGPS mf;
 
-        public int deadZoneHeading, deadZoneDelay;
-        public int deadZoneDelayCounter;
-        public bool isInDeadZone;
+        // Dead zone configuration - delegate to Core
+        public int deadZoneHeading
+        {
+            get => VehicleConfig.DeadZoneHeading;
+            set => VehicleConfig.DeadZoneHeading = value;
+        }
 
-        //min vehicle speed allowed before turning shit off
-        public double slowSpeedCutoff = 0;
+        public int deadZoneDelay
+        {
+            get => VehicleConfig.DeadZoneDelay;
+            set => VehicleConfig.DeadZoneDelay = value;
+        }
 
-        //autosteer values
-        public double goalPointLookAheadHold, goalPointLookAheadMult, goalPointAcquireFactor, uturnCompensation;
+        public int deadZoneDelayCounter
+        {
+            get => VehicleConfig.DeadZoneDelayCounter;
+            set => VehicleConfig.DeadZoneDelayCounter = value;
+        }
 
-        public double stanleyDistanceErrorGain, stanleyHeadingErrorGain;
-        public double maxSteerAngle, maxSteerSpeed, minSteerSpeed;
-        public double maxAngularVelocity;
-        public double hydLiftLookAheadTime;
+        public bool isInDeadZone
+        {
+            get => VehicleConfig.IsInDeadZone;
+            set => VehicleConfig.IsInDeadZone = value;
+        }
 
-        public double hydLiftLookAheadDistanceLeft, hydLiftLookAheadDistanceRight;
+        // Speed configuration - delegate to Core
+        public double slowSpeedCutoff
+        {
+            get => VehicleConfig.SlowSpeedCutoff;
+            set => VehicleConfig.SlowSpeedCutoff = value;
+        }
 
-        public bool isHydLiftOn;
-        public double stanleyIntegralGainAB, purePursuitIntegralGain;
+        public double functionSpeedLimit
+        {
+            get => VehicleConfig.FunctionSpeedLimit;
+            set => VehicleConfig.FunctionSpeedLimit = value;
+        }
 
-        //flag for free drive window to control autosteer
-        public bool isInFreeDriveMode;
+        // Goal point lookahead - delegate to Core
+        public double goalPointLookAheadHold
+        {
+            get => VehicleConfig.GoalPointLookAheadHold;
+            set => VehicleConfig.GoalPointLookAheadHold = value;
+        }
 
-        //the trackbar angle for free drive
-        public double driveFreeSteerAngle = 0;
+        public double goalPointLookAheadMult
+        {
+            get => VehicleConfig.GoalPointLookAheadMult;
+            set => VehicleConfig.GoalPointLookAheadMult = value;
+        }
 
-        public double modeXTE, modeActualXTE = 0, modeActualHeadingError = 0;
-        public int modeTime = 0;
+        public double goalPointAcquireFactor
+        {
+            get => VehicleConfig.GoalPointAcquireFactor;
+            set => VehicleConfig.GoalPointAcquireFactor = value;
+        }
 
-        public double functionSpeedLimit;
+        public double uturnCompensation
+        {
+            get => VehicleConfig.UturnCompensation;
+            set => VehicleConfig.UturnCompensation = value;
+        }
 
+        // Stanley controller - delegate to Core
+        public double stanleyDistanceErrorGain
+        {
+            get => VehicleConfig.StanleyDistanceErrorGain;
+            set => VehicleConfig.StanleyDistanceErrorGain = value;
+        }
+
+        public double stanleyHeadingErrorGain
+        {
+            get => VehicleConfig.StanleyHeadingErrorGain;
+            set => VehicleConfig.StanleyHeadingErrorGain = value;
+        }
+
+        public double stanleyIntegralGainAB
+        {
+            get => VehicleConfig.StanleyIntegralGainAB;
+            set => VehicleConfig.StanleyIntegralGainAB = value;
+        }
+
+        // Pure pursuit controller - delegate to Core
+        public double purePursuitIntegralGain
+        {
+            get => VehicleConfig.PurePursuitIntegralGain;
+            set => VehicleConfig.PurePursuitIntegralGain = value;
+        }
+
+        // Steering limits - delegate to Core
+        public double maxSteerAngle
+        {
+            get => VehicleConfig.MaxSteerAngle;
+            set => VehicleConfig.MaxSteerAngle = value;
+        }
+
+        public double maxSteerSpeed
+        {
+            get => VehicleConfig.MaxSteerSpeed;
+            set => VehicleConfig.MaxSteerSpeed = value;
+        }
+
+        public double minSteerSpeed
+        {
+            get => VehicleConfig.MinSteerSpeed;
+            set => VehicleConfig.MinSteerSpeed = value;
+        }
+
+        public double maxAngularVelocity
+        {
+            get => VehicleConfig.MaxAngularVelocity;
+            set => VehicleConfig.MaxAngularVelocity = value;
+        }
+
+        // Hydraulic lift - delegate to Core
+        public bool isHydLiftOn
+        {
+            get => VehicleConfig.IsHydLiftOn;
+            set => VehicleConfig.IsHydLiftOn = value;
+        }
+
+        public double hydLiftLookAheadTime
+        {
+            get => VehicleConfig.HydLiftLookAheadTime;
+            set => VehicleConfig.HydLiftLookAheadTime = value;
+        }
+
+        public double hydLiftLookAheadDistanceLeft
+        {
+            get => VehicleConfig.HydLiftLookAheadDistanceLeft;
+            set => VehicleConfig.HydLiftLookAheadDistanceLeft = value;
+        }
+
+        public double hydLiftLookAheadDistanceRight
+        {
+            get => VehicleConfig.HydLiftLookAheadDistanceRight;
+            set => VehicleConfig.HydLiftLookAheadDistanceRight = value;
+        }
+
+        // Free drive mode - delegate to Core
+        public bool isInFreeDriveMode
+        {
+            get => VehicleConfig.IsInFreeDriveMode;
+            set => VehicleConfig.IsInFreeDriveMode = value;
+        }
+
+        public double driveFreeSteerAngle
+        {
+            get => VehicleConfig.DriveFreeSteerAngle;
+            set => VehicleConfig.DriveFreeSteerAngle = value;
+        }
+
+        // Mode tracking - delegate to Core
+        public double modeXTE
+        {
+            get => VehicleConfig.ModeXTE;
+            set => VehicleConfig.ModeXTE = value;
+        }
+
+        public double modeActualXTE
+        {
+            get => VehicleConfig.ModeActualXTE;
+            set => VehicleConfig.ModeActualXTE = value;
+        }
+
+        public double modeActualHeadingError
+        {
+            get => VehicleConfig.ModeActualHeadingError;
+            set => VehicleConfig.ModeActualHeadingError = value;
+        }
+
+        public int modeTime
+        {
+            get => VehicleConfig.ModeTime;
+            set => VehicleConfig.ModeTime = value;
+        }
+
+        public int modeTimeCounter
+        {
+            get => VehicleConfig.ModeTimeCounter;
+            set => VehicleConfig.ModeTimeCounter = value;
+        }
+
+        // Goal distance - delegate to Core
+        public double goalDistance
+        {
+            get => VehicleConfig.GoalDistance;
+            set => VehicleConfig.GoalDistance = value;
+        }
+
+        /// <summary>
+        /// Core VehicleConfig instance - ALL state stored here
+        /// </summary>
+        public VehicleConfig VehicleConfig { get; }
+
+        /// <summary>
+        /// Constructor - initializes Core VehicleConfig and loads settings
+        /// </summary>
         public CVehicle(FormGPS _f)
         {
-            //constructor
             mf = _f;
 
             VehicleConfig = new VehicleConfig();
 
+            // Load antenna configuration
             VehicleConfig.AntennaHeight = Properties.Settings.Default.setVehicle_antennaHeight;
             VehicleConfig.AntennaPivot = Properties.Settings.Default.setVehicle_antennaPivot;
             VehicleConfig.AntennaOffset = Properties.Settings.Default.setVehicle_antennaOffset;
 
+            // Load vehicle dimensions
             VehicleConfig.Wheelbase = Properties.Settings.Default.setVehicle_wheelbase;
-
-            slowSpeedCutoff = Properties.Settings.Default.setVehicle_slowSpeedCutoff;
-
-            goalPointLookAheadHold = Properties.Settings.Default.setVehicle_goalPointLookAheadHold;
-            goalPointLookAheadMult = Properties.Settings.Default.setVehicle_goalPointLookAheadMult;
-            goalPointAcquireFactor = Properties.Settings.Default.setVehicle_goalPointAcquireFactor;
-
-            stanleyDistanceErrorGain = Properties.Settings.Default.stanleyDistanceErrorGain;
-            stanleyHeadingErrorGain = Properties.Settings.Default.stanleyHeadingErrorGain;
-
-            maxAngularVelocity = Properties.Settings.Default.setVehicle_maxAngularVelocity;
-            maxSteerAngle = Properties.Settings.Default.setVehicle_maxSteerAngle;
-
-            isHydLiftOn = false;
-
             VehicleConfig.TrackWidth = Properties.Settings.Default.setVehicle_trackWidth;
 
-            stanleyIntegralGainAB = Properties.Settings.Default.stanleyIntegralGainAB;
+            // Load speed configuration
+            VehicleConfig.SlowSpeedCutoff = Properties.Settings.Default.setVehicle_slowSpeedCutoff;
+            VehicleConfig.FunctionSpeedLimit = Properties.Settings.Default.setAS_functionSpeedLimit;
 
-            purePursuitIntegralGain = Properties.Settings.Default.purePursuitIntegralGainAB;
+            // Load goal point lookahead
+            VehicleConfig.GoalPointLookAheadHold = Properties.Settings.Default.setVehicle_goalPointLookAheadHold;
+            VehicleConfig.GoalPointLookAheadMult = Properties.Settings.Default.setVehicle_goalPointLookAheadMult;
+            VehicleConfig.GoalPointAcquireFactor = Properties.Settings.Default.setVehicle_goalPointAcquireFactor;
+            VehicleConfig.UturnCompensation = Properties.Settings.Default.setAS_uTurnCompensation;
+
+            // Load Stanley controller gains
+            VehicleConfig.StanleyDistanceErrorGain = Properties.Settings.Default.stanleyDistanceErrorGain;
+            VehicleConfig.StanleyHeadingErrorGain = Properties.Settings.Default.stanleyHeadingErrorGain;
+            VehicleConfig.StanleyIntegralGainAB = Properties.Settings.Default.stanleyIntegralGainAB;
+
+            // Load pure pursuit controller
+            VehicleConfig.PurePursuitIntegralGain = Properties.Settings.Default.purePursuitIntegralGainAB;
+
+            // Load steering limits
+            VehicleConfig.MaxAngularVelocity = Properties.Settings.Default.setVehicle_maxAngularVelocity;
+            VehicleConfig.MaxSteerAngle = Properties.Settings.Default.setVehicle_maxSteerAngle;
+            VehicleConfig.MaxSteerSpeed = Properties.Settings.Default.setAS_maxSteerSpeed;
+            VehicleConfig.MinSteerSpeed = Properties.Settings.Default.setAS_minSteerSpeed;
+
+            // Load hydraulic lift configuration
+            VehicleConfig.IsHydLiftOn = false;
+            VehicleConfig.HydLiftLookAheadTime = Properties.Settings.Default.setVehicle_hydraulicLiftLookAhead;
+
+            // Load dead zone configuration
+            VehicleConfig.DeadZoneHeading = Properties.Settings.Default.setAS_deadZoneHeading;
+            VehicleConfig.DeadZoneDelay = Properties.Settings.Default.setAS_deadZoneDelay;
+
+            // Load vehicle type
             VehicleConfig.Type = (VehicleType)Properties.Settings.Default.setVehicle_vehicleType;
 
-            hydLiftLookAheadTime = Properties.Settings.Default.setVehicle_hydraulicLiftLookAhead;
+            // Initialize free drive mode
+            VehicleConfig.IsInFreeDriveMode = false;
 
-            deadZoneHeading = Properties.Settings.Default.setAS_deadZoneHeading;
-            deadZoneDelay = Properties.Settings.Default.setAS_deadZoneDelay;
-
-            isInFreeDriveMode = false;
-
-            //how far from line before it becomes Hold
-            modeXTE = 0.2;
-
-            //how long before hold is activated
-            modeTime = 1;
-
-            functionSpeedLimit = Properties.Settings.Default.setAS_functionSpeedLimit;
-            maxSteerSpeed = Properties.Settings.Default.setAS_maxSteerSpeed;
-            minSteerSpeed = Properties.Settings.Default.setAS_minSteerSpeed;
-
-            uturnCompensation = Properties.Settings.Default.setAS_uTurnCompensation;
+            // Initialize mode tracking
+            VehicleConfig.ModeXTE = 0.2;  // how far from line before it becomes Hold
+            VehicleConfig.ModeTime = 1;    // how long before hold is activated
         }
 
-        public int modeTimeCounter = 0;
-        public double goalDistance = 0;
-
-        public VehicleConfig VehicleConfig { get; }
-
+        /// <summary>
+        /// Calculate goal point distance based on speed and cross track error
+        /// Business logic method - could potentially move to Core later
+        /// </summary>
         public double UpdateGoalPointDistance()
         {
             double xTE = Math.Abs(modeActualXTE);
@@ -137,6 +311,8 @@ namespace AgOpenGPS
 
             return goalPointDistance;
         }
+
+        // ========== OpenGL Rendering Methods (WinForms-specific) ==========
 
         public void DrawVehicle()
         {
