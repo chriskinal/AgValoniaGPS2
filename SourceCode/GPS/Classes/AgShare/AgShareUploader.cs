@@ -11,6 +11,7 @@ using System.Linq;
 using System.Diagnostics;
 using AgLibrary.Logging;
 using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.AgShare;
 using AgOpenGPS.Forms;
 
 namespace AgOpenGPS

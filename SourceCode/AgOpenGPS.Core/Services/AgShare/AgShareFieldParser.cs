@@ -1,13 +1,19 @@
-﻿using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models;
 using AgOpenGPS.Core.Models.AgShare;
-using System;
+using AgOpenGPS.Core.Models.Base;
 using System.Collections.Generic;
-using System.Diagnostics;
 
-namespace AgOpenGPS.Classes.AgShare.Helpers
+namespace AgOpenGPS.Core.Services.AgShare
 {
+    /// <summary>
+    /// Core service for parsing AgShare field data from DTO format to local field models
+    /// </summary>
     public static class AgShareFieldParser
     {
+        /// <summary>
+        /// Parse AgShare field DTO to local field model
+        /// Converts boundaries and AB lines from WGS84 to local NE coordinates
+        /// </summary>
         public static LocalFieldModel Parse(AgShareFieldDto dto)
         {
             var result = new LocalFieldModel
@@ -19,7 +25,7 @@ namespace AgOpenGPS.Classes.AgShare.Helpers
                 AbLines = new List<AbLineLocal>()
             };
 
-            var converter = new GeoConverter(dto.Latitude, dto.Longitude);
+            var converter = new GeoConversion(dto.Latitude, dto.Longitude);
 
             // Convert boundary rings from WGS84 to local NE
             foreach (var ring in dto.Boundaries)
@@ -40,7 +46,7 @@ namespace AgOpenGPS.Classes.AgShare.Helpers
 
                 var vA = converter.ToLocal(ab.Coords[0].Latitude, ab.Coords[0].Longitude);
                 var vB = converter.ToLocal(ab.Coords[1].Latitude, ab.Coords[1].Longitude);
-                double heading = GeoConverter.HeadingFromPoints(vA, vB);
+                double heading = GeoConversion.HeadingFromPoints(vA, vB);
 
                 var abLine = new AbLineLocal
                 {
