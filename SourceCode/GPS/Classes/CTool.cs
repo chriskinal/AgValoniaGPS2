@@ -1,126 +1,381 @@
-﻿using AgOpenGPS.Core.Drawing;
+using AgOpenGPS.Core.Drawing;
 using AgOpenGPS.Core.DrawLib;
 using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.Tool;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Drawing;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for ToolConfiguration from AgOpenGPS.Core
+    /// Delegates configuration/state to Core, keeps OpenGL rendering in WinForms
+    /// </summary>
     public class CTool
     {
         private readonly FormGPS mf;
+        private readonly ToolConfiguration _core;
 
-        public double width, halfWidth, contourWidth;
-        public double farLeftPosition = 0;
-        public double farLeftSpeed = 0;
-        public double farRightPosition = 0;
-        public double farRightSpeed = 0;
+        // Tool dimensions - delegate to Core
+        public double width
+        {
+            get => _core.Width;
+            set => _core.Width = value;
+        }
 
-        public double overlap;
-        public double trailingHitchLength, tankTrailingHitchLength, trailingToolToPivotLength;
-        public double offset;
+        public double halfWidth
+        {
+            get => _core.HalfWidth;
+            set => _core.HalfWidth = value;
+        }
 
-        public double lookAheadOffSetting, lookAheadOnSetting;
-        public double turnOffDelay;
+        public double contourWidth
+        {
+            get => _core.ContourWidth;
+            set => _core.ContourWidth = value;
+        }
 
-        public double lookAheadDistanceOnPixelsLeft, lookAheadDistanceOnPixelsRight;
-        public double lookAheadDistanceOffPixelsLeft, lookAheadDistanceOffPixelsRight;
+        public double overlap
+        {
+            get => _core.Overlap;
+            set => _core.Overlap = value;
+        }
 
-        public bool isToolTrailing, isToolTBT;
-        public bool isToolRearFixed, isToolFrontFixed;
+        public double offset
+        {
+            get => _core.Offset;
+            set => _core.Offset = value;
+        }
 
-        public bool isMultiColoredSections, isSectionOffWhenOut;
+        // Position and speed - delegate to Core
+        public double farLeftPosition
+        {
+            get => _core.FarLeftPosition;
+            set => _core.FarLeftPosition = value;
+        }
 
-        public double hitchLength;
+        public double farLeftSpeed
+        {
+            get => _core.FarLeftSpeed;
+            set => _core.FarLeftSpeed = value;
+        }
 
-        //how many individual sections
-        public int numOfSections;
+        public double farRightPosition
+        {
+            get => _core.FarRightPosition;
+            set => _core.FarRightPosition = value;
+        }
 
-        //used for super section off on
-        public int minCoverage;
+        public double farRightSpeed
+        {
+            get => _core.FarRightSpeed;
+            set => _core.FarRightSpeed = value;
+        }
 
-        public bool isLeftSideInHeadland = true, isRightSideInHeadland = true, isSectionsNotZones;
+        // Hitch configuration - delegate to Core
+        public double trailingHitchLength
+        {
+            get => _core.TrailingHitchLength;
+            set => _core.TrailingHitchLength = value;
+        }
 
-        //read pixel values
-        public int rpXPosition;
+        public double tankTrailingHitchLength
+        {
+            get => _core.TankTrailingHitchLength;
+            set => _core.TankTrailingHitchLength = value;
+        }
 
-        public int rpWidth;
+        public double trailingToolToPivotLength
+        {
+            get => _core.TrailingToolToPivotLength;
+            set => _core.TrailingToolToPivotLength = value;
+        }
 
+        public double hitchLength
+        {
+            get => _core.HitchLength;
+            set => _core.HitchLength = value;
+        }
+
+        // Lookahead settings - delegate to Core
+        public double lookAheadOffSetting
+        {
+            get => _core.LookAheadOffSetting;
+            set => _core.LookAheadOffSetting = value;
+        }
+
+        public double lookAheadOnSetting
+        {
+            get => _core.LookAheadOnSetting;
+            set => _core.LookAheadOnSetting = value;
+        }
+
+        public double turnOffDelay
+        {
+            get => _core.TurnOffDelay;
+            set => _core.TurnOffDelay = value;
+        }
+
+        public double lookAheadDistanceOnPixelsLeft
+        {
+            get => _core.LookAheadDistanceOnPixelsLeft;
+            set => _core.LookAheadDistanceOnPixelsLeft = value;
+        }
+
+        public double lookAheadDistanceOnPixelsRight
+        {
+            get => _core.LookAheadDistanceOnPixelsRight;
+            set => _core.LookAheadDistanceOnPixelsRight = value;
+        }
+
+        public double lookAheadDistanceOffPixelsLeft
+        {
+            get => _core.LookAheadDistanceOffPixelsLeft;
+            set => _core.LookAheadDistanceOffPixelsLeft = value;
+        }
+
+        public double lookAheadDistanceOffPixelsRight
+        {
+            get => _core.LookAheadDistanceOffPixelsRight;
+            set => _core.LookAheadDistanceOffPixelsRight = value;
+        }
+
+        // Tool type flags - delegate to Core
+        public bool isToolTrailing
+        {
+            get => _core.IsToolTrailing;
+            set => _core.IsToolTrailing = value;
+        }
+
+        public bool isToolTBT
+        {
+            get => _core.IsToolTBT;
+            set => _core.IsToolTBT = value;
+        }
+
+        public bool isToolRearFixed
+        {
+            get => _core.IsToolRearFixed;
+            set => _core.IsToolRearFixed = value;
+        }
+
+        public bool isToolFrontFixed
+        {
+            get => _core.IsToolFrontFixed;
+            set => _core.IsToolFrontFixed = value;
+        }
+
+        // Section configuration - delegate to Core
+        public int numOfSections
+        {
+            get => _core.NumOfSections;
+            set => _core.NumOfSections = value;
+        }
+
+        public int minCoverage
+        {
+            get => _core.MinCoverage;
+            set => _core.MinCoverage = value;
+        }
+
+        public bool isMultiColoredSections
+        {
+            get => _core.IsMultiColoredSections;
+            set => _core.IsMultiColoredSections = value;
+        }
+
+        public bool isSectionOffWhenOut
+        {
+            get => _core.IsSectionOffWhenOut;
+            set => _core.IsSectionOffWhenOut = value;
+        }
+
+        public bool isSectionsNotZones
+        {
+            get => _core.IsSectionsNotZones;
+            set => _core.IsSectionsNotZones = value;
+        }
+
+        // Headland detection - delegate to Core
+        public bool isLeftSideInHeadland
+        {
+            get => _core.IsLeftSideInHeadland;
+            set => _core.IsLeftSideInHeadland = value;
+        }
+
+        public bool isRightSideInHeadland
+        {
+            get => _core.IsRightSideInHeadland;
+            set => _core.IsRightSideInHeadland = value;
+        }
+
+        // Read pixel parameters - delegate to Core
+        public int rpXPosition
+        {
+            get => _core.RpXPosition;
+            set => _core.RpXPosition = value;
+        }
+
+        public int rpWidth
+        {
+            get => _core.RpWidth;
+            set => _core.RpWidth = value;
+        }
+
+        // Zone configuration - delegate to Core
+        public int zones
+        {
+            get => _core.Zones;
+            set => _core.Zones = value;
+        }
+
+        public int[] zoneRanges
+        {
+            get => _core.ZoneRanges;
+            set => _core.ZoneRanges = value;
+        }
+
+        // Display settings - delegate to Core
+        public bool isDisplayTramControl
+        {
+            get => _core.IsDisplayTramControl;
+            set => _core.IsDisplayTramControl = value;
+        }
+
+        // Section colors - delegate to Core with System.Drawing.Color conversion
+        public Color[] secColors
+        {
+            get
+            {
+                Color[] colors = new Color[16];
+                for (int i = 0; i < 16; i++)
+                {
+                    colors[i] = (Color)_core.SectionColors[i];  // Explicit conversion from ColorRgb
+                }
+                return colors;
+            }
+            set
+            {
+                for (int i = 0; i < 16; i++)
+                {
+                    if (i < value.Length)
+                    {
+                        _core.SectionColors[i] = new ColorRgb(value[i].R, value[i].G, value[i].B);
+                    }
+                }
+            }
+        }
+
+        // WinForms-specific rendering state (not in Core)
         private double textRotate;
 
-        public Color[] secColors = new Color[16];
-
-        public int zones;
-        public int[] zoneRanges = new int[9];
-
-        public bool isDisplayTramControl;
-
-        //Constructor called by FormGPS
+        /// <summary>
+        /// Constructor - initializes Core instance and loads configuration from Settings
+        /// </summary>
         public CTool(FormGPS _f)
         {
             mf = _f;
+            _core = new ToolConfiguration();
 
-            //from settings grab the vehicle specifics
+            // Load configuration from WinForms Settings into Core
+            _core.TrailingToolToPivotLength = Properties.Settings.Default.setTool_trailingToolToPivotLength;
+            _core.Width = Properties.Settings.Default.setVehicle_toolWidth;
+            _core.Overlap = Properties.Settings.Default.setVehicle_toolOverlap;
+            _core.Offset = Properties.Settings.Default.setVehicle_toolOffset;
 
-            trailingToolToPivotLength = Properties.Settings.Default.setTool_trailingToolToPivotLength;
-            width = Properties.Settings.Default.setVehicle_toolWidth;
-            overlap = Properties.Settings.Default.setVehicle_toolOverlap;
+            _core.TrailingHitchLength = Properties.Settings.Default.setTool_toolTrailingHitchLength;
+            _core.TankTrailingHitchLength = Properties.Settings.Default.setVehicle_tankTrailingHitchLength;
+            _core.HitchLength = Properties.Settings.Default.setVehicle_hitchLength;
 
-            offset = Properties.Settings.Default.setVehicle_toolOffset;
+            _core.IsToolRearFixed = Properties.Settings.Default.setTool_isToolRearFixed;
+            _core.IsToolTrailing = Properties.Settings.Default.setTool_isToolTrailing;
+            _core.IsToolTBT = Properties.Settings.Default.setTool_isToolTBT;
+            _core.IsToolFrontFixed = Properties.Settings.Default.setTool_isToolFront;
 
-            trailingHitchLength = Properties.Settings.Default.setTool_toolTrailingHitchLength;
-            tankTrailingHitchLength = Properties.Settings.Default.setVehicle_tankTrailingHitchLength;
-            hitchLength = Properties.Settings.Default.setVehicle_hitchLength;
+            _core.LookAheadOnSetting = Properties.Settings.Default.setVehicle_toolLookAheadOn;
+            _core.LookAheadOffSetting = Properties.Settings.Default.setVehicle_toolLookAheadOff;
+            _core.TurnOffDelay = Properties.Settings.Default.setVehicle_toolOffDelay;
 
-            isToolRearFixed = Properties.Settings.Default.setTool_isToolRearFixed;
-            isToolTrailing = Properties.Settings.Default.setTool_isToolTrailing;
-            isToolTBT = Properties.Settings.Default.setTool_isToolTBT;
-            isToolFrontFixed = Properties.Settings.Default.setTool_isToolFront;
+            _core.IsSectionOffWhenOut = Properties.Settings.Default.setTool_isSectionOffWhenOut;
+            _core.IsSectionsNotZones = Properties.Settings.Default.setTool_isSectionsNotZones;
 
-            lookAheadOnSetting = Properties.Settings.Default.setVehicle_toolLookAheadOn;
-            lookAheadOffSetting = Properties.Settings.Default.setVehicle_toolLookAheadOff;
-            turnOffDelay = Properties.Settings.Default.setVehicle_toolOffDelay;
-
-            isSectionOffWhenOut = Properties.Settings.Default.setTool_isSectionOffWhenOut;
-
-            isSectionsNotZones = Properties.Settings.Default.setTool_isSectionsNotZones;
-
-            if (isSectionsNotZones)
-                numOfSections = Properties.Settings.Default.setVehicle_numSections;
+            if (_core.IsSectionsNotZones)
+                _core.NumOfSections = Properties.Settings.Default.setVehicle_numSections;
             else
-                numOfSections = Properties.Settings.Default.setTool_numSectionsMulti;
+                _core.NumOfSections = Properties.Settings.Default.setTool_numSectionsMulti;
 
-            minCoverage = Properties.Settings.Default.setVehicle_minCoverage;
-            isMultiColoredSections = Properties.Settings.Default.setColor_isMultiColorSections;
+            _core.MinCoverage = Properties.Settings.Default.setVehicle_minCoverage;
+            _core.IsMultiColoredSections = Properties.Settings.Default.setColor_isMultiColorSections;
 
-            secColors[0] = Properties.Settings.Default.setColor_sec01.CheckColorFor255();
-            secColors[1] = Properties.Settings.Default.setColor_sec02.CheckColorFor255();
-            secColors[2] = Properties.Settings.Default.setColor_sec03.CheckColorFor255();
-            secColors[3] = Properties.Settings.Default.setColor_sec04.CheckColorFor255();
-            secColors[4] = Properties.Settings.Default.setColor_sec05.CheckColorFor255();
-            secColors[5] = Properties.Settings.Default.setColor_sec06.CheckColorFor255();
-            secColors[6] = Properties.Settings.Default.setColor_sec07.CheckColorFor255();
-            secColors[7] = Properties.Settings.Default.setColor_sec08.CheckColorFor255();
-            secColors[8] = Properties.Settings.Default.setColor_sec09.CheckColorFor255();
-            secColors[9] = Properties.Settings.Default.setColor_sec10.CheckColorFor255();
-            secColors[10] = Properties.Settings.Default.setColor_sec11.CheckColorFor255();
-            secColors[11] = Properties.Settings.Default.setColor_sec12.CheckColorFor255();
-            secColors[12] = Properties.Settings.Default.setColor_sec13.CheckColorFor255();
-            secColors[13] = Properties.Settings.Default.setColor_sec14.CheckColorFor255();
-            secColors[14] = Properties.Settings.Default.setColor_sec15.CheckColorFor255();
-            secColors[15] = Properties.Settings.Default.setColor_sec16.CheckColorFor255();
+            // Load section colors
+            _core.SectionColors[0] = new ColorRgb(Properties.Settings.Default.setColor_sec01.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec01.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec01.CheckColorFor255().B);
+            _core.SectionColors[1] = new ColorRgb(Properties.Settings.Default.setColor_sec02.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec02.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec02.CheckColorFor255().B);
+            _core.SectionColors[2] = new ColorRgb(Properties.Settings.Default.setColor_sec03.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec03.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec03.CheckColorFor255().B);
+            _core.SectionColors[3] = new ColorRgb(Properties.Settings.Default.setColor_sec04.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec04.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec04.CheckColorFor255().B);
+            _core.SectionColors[4] = new ColorRgb(Properties.Settings.Default.setColor_sec05.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec05.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec05.CheckColorFor255().B);
+            _core.SectionColors[5] = new ColorRgb(Properties.Settings.Default.setColor_sec06.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec06.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec06.CheckColorFor255().B);
+            _core.SectionColors[6] = new ColorRgb(Properties.Settings.Default.setColor_sec07.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec07.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec07.CheckColorFor255().B);
+            _core.SectionColors[7] = new ColorRgb(Properties.Settings.Default.setColor_sec08.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec08.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec08.CheckColorFor255().B);
+            _core.SectionColors[8] = new ColorRgb(Properties.Settings.Default.setColor_sec09.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec09.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec09.CheckColorFor255().B);
+            _core.SectionColors[9] = new ColorRgb(Properties.Settings.Default.setColor_sec10.CheckColorFor255().R,
+                                                   Properties.Settings.Default.setColor_sec10.CheckColorFor255().G,
+                                                   Properties.Settings.Default.setColor_sec10.CheckColorFor255().B);
+            _core.SectionColors[10] = new ColorRgb(Properties.Settings.Default.setColor_sec11.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec11.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec11.CheckColorFor255().B);
+            _core.SectionColors[11] = new ColorRgb(Properties.Settings.Default.setColor_sec12.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec12.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec12.CheckColorFor255().B);
+            _core.SectionColors[12] = new ColorRgb(Properties.Settings.Default.setColor_sec13.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec13.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec13.CheckColorFor255().B);
+            _core.SectionColors[13] = new ColorRgb(Properties.Settings.Default.setColor_sec14.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec14.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec14.CheckColorFor255().B);
+            _core.SectionColors[14] = new ColorRgb(Properties.Settings.Default.setColor_sec15.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec15.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec15.CheckColorFor255().B);
+            _core.SectionColors[15] = new ColorRgb(Properties.Settings.Default.setColor_sec16.CheckColorFor255().R,
+                                                    Properties.Settings.Default.setColor_sec16.CheckColorFor255().G,
+                                                    Properties.Settings.Default.setColor_sec16.CheckColorFor255().B);
 
+            // Load zone configuration
             string[] words = Properties.Settings.Default.setTool_zones.Split(',');
-            zones = int.Parse(words[0]);
+            _core.Zones = int.Parse(words[0]);
 
             for (int i = 0; i < words.Length; i++)
             {
-                zoneRanges[i] = int.Parse(words[i]);
+                _core.ZoneRanges[i] = int.Parse(words[i]);
             }
 
-            isDisplayTramControl = Properties.Settings.Default.setTool_isDisplayTramControl;
+            _core.IsDisplayTramControl = Properties.Settings.Default.setTool_isDisplayTramControl;
         }
+
+        /// <summary>
+        /// Get the underlying Core ToolConfiguration instance
+        /// </summary>
+        public ToolConfiguration CoreToolConfiguration => _core;
+
+        // ========== OpenGL Rendering Methods (WinForms-specific) ==========
 
         private void DrawHitch(double trailingTank)
         {
