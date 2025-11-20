@@ -64,7 +64,7 @@ Configuration and state management services with clear data models.
 | 2.3 | **CSection** | Classes/CSection.cs | 76 | Section state data holder | vec2 | ✅ | ✅ WinForms delegates to Core SectionControl |
 | 2.4 | **CTool** (config) | Classes/CTool.cs | 323 | Tool width, offset, section positions | Settings, Section | ✅ | ✅ WinForms delegates to Core ToolConfiguration |
 | 2.5 | **CVehicle** (config) | Classes/CVehicle.cs | 360 | Vehicle geometry, steering limits | VehicleConfig, Settings | ✅ | ✅ WinForms delegates to Core VehicleConfig |
-| 2.6 | **FieldParser** | AgShare/Helpers/FieldParser.cs | ? | Parse field file formats | Core models | 📋 | - |
+| 2.6 | **FieldParser** | AgShare/Helpers/FieldParser.cs | 88 | Parse field file formats | Core models | ✅ | ✅ Moved to Core.Services.AgShare.AgShareFieldParser |
 
 **Notes:**
 - CHeadLine: FormGPS dependency removed ✅, provides ToCoreHeadlandLine()/FromCoreHeadlandLine() conversion methods for Core integration
@@ -72,6 +72,7 @@ Configuration and state management services with clear data models.
 - VehicleConfiguration model already exists in Core - enhance/complete it
 - CSection is a pure state holder - easy migration candidate
 - Create ToolConfiguration model similar to VehicleConfiguration
+- FieldParser: Static service moved to Core.Services.AgShare with all DTOs moved to Core.Models.AgShare
 
 ---
 
@@ -81,9 +82,9 @@ ISO standard protocol support for field data interoperability.
 
 | Priority | Service | Location | Lines | Description | Dependencies | Status |
 |----------|---------|----------|-------|-------------|--------------|--------|
-| 2.6 | **IsoXmlFieldImporter** | Protocols/ISOBUS/IsoXmlFieldImporter.cs | 35 | ISO XML field import service | Core models | 📋 |
-| 2.7 | **IsoXmlParserHelpers** | Protocols/ISOBUS/IsoXmlParserHelpers.cs | 300 | ISO XML parsing algorithms | Core models | 📋 |
-| 2.8 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 200 | ISO ISOXML export service | Field data models | 📋 |
+| 2.7 | **IsoXmlFieldImporter** | Protocols/ISOBUS/IsoXmlFieldImporter.cs | 35 | ISO XML field import service | Core models | 📋 |
+| 2.8 | **IsoXmlParserHelpers** | Protocols/ISOBUS/IsoXmlParserHelpers.cs | 300 | ISO XML parsing algorithms | Core models | 📋 |
+| 2.9 | **ISO11783_TaskFile** | Protocols/ISOBUS/ISO11783_TaskFile.cs | 200 | ISO ISOXML export service | Field data models | 📋 |
 
 **Notes:**
 - High-value services for interoperability with other agricultural software
@@ -243,9 +244,9 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 16 (42%)
+**Migrated:** 17 (45%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
-**Phase 2 Targets:** 6 services (5 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅)
+**Phase 2 Targets:** 6 services (6 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅, FieldParser ✅) - PHASE 2 COMPLETE ✅
 **Phase 2.5 Targets:** 3 services (Protocol)
 **Phase 3 Targets:** 9 services
 **Phase 4 Targets:** 5 services
