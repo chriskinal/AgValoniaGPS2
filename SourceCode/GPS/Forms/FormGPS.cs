@@ -351,7 +351,7 @@ namespace AgOpenGPS
             trk = new CTrack(this);
 
             //new instance of contour mode
-            hdl = new CHeadLine(this);
+            hdl = new CHeadLine();
 
             ////new instance of auto headland turn
             yt = new CYouTurn(this);
