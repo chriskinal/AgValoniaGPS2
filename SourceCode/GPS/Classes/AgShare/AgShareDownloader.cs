@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Diagnostics;
 using AgOpenGPS.Properties;
 using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.AgShare;
 using AgOpenGPS.Classes.AgShare.Helpers;
 using AgLibrary.Logging;
 

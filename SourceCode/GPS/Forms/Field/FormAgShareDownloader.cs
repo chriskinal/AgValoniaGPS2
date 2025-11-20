@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using AgOpenGPS.Core.Models.AgShare;
 using AgOpenGPS.Classes.AgShare.Helpers;
 using System.Threading.Tasks;
 using System.IO;

@@ -1,4 +1,5 @@
 ﻿using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.AgShare;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using AgOpenGPS.Core.Models.AgShare;
 
 namespace AgOpenGPS.Classes.AgShare.Helpers
 {
