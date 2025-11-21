@@ -26,6 +26,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Dubins Path Planning** | Core/Services/PathPlanning/DubinsPathService.cs | ✅ DubinsPathService, DubinsMath, DubinsPathData, DubinsPathType (WinForms delegates to Core) |
 | **Tramline Generation** | Core/Services/TramlineService.cs | ✅ ITramlineService, TramlineService (WinForms delegates to Core, OpenGL rendering stays in UI) |
 | **Module Communication** | Core/Services/ModuleCommunicationService.cs | ✅ IModuleCommunicationService, ModuleCommunicationService, ModuleSwitchState (Event-based - replaces PerformClick() calls) |
+| **Fence Line Geometry** | Core/Services/Geometry/FenceLineService.cs | ✅ IFenceLineService, FenceLineService (WinForms delegates to Core - headings, spacing, winding, area) |
 
 ---
 
@@ -111,7 +112,7 @@ Mathematical algorithms and generation logic with manageable complexity.
 | 3.2 | **CDubins** | Classes/CDubins.cs | 637 | Dubins path planning algorithm | vec3/vec2, turn radius | ✅ | ✅ WinForms delegates to Core DubinsPathService |
 | 3.3 | **CTram** (gen only) | Classes/CTram.cs | 195 | Tramline generation logic | Boundary, Tool, Settings | ✅ | ✅ WinForms delegates to Core TramlineService (240→195 lines) |
 | 3.4 | **CModuleComm** | Classes/CModuleComm.cs | 177 | Hardware communication abstraction | UDP service, Events | ✅ | ✅ WinForms delegates to Core ModuleCommunicationService (event-based, 124→177 lines) |
-| 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 170 | Fence line geometry calculations | vec2, boundary | 📋 | ❌ |
+| 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 120 | Fence line geometry calculations | vec2, boundary | ✅ | ✅ WinForms delegates to Core FenceLineService (174→120 lines, 31% reduction) |
 | 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 105 | Turn line generation algorithm | vec2, boundary | 📋 | ❌ |
 | 3.7 | **CTurn** | Classes/CTurn.cs | 35 | Turn area polygon testing | vec2, boundary | 📋 | ❌ |
 | 3.8 | **CFence** (logic) | Classes/CFence.cs | 160 | Boundary fence management | vec2, polygon math | 📋 | ❌ |
