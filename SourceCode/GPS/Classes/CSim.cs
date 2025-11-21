@@ -62,8 +62,8 @@ namespace AgOpenGPS
         {
             mf = _f;
 
-            // Create Core simulation service
-            _coreSimulation = new GpsSimulationService(mf.AppModel.LocalPlane);
+            // Create Core simulation service (no LocalPlane dependency)
+            _coreSimulation = new GpsSimulationService();
 
             // Initialize with settings
             var startPosition = new Wgs84(
@@ -97,8 +97,11 @@ namespace AgOpenGPS
             mf.pn.vtgSpeed = data.SpeedKmh;
             mf.pn.AverageTheSpeed();
 
-            mf.pn.fix.northing = data.LocalPosition.Northing;
-            mf.pn.fix.easting = data.LocalPosition.Easting;
+            // Convert WGS84 to local coordinates using FormGPS's LocalPlane
+            // (original code did this conversion here, not in CSim)
+            GeoCoord fixCoord = mf.AppModel.LocalPlane.ConvertWgs84ToGeoCoord(data.Position);
+            mf.pn.fix.northing = fixCoord.Northing;
+            mf.pn.fix.easting = fixCoord.Easting;
 
             mf.pn.headingTrue = data.HeadingDegrees;
             mf.pn.headingTrueDual = data.HeadingDegrees;

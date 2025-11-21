@@ -12,7 +12,6 @@ namespace AgOpenGPS.Core.Services
     /// </summary>
     public class GpsSimulationService : IGpsSimulationService
     {
-        private readonly LocalPlane _localPlane;
         private Wgs84 _currentPosition;
         private double _headingRadians;
         private double _steerAngle;
@@ -59,9 +58,8 @@ namespace AgOpenGPS.Core.Services
             set => _isAcceleratingBackward = value;
         }
 
-        public GpsSimulationService(LocalPlane localPlane)
+        public GpsSimulationService()
         {
-            _localPlane = localPlane ?? throw new ArgumentNullException(nameof(localPlane));
             _currentPosition = new Wgs84();
             _initialPosition = new Wgs84();
             _headingRadians = 0;
@@ -109,9 +107,6 @@ namespace AgOpenGPS.Core.Services
             // Calculate next position using WGS84 bearing/distance
             _currentPosition = _currentPosition.CalculateNewPostionFromBearingDistance(_headingRadians, _stepDistance);
 
-            // Convert to local coordinates
-            GeoCoord localCoord = _localPlane.ConvertWgs84ToGeoCoord(_currentPosition);
-
             // Simulate altitude
             double altitude = SimulateAltitude(_currentPosition);
 
@@ -119,10 +114,12 @@ namespace AgOpenGPS.Core.Services
             UpdateAcceleration();
 
             // Build simulated GPS data package
+            // NOTE: LocalPosition conversion is NOT done here - WinForms wrapper handles it
+            // because LocalPlane initialization is a UI concern
             var data = new SimulatedGpsData
             {
                 Position = _currentPosition,
-                LocalPosition = localCoord,
+                LocalPosition = new GeoCoord(),  // Will be filled by WinForms wrapper
                 HeadingRadians = _headingRadians,
                 HeadingDegrees = ToDegrees(_headingRadians),
                 SpeedKmh = speedKmh,
