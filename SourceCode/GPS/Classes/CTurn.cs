@@ -1,10 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Services.Geometry;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for turn area testing.
+    /// Delegates all calculations to Core TurnAreaService.
+    /// </summary>
     public partial class CBoundary
     {
+        private static readonly TurnAreaService _coreTurnAreaService = new TurnAreaService();
 
         public int turnSelected;
         public double iE = 0, iN = 0;
@@ -16,19 +23,29 @@ namespace AgOpenGPS
 
         public int IsPointInsideTurnArea(vec3 pt)
         {
-            if (bndList.Count > 0 && bndList[0].turnLine.IsPointInPolygon(pt))
+            if (bndList.Count == 0)
+                return -1;
+
+            // Convert WinForms turn lines to Core format
+            List<List<Vec3>> coreTurnLines = new List<List<Vec3>>(bndList.Count);
+            List<bool> coreDriveThru = new List<bool>(bndList.Count);
+
+            for (int i = 0; i < bndList.Count; i++)
             {
-                for (int i = 1; i < bndList.Count; i++)
+                List<Vec3> coreTurnLine = new List<Vec3>(bndList[i].turnLine.Count);
+                foreach (vec3 point in bndList[i].turnLine)
                 {
-                    if (bndList[i].isDriveThru) continue;
-                    if (bndList[i].turnLine.IsPointInPolygon(pt))
-                    {
-                        return i;
-                    }
+                    coreTurnLine.Add(new Vec3(point.easting, point.northing, point.heading));
                 }
-                return 0;
+                coreTurnLines.Add(coreTurnLine);
+                coreDriveThru.Add(bndList[i].isDriveThru);
             }
-            return -1; //is outside border turn
+
+            // Convert WinForms point to Core format
+            Vec3 corePoint = new Vec3(pt.easting, pt.northing, pt.heading);
+
+            // Delegate to Core service
+            return _coreTurnAreaService.IsPointInsideTurnArea(coreTurnLines, coreDriveThru, corePoint);
         }
 
         //public vec3 closePt;

@@ -28,6 +28,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Module Communication** | Core/Services/ModuleCommunicationService.cs | ✅ IModuleCommunicationService, ModuleCommunicationService, ModuleSwitchState (Event-based - replaces PerformClick() calls) |
 | **Fence Line Geometry** | Core/Services/Geometry/FenceLineService.cs | ✅ IFenceLineService, FenceLineService (WinForms delegates to Core - headings, spacing, winding, area) |
 | **Turn Line Geometry** | Core/Services/Geometry/TurnLineService.cs | ✅ ITurnLineService, TurnLineService (WinForms delegates to Core - headland line calculations) |
+| **Turn Area Testing** | Core/Services/Geometry/TurnAreaService.cs | ✅ ITurnAreaService, TurnAreaService (WinForms delegates to Core - polygon point-in-polygon testing) |
 
 ---
 
@@ -115,7 +116,7 @@ Mathematical algorithms and generation logic with manageable complexity.
 | 3.4 | **CModuleComm** | Classes/CModuleComm.cs | 177 | Hardware communication abstraction | UDP service, Events | ✅ | ✅ WinForms delegates to Core ModuleCommunicationService (event-based, 124→177 lines) |
 | 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 120 | Fence line geometry calculations | vec2, boundary | ✅ | ✅ WinForms delegates to Core FenceLineService (174→120 lines, 31% reduction) |
 | 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 62 | Turn line generation algorithm | vec2, boundary | ✅ | ✅ WinForms delegates to Core TurnLineService (109→62 lines, 43% reduction) |
-| 3.7 | **CTurn** | Classes/CTurn.cs | 35 | Turn area polygon testing | vec2, boundary | 📋 | ❌ |
+| 3.7 | **CTurn** | Classes/CTurn.cs | 49 | Turn area polygon testing | GeometryMath, boundary | ✅ | ✅ WinForms delegates to Core TurnAreaService (IsPointInsideTurnArea) |
 | 3.8 | **CFence** (logic) | Classes/CFence.cs | 160 | Boundary fence management | vec2, polygon math | 📋 | ❌ |
 | 3.9 | **CPatches** (logic) | Classes/CPatches.cs | 160 | Worked area tracking | triangle patches | 📋 | ❌ |
 
