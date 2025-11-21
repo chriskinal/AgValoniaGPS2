@@ -24,6 +24,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **LocalFieldModel** | Core/Models/AgShare/LocalFieldModel.cs | ✅ LocalFieldModel, LocalPoint, AbLineLocal (with implicit conversions) |
 | **GPS Simulation** | Core/Services/GpsSimulationService.cs | ✅ IGpsSimulationService, GpsSimulationService, SimulatedGpsData (WinForms delegates to Core) |
 | **Dubins Path Planning** | Core/Services/PathPlanning/DubinsPathService.cs | ✅ DubinsPathService, DubinsMath, DubinsPathData, DubinsPathType (WinForms delegates to Core) |
+| **Tramline Generation** | Core/Services/TramlineService.cs | ✅ ITramlineService, TramlineService (WinForms delegates to Core, OpenGL rendering stays in UI) |
 
 ---
 
@@ -107,7 +108,7 @@ Mathematical algorithms and generation logic with manageable complexity.
 |----------|---------|----------|-------|-------------|--------------|--------|---------------------|
 | 3.1 | **CSim** | Classes/CSim.cs | 125 | GPS position simulation | NMEA, LocalPlane, Wgs84 | ✅ | ✅ WinForms delegates to Core GpsSimulationService |
 | 3.2 | **CDubins** | Classes/CDubins.cs | 637 | Dubins path planning algorithm | vec3/vec2, turn radius | ✅ | ✅ WinForms delegates to Core DubinsPathService |
-| 3.3 | **CTram** (gen only) | Classes/CTram.cs | 240 | Tramline generation logic | Boundary, Tool, Settings | 📋 | ❌ |
+| 3.3 | **CTram** (gen only) | Classes/CTram.cs | 195 | Tramline generation logic | Boundary, Tool, Settings | ✅ | ✅ WinForms delegates to Core TramlineService (240→195 lines) |
 | 3.4 | **CModuleComm** | Classes/CModuleComm.cs | 124 | Hardware communication abstraction | UDP service, Events | 📋 | ❌ |
 | 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 170 | Fence line geometry calculations | vec2, boundary | 📋 | ❌ |
 | 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 105 | Turn line generation algorithm | vec2, boundary | 📋 | ❌ |

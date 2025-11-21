@@ -1,12 +1,19 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Services;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for tramline generation.
+    /// Delegates tramline offset calculation to Core TramlineService.
+    /// </summary>
     public class CTram
     {
         private readonly FormGPS mf;
+        private readonly TramlineService _coreService;
 
         //the triangle strip of the outer tram highlight
         public List<vec2> tramBndOuterArr = new List<vec2>();
@@ -38,6 +45,9 @@ namespace AgOpenGPS
         {
             //constructor
             mf = _f;
+
+            // Create Core tramline service
+            _coreService = new TramlineService();
 
             tramWidth = Properties.Settings.Default.setTram_tramWidth;
             //halfTramWidth = (Math.Round((Properties.Settings.Default.setTram_tramWidth) / 2.0, 3));
@@ -143,97 +153,43 @@ namespace AgOpenGPS
 
         private void CreateBndInnerTramTrack()
         {
-            //countExit the points from the boundary
-            int ptCount = mf.bnd.bndList[0].fenceLine.Count;
             tramBndInnerArr?.Clear();
 
-            //outside point
-            vec2 pt3 = new vec2();
-
-            double distSq = ((tramWidth * 0.5) + halfWheelTrack) * ((tramWidth * 0.5) + halfWheelTrack) * 0.999;
-
-            //make the boundary tram outer array
-            for (int i = 0; i < ptCount; i++)
+            // Convert WinForms fence line to Core format
+            List<Vec3> coreFenceLine = new List<Vec3>(mf.bnd.bndList[0].fenceLine.Count);
+            foreach (vec3 point in mf.bnd.bndList[0].fenceLine)
             {
-                //calculate the point inside the boundary
-                pt3.easting = mf.bnd.bndList[0].fenceLine[i].easting -
-                    (Math.Sin(glm.PIBy2 + mf.bnd.bndList[0].fenceLine[i].heading) * (tramWidth * 0.5 + halfWheelTrack));
+                coreFenceLine.Add(new Vec3(point.easting, point.northing, point.heading));
+            }
 
-                pt3.northing = mf.bnd.bndList[0].fenceLine[i].northing -
-                    (Math.Cos(glm.PIBy2 + mf.bnd.bndList[0].fenceLine[i].heading) * (tramWidth * 0.5 + halfWheelTrack));
+            // Delegate to Core service
+            List<Vec2> coreInnerTramline = _coreService.GenerateInnerTramline(coreFenceLine, tramWidth, halfWheelTrack);
 
-                bool Add = true;
-
-                for (int j = 0; j < ptCount; j++)
-                {
-                    double check = glm.DistanceSquared(pt3.northing, pt3.easting,
-                                        mf.bnd.bndList[0].fenceLine[j].northing, mf.bnd.bndList[0].fenceLine[j].easting);
-                    if (check < distSq)
-                    {
-                        Add = false;
-                        break;
-                    }
-                }
-
-                if (Add)
-                {
-                    if (tramBndInnerArr.Count > 0)
-                    {
-                        double dist = ((pt3.easting - tramBndInnerArr[tramBndInnerArr.Count - 1].easting) * (pt3.easting - tramBndInnerArr[tramBndInnerArr.Count - 1].easting))
-                            + ((pt3.northing - tramBndInnerArr[tramBndInnerArr.Count - 1].northing) * (pt3.northing - tramBndInnerArr[tramBndInnerArr.Count - 1].northing));
-                        if (dist > 2)
-                            tramBndInnerArr.Add(pt3);
-                    }
-                    else tramBndInnerArr.Add(pt3);
-                }
+            // Convert back to WinForms format
+            foreach (Vec2 corePoint in coreInnerTramline)
+            {
+                tramBndInnerArr.Add(new vec2(corePoint.Easting, corePoint.Northing));
             }
         }
 
         public void CreateBndOuterTramTrack()
         {
-            //countExit the points from the boundary
-            int ptCount = mf.bnd.bndList[0].fenceLine.Count;
             tramBndOuterArr?.Clear();
 
-            //outside point
-            vec2 pt3 = new vec2();
-
-            double distSq = ((tramWidth * 0.5) - halfWheelTrack) * ((tramWidth * 0.5) - halfWheelTrack) * 0.999;
-
-            //make the boundary tram outer array
-            for (int i = 0; i < ptCount; i++)
+            // Convert WinForms fence line to Core format
+            List<Vec3> coreFenceLine = new List<Vec3>(mf.bnd.bndList[0].fenceLine.Count);
+            foreach (vec3 point in mf.bnd.bndList[0].fenceLine)
             {
-                //calculate the point inside the boundary
-                pt3.easting = mf.bnd.bndList[0].fenceLine[i].easting -
-                    (Math.Sin(glm.PIBy2 + mf.bnd.bndList[0].fenceLine[i].heading) * (tramWidth * 0.5 - halfWheelTrack));
+                coreFenceLine.Add(new Vec3(point.easting, point.northing, point.heading));
+            }
 
-                pt3.northing = mf.bnd.bndList[0].fenceLine[i].northing -
-                    (Math.Cos(glm.PIBy2 + mf.bnd.bndList[0].fenceLine[i].heading) * (tramWidth * 0.5 - halfWheelTrack));
+            // Delegate to Core service
+            List<Vec2> coreOuterTramline = _coreService.GenerateOuterTramline(coreFenceLine, tramWidth, halfWheelTrack);
 
-                bool Add = true;
-
-                for (int j = 0; j < ptCount; j++)
-                {
-                    double check = glm.DistanceSquared(pt3.northing, pt3.easting,
-                                        mf.bnd.bndList[0].fenceLine[j].northing, mf.bnd.bndList[0].fenceLine[j].easting);
-                    if (check < distSq)
-                    {
-                        Add = false;
-                        break;
-                    }
-                }
-
-                if (Add)
-                {
-                    if (tramBndOuterArr.Count > 0)
-                    {
-                        double dist = ((pt3.easting - tramBndOuterArr[tramBndOuterArr.Count - 1].easting) * (pt3.easting - tramBndOuterArr[tramBndOuterArr.Count - 1].easting))
-                            + ((pt3.northing - tramBndOuterArr[tramBndOuterArr.Count - 1].northing) * (pt3.northing - tramBndOuterArr[tramBndOuterArr.Count - 1].northing));
-                        if (dist > 2)
-                            tramBndOuterArr.Add(pt3);
-                    }
-                    else tramBndOuterArr.Add(pt3);
-                }
+            // Convert back to WinForms format
+            foreach (Vec2 corePoint in coreOuterTramline)
+            {
+                tramBndOuterArr.Add(new vec2(corePoint.Easting, corePoint.Northing));
             }
         }
     }
