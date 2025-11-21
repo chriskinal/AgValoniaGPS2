@@ -1,11 +1,19 @@
 ﻿using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Services.Geometry;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for fence area testing.
+    /// Delegates polygon testing to Core FenceAreaService.
+    /// </summary>
     public partial class CBoundary
     {
+        private static readonly FenceAreaService _coreFenceAreaService = new FenceAreaService();
+
         public List<vec3> bndBeingMadePts = new List<vec3>(128);
 
         public double createBndOffset;
@@ -16,42 +24,52 @@ namespace AgOpenGPS
 
         public bool IsPointInsideFenceArea(vec3 testPoint)
         {
-            //first where are we, must be inside outer and outside of inner geofence non drive thru turn borders
-            if (bndList[0].fenceLineEar.IsPointInPolygon(testPoint))
+            if (bndList.Count == 0)
+                return false;
+
+            // Convert WinForms fence lines to Core format
+            List<List<Vec2>> coreFenceLines = new List<List<Vec2>>(bndList.Count);
+
+            for (int i = 0; i < bndList.Count; i++)
             {
-                for (int i = 1; i < bndList.Count; i++)
+                List<Vec2> coreFenceLine = new List<Vec2>(bndList[i].fenceLineEar.Count);
+                foreach (vec2 point in bndList[i].fenceLineEar)
                 {
-                    //make sure not inside a non drivethru boundary
-                    //if (bndList[i].isDriveThru) continue;
-                    if (bndList[i].fenceLineEar.IsPointInPolygon(testPoint))
-                    {
-                        return false;
-                    }
+                    coreFenceLine.Add(new Vec2(point.easting, point.northing));
                 }
-                //we are safely inside outer, outside inner boundaries
-                return true;
+                coreFenceLines.Add(coreFenceLine);
             }
-            return false;
+
+            // Convert WinForms point to Core format
+            Vec3 corePoint = new Vec3(testPoint.easting, testPoint.northing, testPoint.heading);
+
+            // Delegate to Core service
+            return _coreFenceAreaService.IsPointInsideFenceArea(coreFenceLines, corePoint);
         }
 
         public bool IsPointInsideFenceArea(vec2 testPoint)
         {
-            //first where are we, must be inside outer and outside of inner geofence non drive thru turn borders
-            if (bndList[0].fenceLineEar.IsPointInPolygon(testPoint))
+            if (bndList.Count == 0)
+                return false;
+
+            // Convert WinForms fence lines to Core format
+            List<List<Vec2>> coreFenceLines = new List<List<Vec2>>(bndList.Count);
+
+            for (int i = 0; i < bndList.Count; i++)
             {
-                for (int i = 1; i < bndList.Count; i++)
+                List<Vec2> coreFenceLine = new List<Vec2>(bndList[i].fenceLineEar.Count);
+                foreach (vec2 point in bndList[i].fenceLineEar)
                 {
-                    //make sure not inside a non drivethru boundary
-                    //if (bndList[i].isDriveThru) continue;
-                    if (bndList[i].fenceLineEar.IsPointInPolygon(testPoint))
-                    {
-                        return false;
-                    }
+                    coreFenceLine.Add(new Vec2(point.easting, point.northing));
                 }
-                //we are safely inside outer, outside inner boundaries
-                return true;
+                coreFenceLines.Add(coreFenceLine);
             }
-            return false;
+
+            // Convert WinForms point to Core format
+            Vec2 corePoint = new Vec2(testPoint.easting, testPoint.northing);
+
+            // Delegate to Core service
+            return _coreFenceAreaService.IsPointInsideFenceArea(coreFenceLines, corePoint);
         }
 
         public void DrawFenceLines()
