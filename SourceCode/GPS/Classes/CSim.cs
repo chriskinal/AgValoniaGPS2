@@ -1,125 +1,121 @@
-﻿using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Interfaces.Services;
+using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Services;
 using System;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for GPS simulation.
+    /// Delegates all simulation logic to Core GpsSimulationService and updates FormGPS.
+    /// </summary>
     public class CSim
     {
         private readonly FormGPS mf;
+        private readonly IGpsSimulationService _coreSimulation;
 
-        #region properties sim
+        #region properties sim (delegated to Core)
 
-        public Wgs84 CurrentLatLon { get; set; }
+        public Wgs84 CurrentLatLon
+        {
+            get => _coreSimulation.CurrentPosition;
+            set => _coreSimulation.Initialize(value);
+        }
 
-        public double headingTrue, stepDistance = 0.0, steerAngle, steerangleAve = 0.0;
-        public double steerAngleScrollBar = 0;
+        public double headingTrue
+        {
+            get => _coreSimulation.HeadingRadians;
+            set => _coreSimulation.SetHeading(value);
+        }
 
-        public bool isAccelForward, isAccelBack;
+        public double stepDistance
+        {
+            get => _coreSimulation.StepDistance;
+            set => _coreSimulation.StepDistance = value;
+        }
+
+        public double steerAngle
+        {
+            get => _coreSimulation.SteerAngle;
+            set => _coreSimulation.SteerAngle = value;
+        }
+
+        public double steerangleAve => _coreSimulation.SteerAngleAverage;
+
+        public double steerAngleScrollBar { get; set; }
+
+        public bool isAccelForward
+        {
+            get => _coreSimulation.IsAcceleratingForward;
+            set => _coreSimulation.IsAcceleratingForward = value;
+        }
+
+        public bool isAccelBack
+        {
+            get => _coreSimulation.IsAcceleratingBackward;
+            set => _coreSimulation.IsAcceleratingBackward = value;
+        }
 
         #endregion properties sim
 
         public CSim(FormGPS _f)
         {
             mf = _f;
-            CurrentLatLon = new Wgs84(
+
+            // Create Core simulation service
+            _coreSimulation = new GpsSimulationService(mf.AppModel.LocalPlane);
+
+            // Initialize with settings
+            var startPosition = new Wgs84(
                 Properties.Settings.Default.setGPS_SimLatitude,
                 Properties.Settings.Default.setGPS_SimLongitude);
+            _coreSimulation.Initialize(startPosition);
+
+            // Subscribe to simulation updates
+            _coreSimulation.GpsDataUpdated += OnGpsDataUpdated;
         }
 
+        /// <summary>
+        /// Process simulation tick - delegates to Core service
+        /// </summary>
         public void DoSimTick(double _st)
         {
-            steerAngle = _st;
+            // Core service handles all simulation logic and raises event
+            _coreSimulation.Tick(_st);
+        }
 
-            double diff = Math.Abs(steerAngle - steerangleAve);
+        /// <summary>
+        /// Handle GPS data updates from Core simulation service
+        /// </summary>
+        private void OnGpsDataUpdated(object sender, GpsSimulationEventArgs e)
+        {
+            var data = e.Data;
 
-            if (diff > 11)
-            {
-                if (steerangleAve >= steerAngle)
-                {
-                    steerangleAve -= 6;
-                }
-                else steerangleAve += 6;
-            }
-            else if (diff > 5)
-            {
-                if (steerangleAve >= steerAngle)
-                {
-                    steerangleAve -= 2;
-                }
-                else steerangleAve += 2;
-            }
-            else if (diff > 1)
-            {
-                if (steerangleAve >= steerAngle)
-                {
-                    steerangleAve -= 0.5;
-                }
-                else steerangleAve += 0.5;
-            }
-            else
-            {
-                steerangleAve = steerAngle;
-            }
+            // Update FormGPS with simulated data
+            mf.mc.actualSteerAngleDegrees = data.SteerAngleDegrees;
 
-            mf.mc.actualSteerAngleDegrees = steerangleAve;
-
-            double temp = stepDistance * Math.Tan(steerangleAve * 0.0165329252) / 2;
-            headingTrue += temp;
-            if (headingTrue > glm.twoPI) headingTrue -= glm.twoPI;
-            if (headingTrue < 0) headingTrue += glm.twoPI;
-
-            mf.pn.vtgSpeed = Math.Abs(Math.Round(4 * stepDistance * 10, 2));
+            mf.pn.vtgSpeed = data.SpeedKmh;
             mf.pn.AverageTheSpeed();
 
-            //Calculate the next Lat Long based on heading and distance
-            CurrentLatLon = CurrentLatLon.CalculateNewPostionFromBearingDistance(headingTrue, stepDistance);
+            mf.pn.fix.northing = data.LocalPosition.Northing;
+            mf.pn.fix.easting = data.LocalPosition.Easting;
 
-            GeoCoord fixCoord = mf.AppModel.LocalPlane.ConvertWgs84ToGeoCoord(CurrentLatLon);
-            mf.pn.fix.northing = fixCoord.Northing;
-            mf.pn.fix.easting = fixCoord.Easting;
-            mf.pn.headingTrue = mf.pn.headingTrueDual = glm.toDegrees(headingTrue);
-            mf.ahrs.imuHeading = mf.pn.headingTrue;
-            if (mf.ahrs.imuHeading >= 360) mf.ahrs.imuHeading -= 360;
+            mf.pn.headingTrue = data.HeadingDegrees;
+            mf.pn.headingTrueDual = data.HeadingDegrees;
 
-            mf.AppModel.CurrentLatLon = CurrentLatLon;
+            mf.ahrs.imuHeading = data.HeadingDegrees;
+            if (mf.ahrs.imuHeading >= 360)
+                mf.ahrs.imuHeading -= 360;
 
-            mf.pn.hdop = 0.7;
+            mf.AppModel.CurrentLatLon = data.Position;
 
-            mf.pn.altitude = SimulateAltitude(mf.AppModel.CurrentLatLon);
-
-            mf.pn.satellitesTracked = 12;
+            mf.pn.hdop = data.Hdop;
+            mf.pn.altitude = data.Altitude;
+            mf.pn.satellitesTracked = data.SatellitesTracked;
 
             mf.sentenceCounter = 0;
 
             mf.UpdateFixPosition();
-
-            if (isAccelForward)
-            {
-                isAccelBack = false;
-                stepDistance += 0.02;
-                if (stepDistance > 0.12) isAccelForward = false;
-            }
-            if (isAccelBack)
-            {
-                isAccelForward = false;
-                stepDistance -= 0.01;
-                if (stepDistance < -0.06) isAccelBack = false;
-            }
         }
-
-        private double SimulateAltitude(Wgs84 latLon)
-        {
-            double temp = Math.Abs(latLon.Latitude * 100);
-            temp -= ((int)(temp));
-            temp *= 100;
-            double altitude = temp + 200;
-
-            temp = Math.Abs(latLon.Longitude * 100);
-            temp -= ((int)(temp));
-            temp *= 100;
-            altitude += temp;
-            return altitude;
-        }
-
     }
 }

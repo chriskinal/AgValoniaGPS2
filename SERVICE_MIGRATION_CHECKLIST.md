@@ -22,6 +22,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Curve Processing** | Core/Models/Guidance/CurveProcessing.cs | ✅ CurveProcessing (WinForms delegates to Core) |
 | **File I/O Utils** | Core/Utilities/FileIoUtils.cs | ✅ FileIoUtils (WinForms delegates to Core) |
 | **LocalFieldModel** | Core/Models/AgShare/LocalFieldModel.cs | ✅ LocalFieldModel, LocalPoint, AbLineLocal (with implicit conversions) |
+| **GPS Simulation** | Core/Services/GpsSimulationService.cs | ✅ IGpsSimulationService, GpsSimulationService, SimulatedGpsData (WinForms delegates to Core) |
 
 ---
 
@@ -101,17 +102,17 @@ ISO standard protocol support for field data interoperability.
 
 Mathematical algorithms and generation logic with manageable complexity.
 
-| Priority | Service | Location | Lines | Description | Dependencies | Status |
-|----------|---------|----------|-------|-------------|--------------|--------|
-| 3.1 | **CSim** | Classes/CSim.cs | 125 | GPS position simulation | NMEA, LocalPlane, Wgs84 | 📋 |
-| 3.2 | **CDubins** | Classes/CDubins.cs | 637 | Dubins path planning algorithm | vec3/vec2, turn radius | 📋 |
-| 3.3 | **CTram** (gen only) | Classes/CTram.cs | 240 | Tramline generation logic | Boundary, Tool, Settings | 📋 |
-| 3.4 | **CModuleComm** | Classes/CModuleComm.cs | 124 | Hardware communication abstraction | UDP service, Events | 📋 |
-| 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 170 | Fence line geometry calculations | vec2, boundary | 📋 |
-| 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 105 | Turn line generation algorithm | vec2, boundary | 📋 |
-| 3.7 | **CTurn** | Classes/CTurn.cs | 35 | Turn area polygon testing | vec2, boundary | 📋 |
-| 3.8 | **CFence** (logic) | Classes/CFence.cs | 160 | Boundary fence management | vec2, polygon math | 📋 |
-| 3.9 | **CPatches** (logic) | Classes/CPatches.cs | 160 | Worked area tracking | triangle patches | 📋 |
+| Priority | Service | Location | Lines | Description | Dependencies | Status | WinForms Uses Core? |
+|----------|---------|----------|-------|-------------|--------------|--------|---------------------|
+| 3.1 | **CSim** | Classes/CSim.cs | 125 | GPS position simulation | NMEA, LocalPlane, Wgs84 | ✅ | ✅ WinForms delegates to Core GpsSimulationService |
+| 3.2 | **CDubins** | Classes/CDubins.cs | 637 | Dubins path planning algorithm | vec3/vec2, turn radius | 📋 | ❌ |
+| 3.3 | **CTram** (gen only) | Classes/CTram.cs | 240 | Tramline generation logic | Boundary, Tool, Settings | 📋 | ❌ |
+| 3.4 | **CModuleComm** | Classes/CModuleComm.cs | 124 | Hardware communication abstraction | UDP service, Events | 📋 | ❌ |
+| 3.5 | **CFenceLine** | Classes/CFenceLine.cs | 170 | Fence line geometry calculations | vec2, boundary | 📋 | ❌ |
+| 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 105 | Turn line generation algorithm | vec2, boundary | 📋 | ❌ |
+| 3.7 | **CTurn** | Classes/CTurn.cs | 35 | Turn area polygon testing | vec2, boundary | 📋 | ❌ |
+| 3.8 | **CFence** (logic) | Classes/CFence.cs | 160 | Boundary fence management | vec2, polygon math | 📋 | ❌ |
+| 3.9 | **CPatches** (logic) | Classes/CPatches.cs | 160 | Worked area tracking | triangle patches | 📋 | ❌ |
 
 **Notes:**
 - CDubins is pure path planning math - excellent migration candidate
@@ -248,11 +249,11 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 20 (53%)
+**Migrated:** 21 (55%)
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
 **Phase 2 Targets:** 6 services (6 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅, FieldParser ✅) - PHASE 2 COMPLETE ✅
 **Phase 2.5 Targets:** 3 services (3 complete - IsoXmlFieldImporter ✅, IsoXmlParserHelpers ✅, ISO11783_TaskFile ✅) - PHASE 2.5 COMPLETE ✅
-**Phase 3 Targets:** 9 services
+**Phase 3 Targets:** 9 services (1 complete - CSim ✅)
 **Phase 4 Targets:** 5 services
 **Phase 5 Targets:** 6 services
 **Not Suitable:** 8 services
