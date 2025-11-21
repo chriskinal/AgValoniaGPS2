@@ -1,4 +1,7 @@
 ﻿using AgLibrary.Logging;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.Guidance;
+using AgOpenGPS.Core.Services.Guidance;
 using AgOpenGPS.Core.Translations;
 using OpenTK.Graphics.OpenGL;
 using System;
@@ -8,8 +11,15 @@ using System.Threading.Tasks;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for AB curve guidance.
+    /// Delegates Pure Pursuit calculations to Core CurvePurePursuitGuidanceService.
+    /// Stanley guidance already delegates to Core StanleyGuidanceService.
+    /// </summary>
     public class CABCurve
     {
+        private static readonly CurvePurePursuitGuidanceService _coreCurvePurePursuitService = new CurvePurePursuitGuidanceService();
+
         //pointers to mainform controls
         private readonly FormGPS mf;
 
@@ -651,279 +661,79 @@ namespace AgOpenGPS
                 {
                     mf.gyd.StanleyGuidanceCurve(pivot, steer, ref curList);
                 }
-                else// Pure Pursuit ------------------------------------------
+                else// Pure Pursuit - delegate to Core ------------------------------------------
                 {
-                    double minDistA;
-                    double minDistB;
-
-                    //If is a curve
-                    if (mf.trk.gArr[mf.trk.idx].mode <= TrackMode.Curve)
+                    // Convert WinForms curve points to Core format
+                    var coreCurvePoints = new List<Vec3>(curList.Count);
+                    for (int i = 0; i < curList.Count; i++)
                     {
-                        minDistB = double.MaxValue;
-                        //close call hit
-                        int cc, dd;
-
-                        if (findGlobalNearestCurvePoint)
-                        {
-                            // When not already following some line, find the globally nearest point
-
-                            cc = findNearestGlobalCurvePoint(pivot, 10);
-
-                            findGlobalNearestCurvePoint = false;
-                        }
-                        else
-                        {
-                            // When already "locked" to follow some line, try to find the "local" nearest point
-                            // based on the last one. This prevents jumping between lines close to each other (or crossing lines).
-                            // As this is prone to find a "local minimum", this should only be used when already following some line.
-
-                            cc = findNearestLocalCurvePoint(pivot, currentLocationIndex, goalPointDistance, ReverseHeading);
-                        }
-
-                        minDistA = double.MaxValue;
-
-                        dd = cc + 8; if (dd > curList.Count - 1) dd = curList.Count;
-                        cc -= 8; if (cc < 0) cc = 0;
-
-                        //find the closest 2 points to current close call
-                        for (int j = cc; j < dd; j++)
-                        {
-                            dist = glm.DistanceSquared(pivot, curList[j]);
-                            if (dist < minDistA)
-                            {
-                                minDistB = minDistA;
-                                B = A;
-                                minDistA = dist;
-                                A = j;
-                            }
-                            else if (dist < minDistB)
-                            {
-                                minDistB = dist;
-                                B = j;
-                            }
-                        }
-
-                        //just need to make sure the points continue ascending or heading switches all over the place
-                        if (A > B) { C = A; A = B; B = C; }
-
-                        currentLocationIndex = A;
-
-                        if (A > curList.Count - 1 || B > curList.Count - 1)
-                            return;
-                    }
-                    else
-                    {
-                        if (findGlobalNearestCurvePoint)
-                        {
-                            // When not already following some line, find the globally nearest point
-
-                            A = findNearestGlobalCurvePoint(pivot);
-
-                            findGlobalNearestCurvePoint = false;
-                        }
-                        else
-                        {
-                            // When already "locked" to follow some line, try to find the "local" nearest point
-                            // based on the last one. This prevents jumping between lines close to each other (or crossing lines).
-                            // As this is prone to find a "local minimum", this should only be used when already following some line.
-
-                            A = findNearestLocalCurvePoint(pivot, currentLocationIndex, goalPointDistance, ReverseHeading);
-                        }
-
-                        currentLocationIndex = A;
-
-                        if (A > curList.Count - 1)
-                            return;
-
-                        //initial forward Test if pivot InRange AB
-                        if (A == curList.Count - 1) B = 0;
-                        else B = A + 1;
-
-                        if (glm.InRangeBetweenAB(curList[A].easting, curList[A].northing,
-                             curList[B].easting, curList[B].northing, pivot.easting, pivot.northing))
-                            goto SegmentFound;
-
-                        //step back one
-                        if (A == 0)
-                        {
-                            A = curList.Count - 1;
-                            B = 0;
-                        }
-                        else
-                        {
-                            A--;
-                            B = A + 1;
-                        }
-
-                        if (glm.InRangeBetweenAB(curList[A].easting, curList[A].northing,
-                            curList[B].easting, curList[B].northing, pivot.easting, pivot.northing))
-                            goto SegmentFound;
-
-                        //realy really lost
-                        return;
+                        coreCurvePoints.Add(new Vec3(curList[i].easting, curList[i].northing, curList[i].heading));
                     }
 
-                SegmentFound:
-
-                    //get the distance from currently active AB line
-
-                    dx = curList[B].easting - curList[A].easting;
-                    dz = curList[B].northing - curList[A].northing;
-
-                    if (Math.Abs(dx) < Double.Epsilon && Math.Abs(dz) < Double.Epsilon) return;
-
-                    //abHeading = Math.Atan2(dz, dx);
-
-                    //how far from current AB Line is fix
-                    distanceFromCurrentLinePivot = ((dz * pivot.easting) - (dx * pivot.northing) + (curList[B].easting
-                                * curList[A].northing) - (curList[B].northing * curList[A].easting))
-                                    / Math.Sqrt((dz * dz) + (dx * dx));
-
-                    //integral slider is set to 0
-                    if (mf.vehicle.purePursuitIntegralGain != 0 && !mf.isReverse)
+                    // Create input DTO from current state
+                    var input = new CurvePurePursuitGuidanceInput
                     {
-                        pivotDistanceError = distanceFromCurrentLinePivot * 0.2 + pivotDistanceError * 0.8;
+                        PivotPosition = new Vec3(pivot.easting, pivot.northing, pivot.heading),
+                        CurvePoints = coreCurvePoints,
+                        CurrentLocationIndex = currentLocationIndex,
+                        FindGlobalNearestPoint = findGlobalNearestCurvePoint,
+                        IsHeadingSameWay = isHeadingSameWay,
+                        TrackMode = (AgOpenGPS.Core.Models.Guidance.TrackMode)mf.trk.gArr[mf.trk.idx].mode,
+                        Wheelbase = mf.vehicle.VehicleConfig.Wheelbase,
+                        MaxSteerAngle = mf.vehicle.maxSteerAngle,
+                        PurePursuitIntegralGain = mf.vehicle.purePursuitIntegralGain,
+                        GoalPointDistance = goalPointDistance,
+                        SideHillCompFactor = mf.gyd.sideHillCompFactor,
+                        FixHeading = mf.fixHeading,
+                        AvgSpeed = mf.avgSpeed,
+                        IsReverse = mf.isReverse,
+                        IsAutoSteerOn = mf.isBtnAutoSteerOn,
+                        ImuRoll = mf.ahrs.imuRoll,
+                        PreviousIntegral = inty,
+                        PreviousPivotDistanceError = pivotDistanceError,
+                        PreviousPivotDistanceErrorLast = pivotDistanceErrorLast,
+                        PreviousCounter = counter2
+                    };
 
-                        if (counter2++ > 4)
-                        {
-                            pivotDerivative = pivotDistanceError - pivotDistanceErrorLast;
-                            pivotDistanceErrorLast = pivotDistanceError;
-                            counter2 = 0;
-                            pivotDerivative *= 2;
+                    // Delegate to Core service
+                    var output = _coreCurvePurePursuitService.CalculateGuidanceCurve(input);
 
-                            //limit the derivative
-                            //if (pivotDerivative > 0.03) pivotDerivative = 0.03;
-                            //if (pivotDerivative < -0.03) pivotDerivative = -0.03;
-                            //if (Math.Abs(pivotDerivative) < 0.01) pivotDerivative = 0;
-                        }
+                    // Unpack output DTO back to WinForms fields
+                    steerAngleCu = output.SteerAngle;
+                    distanceFromCurrentLinePivot = output.DistanceFromCurrentLinePivot;
+                    goalPointCu.easting = output.GoalPoint.Easting;
+                    goalPointCu.northing = output.GoalPoint.Northing;
+                    radiusPointCu.easting = output.RadiusPoint.Easting;
+                    radiusPointCu.northing = output.RadiusPoint.Northing;
+                    ppRadiusCu = output.PurePursuitRadius;
+                    rEastCu = output.REast;
+                    rNorthCu = output.RNorth;
+                    manualUturnHeading = output.ManualUturnHeading;
 
-                        //pivotErrorTotal = pivotDistanceError + pivotDerivative;
+                    // Update state for next iteration
+                    currentLocationIndex = output.CurrentLocationIndex;
+                    findGlobalNearestCurvePoint = output.FindGlobalNearestPoint;
+                    inty = output.Integral;
+                    pivotDistanceError = output.PivotDistanceError;
+                    pivotDistanceErrorLast = output.PivotDistanceErrorLast;
+                    pivotDerivative = output.PivotDerivative;
+                    counter2 = output.Counter;
 
-                        if (mf.isBtnAutoSteerOn && mf.avgSpeed > 2.5 && Math.Abs(pivotDerivative) < 0.1)
-                        {
-                            //if over the line heading wrong way, rapidly decrease integral
-                            if ((inty < 0 && distanceFromCurrentLinePivot < 0) || (inty > 0 && distanceFromCurrentLinePivot > 0))
-                            {
-                                inty += pivotDistanceError * mf.vehicle.purePursuitIntegralGain * -0.04;
-                            }
-                            else
-                            {
-                                if (Math.Abs(distanceFromCurrentLinePivot) > 0.02)
-                                {
-                                    inty += pivotDistanceError * mf.vehicle.purePursuitIntegralGain * -0.02;
-                                    if (inty > 0.2) inty = 0.2;
-                                    else if (inty < -0.2) inty = -0.2;
-                                }
-                            }
-                        }
-                        else inty *= 0.95;
-                    }
-                    else inty = 0;
+                    // Mode tracking
+                    mf.vehicle.modeActualXTE = output.ModeActualXTE;
+                    mf.vehicle.modeActualHeadingError = output.ModeActualHeadingError;
 
-                    // ** Pure pursuit ** - calc point on ABLine closest to current position
-                    double U = (((pivot.easting - curList[A].easting) * dx)
-                                + ((pivot.northing - curList[A].northing) * dz))
-                                / ((dx * dx) + (dz * dz));
+                    // Transmission values
+                    mf.guidanceLineDistanceOff = output.GuidanceLineDistanceOff;
+                    mf.guidanceLineSteerAngle = output.GuidanceLineSteerAngle;
 
-                    rEastCu = curList[A].easting + (U * dx);
-                    rNorthCu = curList[A].northing + (U * dz);
-                    manualUturnHeading = curList[A].heading;
-
-                    int count = ReverseHeading ? 1 : -1;
-                    vec3 start = new vec3(rEastCu, rNorthCu, 0);
-                    double distSoFar = 0;
-
-                    for (int i = ReverseHeading ? B : A; i < curList.Count && i >= 0;)
+                    // Handle end of curve detection
+                    if (output.IsAtEndOfCurve)
                     {
-                        // used for calculating the length squared of next segment.
-                        double tempDist = glm.Distance(start, curList[i]);
-
-                        //will we go too far?
-                        if ((tempDist + distSoFar) > goalPointDistance)
-                        {
-                            double j = (goalPointDistance - distSoFar) / tempDist; // the remainder to yet travel
-
-                            goalPointCu.easting = (((1 - j) * start.easting) + (j * curList[i].easting));
-                            goalPointCu.northing = (((1 - j) * start.northing) + (j * curList[i].northing));
-                            break;
-                        }
-                        else distSoFar += tempDist;
-                        start = curList[i];
-                        i += count;
-                        if (i < 0) i = curList.Count - 1;
-                        if (i > curList.Count - 1) i = 0;
+                        mf.btnAutoSteer.PerformClick();
+                        mf.TimedMessageBox(2000, gStr.gsGuidanceStopped, gStr.gsPastEndOfCurve);
+                        Log.EventWriter("Autosteer Stop, Past End of Curve");
                     }
-
-                    if (mf.trk.gArr[mf.trk.idx].mode <= TrackMode.Curve)
-                    {
-                        if (mf.isBtnAutoSteerOn && !mf.isReverse)
-                        {
-                            if (isHeadingSameWay)
-                            {
-                                if (glm.Distance(goalPointCu, curList[(curList.Count - 1)]) < 0.5)
-                                {
-                                    mf.btnAutoSteer.PerformClick();
-                                    mf.TimedMessageBox(2000, gStr.gsGuidanceStopped, gStr.gsPastEndOfCurve);
-                                    Log.EventWriter("Autosteer Stop, Past End of Curve");
-
-                                }
-                            }
-                            else
-                            {
-                                if (glm.Distance(goalPointCu, curList[0]) < 0.5)
-                                {
-                                    mf.btnAutoSteer.PerformClick();
-                                    mf.TimedMessageBox(2000, gStr.gsGuidanceStopped, gStr.gsPastEndOfCurve);
-                                    Log.EventWriter("Autosteer Stop, Past End of Curve");
-                                }
-                            }
-                        }
-                    }
-
-                    //calc "D" the distance from pivot axle to lookahead point
-                    double goalPointDistanceSquared = glm.DistanceSquared(goalPointCu.northing, goalPointCu.easting, pivot.northing, pivot.easting);
-
-                    //calculate the the delta x in local coordinates and steering angle degrees based on wheelbase
-                    //double localHeading = glm.twoPI - mf.fixHeading;
-
-                    double localHeading;
-                    if (ReverseHeading) localHeading = glm.twoPI - mf.fixHeading + inty;
-                    else localHeading = glm.twoPI - mf.fixHeading - inty;
-
-                    ppRadiusCu = goalPointDistanceSquared / (2 * (((goalPointCu.easting - pivot.easting) * Math.Cos(localHeading)) + ((goalPointCu.northing - pivot.northing) * Math.Sin(localHeading))));
-
-                    steerAngleCu = glm.toDegrees(Math.Atan(2 * (((goalPointCu.easting - pivot.easting) * Math.Cos(localHeading))
-                        + ((goalPointCu.northing - pivot.northing) * Math.Sin(localHeading))) * mf.vehicle.VehicleConfig.Wheelbase / goalPointDistanceSquared));
-
-                    if (mf.ahrs.imuRoll != 88888)
-                        steerAngleCu += mf.ahrs.imuRoll * -mf.gyd.sideHillCompFactor;
-
-                    if (steerAngleCu < -mf.vehicle.maxSteerAngle) steerAngleCu = -mf.vehicle.maxSteerAngle;
-                    if (steerAngleCu > mf.vehicle.maxSteerAngle) steerAngleCu = mf.vehicle.maxSteerAngle;
-
-                    if (!isHeadingSameWay)
-                        distanceFromCurrentLinePivot *= -1.0;
-
-                    //used for acquire/hold mode
-                    mf.vehicle.modeActualXTE = (distanceFromCurrentLinePivot);
-
-                    double steerHeadingError = (pivot.heading - curList[A].heading);
-                    //Fix the circular error
-                    if (steerHeadingError > Math.PI)
-                        steerHeadingError -= Math.PI;
-                    else if (steerHeadingError < -Math.PI)
-                        steerHeadingError += Math.PI;
-
-                    if (steerHeadingError > glm.PIBy2)
-                        steerHeadingError -= Math.PI;
-                    else if (steerHeadingError < -glm.PIBy2)
-                        steerHeadingError += Math.PI;
-
-                    mf.vehicle.modeActualHeadingError = glm.toDegrees(steerHeadingError);
-
-                    //Convert to centimeters
-                    mf.guidanceLineDistanceOff = (short)Math.Round(distanceFromCurrentLinePivot * 1000.0, MidpointRounding.AwayFromZero);
-                    mf.guidanceLineSteerAngle = (short)(steerAngleCu * 100);
                 }
             }
             else
