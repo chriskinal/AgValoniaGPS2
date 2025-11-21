@@ -30,6 +30,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Turn Line Geometry** | Core/Services/Geometry/TurnLineService.cs | ✅ ITurnLineService, TurnLineService (WinForms delegates to Core - headland line calculations) |
 | **Turn Area Testing** | Core/Services/Geometry/TurnAreaService.cs | ✅ ITurnAreaService, TurnAreaService (WinForms delegates to Core - polygon point-in-polygon testing) |
 | **Fence Area Testing** | Core/Services/Geometry/FenceAreaService.cs | ✅ IFenceAreaService, FenceAreaService (WinForms delegates to Core - field boundary point-in-polygon testing) |
+| **Worked Area Calculation** | Core/Services/Geometry/WorkedAreaService.cs | ✅ IWorkedAreaService, WorkedAreaService (WinForms delegates to Core - triangle area calculations) |
 
 ---
 
@@ -119,7 +120,7 @@ Mathematical algorithms and generation logic with manageable complexity.
 | 3.6 | **CTurnLines** | Classes/CTurnLines.cs | 62 | Turn line generation algorithm | vec2, boundary | ✅ | ✅ WinForms delegates to Core TurnLineService (109→62 lines, 43% reduction) |
 | 3.7 | **CTurn** | Classes/CTurn.cs | 49 | Turn area polygon testing | GeometryMath, boundary | ✅ | ✅ WinForms delegates to Core TurnAreaService (IsPointInsideTurnArea) |
 | 3.8 | **CFence** (logic) | Classes/CFence.cs | 73 | Fence area polygon testing | GeometryMath, boundary | ✅ | ✅ WinForms delegates to Core FenceAreaService (IsPointInsideFenceArea, rendering stays in UI) |
-| 3.9 | **CPatches** (logic) | Classes/CPatches.cs | 160 | Worked area tracking | triangle patches | 📋 | ❌ |
+| 3.9 | **CPatches** (logic) | Classes/CPatches.cs | 160 | Worked area tracking | triangle patches | ✅ | ✅ WinForms delegates to Core WorkedAreaService (CalculateTriangleStripArea, rendering/state stays in UI) |
 
 **Notes:**
 - CDubins is pure path planning math - excellent migration candidate

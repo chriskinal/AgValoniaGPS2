@@ -2,11 +2,19 @@
 
 using System;
 using System.Collections.Generic;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Services.Geometry;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for worked area tracking.
+    /// Delegates area calculations to Core WorkedAreaService.
+    /// </summary>
     public class CPatches
     {
+        private static readonly WorkedAreaService _coreWorkedAreaService = new WorkedAreaService();
+
         //copy of the mainform address
         private readonly FormGPS mf;
 
@@ -121,19 +129,20 @@ namespace AgOpenGPS
             //Prevented by quick check. 4 points plus colour
             //if (c >= 5)
             {
-                //calculate area of these 2 new triangles - AbsoluteValue of (Ax(By-Cy) + Bx(Cy-Ay) + Cx(Ay-By)/2)
+                //calculate area of these 2 new triangles using Core service
+                if (c >= 3) // Need at least 4 points (c-3, c-2, c-1, c)
                 {
-                    double temp = Math.Abs((triangleList[c].easting * (triangleList[c - 1].northing - triangleList[c - 2].northing))
-                              + (triangleList[c - 1].easting * (triangleList[c - 2].northing - triangleList[c].northing))
-                                  + (triangleList[c - 2].easting * (triangleList[c].northing - triangleList[c - 1].northing)));
+                    // Convert WinForms vec3 points to Core Vec3 array
+                    Vec3[] corePoints = new Vec3[c + 1];
+                    for (int i = 0; i <= c; i++)
+                    {
+                        corePoints[i] = new Vec3(triangleList[i].easting, triangleList[i].northing, triangleList[i].heading);
+                    }
 
-                    temp += Math.Abs((triangleList[c - 1].easting * (triangleList[c - 2].northing - triangleList[c - 3].northing))
-                              + (triangleList[c - 2].easting * (triangleList[c - 3].northing - triangleList[c - 1].northing))
-                                  + (triangleList[c - 3].easting * (triangleList[c - 1].northing - triangleList[c - 2].northing)));
-
-                    temp *= 0.5;
-                    mf.fd.workedAreaTotal += temp;
-                    mf.fd.workedAreaTotalUser += temp;
+                    // Delegate to Core service
+                    double area = _coreWorkedAreaService.CalculateTriangleStripArea(corePoints, c - 3);
+                    mf.fd.workedAreaTotal += area;
+                    mf.fd.workedAreaTotalUser += area;
                 }
             }
 
