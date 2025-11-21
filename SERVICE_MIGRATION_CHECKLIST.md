@@ -31,6 +31,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Turn Area Testing** | Core/Services/Geometry/TurnAreaService.cs | ✅ ITurnAreaService, TurnAreaService (WinForms delegates to Core - polygon point-in-polygon testing) |
 | **Fence Area Testing** | Core/Services/Geometry/FenceAreaService.cs | ✅ IFenceAreaService, FenceAreaService (WinForms delegates to Core - field boundary point-in-polygon testing) |
 | **Worked Area Calculation** | Core/Services/Geometry/WorkedAreaService.cs | ✅ IWorkedAreaService, WorkedAreaService (WinForms delegates to Core - triangle area calculations) |
+| **Stanley Guidance Algorithms** | Core/Services/Guidance/StanleyGuidanceService.cs | ✅ IStanleyGuidanceService, StanleyGuidanceService, StanleyGuidanceInput, StanleyGuidanceOutput, StanleyGuidanceCurveOutput (WinForms delegates to Core - AB line and curve guidance calculations) |
 
 ---
 
@@ -136,7 +137,7 @@ Core agricultural guidance algorithms - the heart of AgOpenGPS.
 
 | Priority | Service | Location | Lines | Description | Dependencies | Status |
 |----------|---------|----------|-------|-------------|--------------|--------|
-| 4.1 | **CGuidance** | Classes/CGuidance.cs | 413 | Stanley & Pure Pursuit algorithms | Vehicle, ABLine, Curve, AHRS | 📋 |
+| 4.1 | **CGuidance** | Classes/CGuidance.cs | 413 | Stanley & Pure Pursuit algorithms | Vehicle, ABLine, Curve, AHRS | ✅ |
 | 4.2 | **CABLine** (logic) | Classes/CABLine.cs | 661 | AB line guidance calculations | Tool, Vehicle, Guidance, Tram | 📋 |
 | 4.3 | **CABCurve** (logic) | Classes/CABCurve.cs | 1540 | Curve guidance calculations | Tool, Vehicle, Guidance | 📋 |
 | 4.4 | **CContour** (logic) | Classes/CContour.cs | 1038 | Contour following guidance | Tool, Vehicle, Guidance, AHRS | 📋 |
