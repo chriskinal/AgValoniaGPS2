@@ -34,6 +34,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Stanley Guidance Algorithms** | Core/Services/Guidance/StanleyGuidanceService.cs | ✅ IStanleyGuidanceService, StanleyGuidanceService, StanleyGuidanceInput, StanleyGuidanceOutput, StanleyGuidanceCurveOutput (WinForms delegates to Core - AB line and curve guidance calculations) |
 | **Pure Pursuit Guidance Algorithm** | Core/Services/Guidance/PurePursuitGuidanceService.cs | ✅ IPurePursuitGuidanceService, PurePursuitGuidanceService, PurePursuitGuidanceInput, PurePursuitGuidanceOutput (WinForms delegates to Core - AB line Pure Pursuit calculations with lookahead goal point) |
 | **Curve Pure Pursuit Guidance** | Core/Services/Guidance/CurvePurePursuitGuidanceService.cs | ✅ ICurvePurePursuitGuidanceService, CurvePurePursuitGuidanceService, CurvePurePursuitGuidanceInput, CurvePurePursuitGuidanceOutput (WinForms delegates to Core - curve path Pure Pursuit with segment finding and goal point walking) |
+| **Contour Pure Pursuit Guidance** | Core/Services/Guidance/ContourPurePursuitGuidanceService.cs | ✅ IContourPurePursuitGuidanceService, ContourPurePursuitGuidanceService, ContourPurePursuitGuidanceInput, ContourPurePursuitGuidanceOutput (WinForms delegates to Core - contour following Pure Pursuit with lock boundaries and fix position) |
 
 ---
 
@@ -142,7 +143,7 @@ Core agricultural guidance algorithms - the heart of AgOpenGPS.
 | 4.1 | **CGuidance** | Classes/CGuidance.cs | 413 | Stanley & Pure Pursuit algorithms | Vehicle, ABLine, Curve, AHRS | ✅ |
 | 4.2 | **CABLine** (logic) | Classes/CABLine.cs | 661 | AB line guidance calculations | Tool, Vehicle, Guidance, Tram | ✅ |
 | 4.3 | **CABCurve** (logic) | Classes/CABCurve.cs | 1540 | Curve guidance calculations | Tool, Vehicle, Guidance | ✅ |
-| 4.4 | **CContour** (logic) | Classes/CContour.cs | 1038 | Contour following guidance | Tool, Vehicle, Guidance, AHRS | 📋 |
+| 4.4 | **CContour** (logic) | Classes/CContour.cs | 1038 | Contour following guidance | Tool, Vehicle, Guidance, AHRS | ✅ |
 | 4.5 | **CTrack** | Classes/CTrack.cs | 350 | Track management and nudging | ABLine, Curve, UI events | 📋 |
 
 **Notes:**
