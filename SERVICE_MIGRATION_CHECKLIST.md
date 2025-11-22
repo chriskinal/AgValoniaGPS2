@@ -35,6 +35,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Pure Pursuit Guidance Algorithm** | Core/Services/Guidance/PurePursuitGuidanceService.cs | ✅ IPurePursuitGuidanceService, PurePursuitGuidanceService, PurePursuitGuidanceInput, PurePursuitGuidanceOutput (WinForms delegates to Core - AB line Pure Pursuit calculations with lookahead goal point) |
 | **Curve Pure Pursuit Guidance** | Core/Services/Guidance/CurvePurePursuitGuidanceService.cs | ✅ ICurvePurePursuitGuidanceService, CurvePurePursuitGuidanceService, CurvePurePursuitGuidanceInput, CurvePurePursuitGuidanceOutput (WinForms delegates to Core - curve path Pure Pursuit with segment finding and goal point walking) |
 | **Contour Pure Pursuit Guidance** | Core/Services/Guidance/ContourPurePursuitGuidanceService.cs | ✅ IContourPurePursuitGuidanceService, ContourPurePursuitGuidanceService, ContourPurePursuitGuidanceInput, ContourPurePursuitGuidanceOutput (WinForms delegates to Core - contour following Pure Pursuit with lock boundaries and fix position) |
+| **Track Nudging** | Core/Services/Track/TrackNudgingService.cs | ✅ ITrackNudgingService, TrackNudgingService, ABLineNudgeInput, ABLineNudgeOutput, CurveNudgeInput, CurveNudgeOutput (WinForms delegates to Core - AB line and curve perpendicular offset with filtering and smoothing) |
 
 ---
 
@@ -144,14 +145,19 @@ Core agricultural guidance algorithms - the heart of AgOpenGPS.
 | 4.2 | **CABLine** (logic) | Classes/CABLine.cs | 661 | AB line guidance calculations | Tool, Vehicle, Guidance, Tram | ✅ |
 | 4.3 | **CABCurve** (logic) | Classes/CABCurve.cs | 1540 | Curve guidance calculations | Tool, Vehicle, Guidance | ✅ |
 | 4.4 | **CContour** (logic) | Classes/CContour.cs | 1038 | Contour following guidance | Tool, Vehicle, Guidance, AHRS | ✅ |
-| 4.5 | **CTrack** | Classes/CTrack.cs | 350 | Track management and nudging | ABLine, Curve, UI events | 📋 |
+| 4.5 | **CTrack** (nudge algorithms) | Classes/CTrack.cs | 350 | Track nudging geometry algorithms | ABLine, Curve | ✅ |
 
 **Notes:**
-- CGuidance implements the core steering algorithms - critical for both UIs
-- These services have OpenGL rendering mixed with calculations
-- Extract calculation methods, leave rendering in WinForms
-- GuidanceService in AgValoniaGPS is incomplete - these would complete it
-- Create clear DTOs for calculation inputs/outputs
+- **Phase 4 COMPLETE** ✅ - All core guidance algorithms migrated to AgOpenGPS.Core
+- CGuidance: Stanley & Pure Pursuit algorithms extracted to StanleyGuidanceService and PurePursuitGuidanceService
+- CABLine: AB line guidance delegated to Core (1142→661 lines, 42% reduction)
+- CABCurve: Curve guidance delegated to Core (1539→1349 lines, 12% reduction)
+- CContour: Contour following delegated to Core (1037→948 lines, 9% reduction)
+- CTrack: Nudge algorithms delegated to Core (352→290 lines, 17.6% reduction)
+  - Note: Track state management (gArr, idx, visibility) remains in WinForms
+  - Will migrate to AgValoniaGPS.Services.TrackManagementService in future
+- All services use DTO pattern for clean WinForms↔Core communication
+- OpenGL rendering remains in WinForms UI layer
 
 ---
 
