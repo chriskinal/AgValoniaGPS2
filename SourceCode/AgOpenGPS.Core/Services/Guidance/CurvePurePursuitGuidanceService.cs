@@ -194,7 +194,7 @@ namespace AgOpenGPS.Core.Services.Guidance
                 }
 
                 // Integral update conditions
-                if (input.IsAutoSteerOn && input.AvgSpeed > 2.5 && Math.Abs(output.PivotDerivative) < 0.1)
+                if (input.IsAutoSteerOn && input.AvgSpeed > 2.5 && Math.Abs(output.PivotDerivative) < 0.1 && !input.IsYouTurnTriggered)
                 {
                     // If over the line heading wrong way, rapidly decrease integral
                     if ((input.PreviousIntegral < 0 && output.DistanceFromCurrentLinePivot < 0)

@@ -688,6 +688,7 @@ namespace AgOpenGPS
                         AvgSpeed = mf.avgSpeed,
                         IsReverse = mf.isReverse,
                         IsAutoSteerOn = mf.isBtnAutoSteerOn,
+                        IsYouTurnTriggered = mf.yt.isYouTurnTriggered,
                         ImuRoll = mf.ahrs.imuRoll,
                         PreviousIntegral = inty,
                         PreviousPivotDistanceError = pivotDistanceError,

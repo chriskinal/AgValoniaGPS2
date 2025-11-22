@@ -32,6 +32,7 @@ namespace AgOpenGPS.Core.Models.Guidance
         public double AvgSpeed { get; set; }
         public bool IsReverse { get; set; }
         public bool IsAutoSteerOn { get; set; }
+        public bool IsYouTurnTriggered { get; set; }
 
         // AHRS data
         public double ImuRoll { get; set; } // 88888 = invalid
