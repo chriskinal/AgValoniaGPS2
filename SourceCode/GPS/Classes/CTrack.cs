@@ -6,6 +6,9 @@ using System.Drawing;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.Track;
+using AgOpenGPS.Core.Services.Track;
 
 namespace AgOpenGPS
 {
@@ -13,6 +16,8 @@ namespace AgOpenGPS
 
     public class CTrack
     {
+        private static readonly TrackNudgingService _coreTrackNudgingService = new TrackNudgingService();
+
         //pointers to mainform controls
         private readonly FormGPS mf;
 
@@ -191,117 +196,51 @@ namespace AgOpenGPS
 
         public void NudgeRefABLine(double dist)
         {
-            double head = gArr[idx].heading;
+            // Delegate to Core service for AB line nudging calculation
+            var input = new ABLineNudgeInput
+            {
+                PointA = new Vec2 { Easting = gArr[idx].ptA.easting, Northing = gArr[idx].ptA.northing },
+                PointB = new Vec2 { Easting = gArr[idx].ptB.easting, Northing = gArr[idx].ptB.northing },
+                Heading = gArr[idx].heading,
+                Distance = dist
+            };
 
-            gArr[idx].ptA.easting += (Math.Sin(head + glm.PIBy2) * (dist));
-            gArr[idx].ptA.northing += (Math.Cos(head + glm.PIBy2) * (dist));
+            var output = _coreTrackNudgingService.NudgeABLine(input);
 
-            gArr[idx].ptB.easting += (Math.Sin(head + glm.PIBy2) * (dist));
-            gArr[idx].ptB.northing += (Math.Cos(head + glm.PIBy2) * (dist));
+            gArr[idx].ptA.easting = output.NewPointA.Easting;
+            gArr[idx].ptA.northing = output.NewPointA.Northing;
+            gArr[idx].ptB.easting = output.NewPointB.Easting;
+            gArr[idx].ptB.northing = output.NewPointB.Northing;
         }
 
         public void NudgeRefCurve(double distAway)
         {
             mf.curve.isCurveValid = false;
 
-            List<vec3> curList = new List<vec3>();
-
-            double distSqAway = (distAway * distAway) - 0.01;
-            vec3 point;
-
+            // Delegate to Core service for curve nudging calculation
+            var coreCurvePoints = new List<Vec3>(gArr[idx].curvePts.Count);
             for (int i = 0; i < gArr[idx].curvePts.Count; i++)
             {
-                point = new vec3(
-                gArr[idx].curvePts[i].easting + (Math.Sin(glm.PIBy2 + gArr[idx].curvePts[i].heading) * distAway),
-                gArr[idx].curvePts[i].northing + (Math.Cos(glm.PIBy2 + gArr[idx].curvePts[i].heading) * distAway),
-                gArr[idx].curvePts[i].heading);
-                bool Add = true;
-
-                for (int t = 0; t < gArr[idx].curvePts.Count; t++)
-                {
-                    double dist = ((point.easting - gArr[idx].curvePts[t].easting) * (point.easting - gArr[idx].curvePts[t].easting))
-                        + ((point.northing - gArr[idx].curvePts[t].northing) * (point.northing - gArr[idx].curvePts[t].northing));
-                    if (dist < distSqAway)
-                    {
-                        Add = false;
-                        break;
-                    }
-                }
-
-                if (Add)
-                {
-                    if (curList.Count > 0)
-                    {
-                        double dist = ((point.easting - curList[curList.Count - 1].easting) * (point.easting - curList[curList.Count - 1].easting))
-                            + ((point.northing - curList[curList.Count - 1].northing) * (point.northing - curList[curList.Count - 1].northing));
-                        if (dist > 1.0)
-                            curList.Add(point);
-                    }
-                    else curList.Add(point);
-                }
+                coreCurvePoints.Add(new Vec3(
+                    gArr[idx].curvePts[i].easting,
+                    gArr[idx].curvePts[i].northing,
+                    gArr[idx].curvePts[i].heading));
             }
 
-            int cnt = curList.Count;
-            if (cnt > 6)
+            var input = new CurveNudgeInput
             {
-                vec3[] arr = new vec3[cnt];
-                curList.CopyTo(arr);
+                CurvePoints = coreCurvePoints,
+                Distance = distAway
+            };
 
-                curList.Clear();
+            var output = _coreTrackNudgingService.NudgeCurve(input);
 
-                for (int i = 0; i < (arr.Length - 1); i++)
-                {
-                    arr[i].heading = Math.Atan2(arr[i + 1].easting - arr[i].easting, arr[i + 1].northing - arr[i].northing);
-                    if (arr[i].heading < 0) arr[i].heading += glm.twoPI;
-                    if (arr[i].heading >= glm.twoPI) arr[i].heading -= glm.twoPI;
-                }
+            // Replace curve points with nudged result
+            gArr[idx].curvePts.Clear();
 
-                arr[arr.Length - 1].heading = arr[arr.Length - 2].heading;
-
-                //replace the array
-                cnt = arr.Length;
-                double distance;
-                double spacing = 1.2;
-
-                //add the first point of loop - it will be p1
-                curList.Add(arr[0]);
-
-                for (int i = 0; i < cnt - 3; i++)
-                {
-                    // add p2
-                    curList.Add(arr[i + 1]);
-
-                    distance = glm.Distance(arr[i + 1], arr[i + 2]);
-
-                    if (distance > spacing)
-                    {
-                        int loopTimes = (int)(distance / spacing + 1);
-                        for (int j = 1; j < loopTimes; j++)
-                        {
-                            vec3 pos = new vec3(glm.Catmull(j / (double)(loopTimes), arr[i], arr[i + 1], arr[i + 2], arr[i + 3]));
-                            curList.Add(pos);
-                        }
-                    }
-                }
-
-                curList.Add(arr[cnt - 2]);
-                curList.Add(arr[cnt - 1]);
-
-                mf.curve.CalculateHeadings(ref curList);
-
-                gArr[idx].curvePts.Clear();
-
-                foreach (var item in curList)
-                {
-                    gArr[idx].curvePts.Add(new vec3(item));
-                }
-
-                //for (int i = 0; i < cnt; i++)
-                //{
-                //    arr[i].easting += Math.Cos(arr[i].heading) * (dist);
-                //    arr[i].northing -= Math.Sin(arr[i].heading) * (dist);
-                //    gArr[idx].curvePts.Add(arr[i]);
-                //}
+            foreach (var item in output.NewCurvePoints)
+            {
+                gArr[idx].curvePts.Add(new vec3(item.Easting, item.Northing, item.Heading));
             }
         }
     }
