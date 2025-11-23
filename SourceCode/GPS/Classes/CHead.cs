@@ -1,9 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.Headland;
+using AgOpenGPS.Core.Services.Headland;
 
 namespace AgOpenGPS
 {
     public partial class CBoundary
     {
+        private readonly HeadlandDetectionService _headlandDetectionService = new HeadlandDetectionService();
+
         public bool isHeadlandOn;
 
         public bool isToolInHeadland,
@@ -41,26 +48,21 @@ namespace AgOpenGPS
         {
             if (bndList.Count > 0 && bndList[0].hdLine.Count > 0)
             {
-                bool isLeftInWk, isRightInWk = true;
+                // Build input DTO
+                var input = BuildHeadlandDetectionInput();
 
-                for (int j = 0; j < mf.tool.numOfSections; j++)
+                // Delegate to Core service
+                var output = _headlandDetectionService.DetectHeadland(input);
+
+                // Map output back to WinForms state
+                mf.tool.isLeftSideInHeadland = output.IsLeftSideInHeadland;
+                mf.tool.isRightSideInHeadland = output.IsRightSideInHeadland;
+                isToolOuterPointsInHeadland = output.IsToolOuterPointsInHeadland;
+
+                for (int j = 0; j < mf.tool.numOfSections && j < output.SectionStatus.Count; j++)
                 {
-                    isLeftInWk = j == 0 ? IsPointInsideHeadArea(mf.section[j].leftPoint) : isRightInWk;
-                    isRightInWk = IsPointInsideHeadArea(mf.section[j].rightPoint);
-
-                    //save left side
-                    if (j == 0)
-                        mf.tool.isLeftSideInHeadland = !isLeftInWk;
-
-                    //merge the two sides into in or out
-                    mf.section[j].isInHeadlandArea = !isLeftInWk && !isRightInWk;
+                    mf.section[j].isInHeadlandArea = output.SectionStatus[j].IsInHeadlandArea;
                 }
-
-                //save right side
-                mf.tool.isRightSideInHeadland = !isRightInWk;
-
-                //is the tool in or out based on endpoints
-                isToolOuterPointsInHeadland = mf.tool.isLeftSideInHeadland && mf.tool.isRightSideInHeadland;
             }
         }
 
@@ -68,49 +70,25 @@ namespace AgOpenGPS
         {
             if (bndList.Count > 0 && bndList[0].hdLine.Count > 0)
             {
-                bool isLookRightIn = false;
+                // Build input DTO
+                var input = BuildHeadlandDetectionInput();
 
-                vec3 toolFix = mf.toolPivotPos;
-                double sinAB = Math.Sin(toolFix.heading);
-                double cosAB = Math.Cos(toolFix.heading);
+                // Delegate to Core service
+                var output = _headlandDetectionService.DetectHeadland(input);
 
-                //generated box for finding closest point
-                double pos = 0;
-                double mOn = (mf.tool.lookAheadDistanceOnPixelsRight - mf.tool.lookAheadDistanceOnPixelsLeft) / mf.tool.rpWidth;
-
-                for (int j = 0; j < mf.tool.numOfSections; j++)
+                // Map output back to WinForms state
+                for (int j = 0; j < mf.tool.numOfSections && j < output.SectionStatus.Count; j++)
                 {
-                    bool isLookLeftIn = j == 0 ? IsPointInsideHeadArea(new vec2(
-                        mf.section[j].leftPoint.easting + (sinAB * mf.tool.lookAheadDistanceOnPixelsLeft * 0.1),
-                        mf.section[j].leftPoint.northing + (cosAB * mf.tool.lookAheadDistanceOnPixelsLeft * 0.1))) : isLookRightIn;
-
-                    pos += mf.section[j].rpSectionWidth;
-                    double endHeight = (mf.tool.lookAheadDistanceOnPixelsLeft + (mOn * pos)) * 0.1;
-
-                    isLookRightIn = IsPointInsideHeadArea(new vec2(
-                        mf.section[j].rightPoint.easting + (sinAB * endHeight),
-                        mf.section[j].rightPoint.northing + (cosAB * endHeight)));
-
-                    mf.section[j].isLookOnInHeadland = !isLookLeftIn && !isLookRightIn;
+                    mf.section[j].isLookOnInHeadland = output.SectionStatus[j].IsLookOnInHeadland;
                 }
             }
         }
 
         public bool IsPointInsideHeadArea(vec2 pt)
         {
-            //if inside outer boundary, then potentially add
-            if (bndList[0].hdLine.IsPointInPolygon(pt))
-            {
-                for (int i = 1; i < bndList.Count; i++)
-                {
-                    if (bndList[i].hdLine.IsPointInPolygon(pt))
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
+            // Delegate to Core service
+            var boundaries = BuildBoundaryList();
+            return _headlandDetectionService.IsPointInsideHeadArea(new Vec2(pt.easting, pt.northing), boundaries);
         }
         public void CheckHeadlandProximity()
         {
@@ -121,36 +99,26 @@ namespace AgOpenGPS
                 return;
             }
 
-            vec3 vehiclePos = mf.toolPivotPos;
+            // Build input DTO
+            var input = BuildHeadlandDetectionInput();
 
-            vec2? nearest = glm.RaycastToPolygon(vehiclePos, bndList[0].hdLine);
-            if (!nearest.HasValue)
+            // Delegate to Core service
+            var output = _headlandDetectionService.DetectHeadland(input);
+
+            // Map output back to WinForms state
+            if (output.HeadlandNearestPoint.HasValue)
+            {
+                HeadlandNearestPoint = new vec2(output.HeadlandNearestPoint.Value.Easting, output.HeadlandNearestPoint.Value.Northing);
+            }
+            else
             {
                 HeadlandNearestPoint = null;
-                HeadlandDistance = null;
-                return;
             }
 
-            vec2 nearestVal = nearest.Value;
-            double distance = glm.Distance(vehiclePos.ToVec2(), nearestVal);
+            HeadlandDistance = output.HeadlandDistance;
 
-            HeadlandNearestPoint = nearestVal;
-            HeadlandDistance = distance;
-
-            bool isInside = bndList[0].hdLine.IsPointInPolygon(vehiclePos.ToVec2());
-
-            double dx = nearestVal.easting - vehiclePos.easting;
-            double dy = nearestVal.northing - vehiclePos.northing;
-            double angleToPolygon = Math.Atan2(dx, dy);
-            double headingDiff = glm.AngleDiff(vehiclePos.heading, angleToPolygon);
-            bool headingOk = headingDiff < glm.toRadians(60); // eventueel verwijderen: zit al in GetClosestPointInFront
-
-            // Warning Logic
-            bool shouldPlay =
-                (isInside && headingOk && distance < 20.0) ||
-                (!isInside && headingOk && distance < 5.0);
-
-            if (shouldPlay && mf.isHeadlandDistanceOn)
+            // Handle warning sound
+            if (output.ShouldTriggerWarning && mf.isHeadlandDistanceOn)
             {
                 if (!mf.sounds.isBoundAlarming)
                 {
@@ -162,6 +130,53 @@ namespace AgOpenGPS
             {
                 mf.sounds.isBoundAlarming = false;
             }
+        }
+
+        private List<BoundaryData> BuildBoundaryList()
+        {
+            var boundaries = new List<BoundaryData>();
+
+            foreach (var bnd in bndList)
+            {
+                var boundaryData = new BoundaryData
+                {
+                    IsDriveThru = bnd.isDriveThru,
+                    HeadlandLine = bnd.hdLine.Select(v => new Vec3(v.easting, v.northing, v.heading)).ToList()
+                };
+                boundaries.Add(boundaryData);
+            }
+
+            return boundaries;
+        }
+
+        private HeadlandDetectionInput BuildHeadlandDetectionInput()
+        {
+            var input = new HeadlandDetectionInput
+            {
+                Boundaries = BuildBoundaryList(),
+                VehiclePosition = new Vec3(mf.toolPivotPos.easting, mf.toolPivotPos.northing, mf.toolPivotPos.heading),
+                IsHeadlandOn = isHeadlandOn,
+                LookAhead = new LookAheadConfig
+                {
+                    LookAheadDistanceOnPixelsLeft = mf.tool.lookAheadDistanceOnPixelsLeft,
+                    LookAheadDistanceOnPixelsRight = mf.tool.lookAheadDistanceOnPixelsRight,
+                    TotalWidth = mf.tool.rpWidth
+                }
+            };
+
+            // Build section corner data
+            for (int j = 0; j < mf.tool.numOfSections; j++)
+            {
+                var section = new SectionCornerData
+                {
+                    LeftPoint = new Vec2(mf.section[j].leftPoint.easting, mf.section[j].leftPoint.northing),
+                    RightPoint = new Vec2(mf.section[j].rightPoint.easting, mf.section[j].rightPoint.northing),
+                    SectionWidth = mf.section[j].rpSectionWidth
+                };
+                input.Sections.Add(section);
+            }
+
+            return input;
         }
 
     }
