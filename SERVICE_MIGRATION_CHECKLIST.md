@@ -39,6 +39,9 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **YouTurn Guidance** | Core/Services/YouTurn/YouTurnGuidanceService.cs | ✅ YouTurnGuidanceService, YouTurnGuidanceInput, YouTurnGuidanceOutput (WinForms delegates to Core - Stanley & Pure Pursuit controllers for U-turn following) |
 | **YouTurn Creation** | Core/Services/YouTurn/YouTurnCreationService.cs | ✅ YouTurnCreationService, YouTurnCreationInput, YouTurnCreationOutput, BoundaryTurnLine, YouTurnType (WinForms delegates to Core - All 6 turn types: Omega, Wide, K-style for Curves and AB lines) |
 | **Headland Detection** | Core/Services/Headland/HeadlandDetectionService.cs | ✅ HeadlandDetectionService, HeadlandDetectionInput, HeadlandDetectionOutput, BoundaryData, SectionCornerData, LookAheadConfig, SectionHeadlandStatus (WinForms delegates to Core - Point-in-polygon detection, section status, proximity warnings) |
+| **AgShare Client** | Core/Services/AgShare/AgShareClient.cs | ✅ AgShareClient (WinForms delegates to Core - HTTP client with API key auth, field upload/download, field listing) |
+| **AgShare Uploader** | Core/Services/AgShare/AgShareUploaderService.cs | ✅ AgShareUploaderService, FieldSnapshotInput, TrackLineInput (WinForms delegates to Core - Field upload with NE→WGS84 coordinate conversion) |
+| **AgShare Downloader** | Core/Services/AgShare/AgShareDownloaderService.cs | ✅ AgShareDownloaderService, FieldFileWriter (WinForms delegates to Core - Field download, batch download with progress, file writing to AgOpenGPS format) |
 
 ---
 
@@ -173,12 +176,12 @@ Advanced features requiring careful architectural planning.
 | 5.1 | **CRecordedPath** | Classes/CRecordedPath.cs | 665 | Recorded path playback | Vehicle, Sim, Dubins, Guidance | ✅ |
 | 5.2 | **CYouTurn** | Classes/CYouTurn.cs | 2897 | U-turn generation and execution | Tool, Vehicle, ABLine, Curve, Boundary, Dubins | ✅ |
 | 5.3 | **CBoundary** | Classes/CBoundary.cs | 1000+ | Boundary and headland management | File I/O, multiple dependencies | ✅ |
-| 5.4 | **AgShareClient** | AgShare/AgShareClient.cs | ? | Cloud field sharing | HTTP client, authentication | 📋 |
-| 5.5 | **AgShareUploader** | AgShare/AgShareUploader.cs | ? | Upload fields to cloud | AgShareClient | 📋 |
-| 5.6 | **AgShareDownloader** | AgShare/AgShareDownloader.cs | ? | Download shared fields | AgShareClient | 📋 |
+| 5.4 | **AgShareClient** | AgShare/AgShareClient.cs | 137 | Cloud field sharing | HTTP client, authentication | ✅ |
+| 5.5 | **AgShareUploader** | AgShare/AgShareUploader.cs | 169 | Upload fields to cloud | AgShareClient | ✅ |
+| 5.6 | **AgShareDownloader** | AgShare/AgShareDownloader.cs | 266 | Download shared fields | AgShareClient | ✅ |
 
 **Notes:**
-- **Phase 5.1-5.3 COMPLETE** ✅ - CRecordedPath, CYouTurn, and CBoundary migrated to AgOpenGPS.Core
+- **Phase 5 COMPLETE** ✅ - All 6 complex state machine services migrated to AgOpenGPS.Core
 - CRecordedPath: Path playback delegated to Core CurvePurePursuitGuidanceService (667→665 lines)
 - CYouTurn: Full migration with all 6 turn types (Omega, Wide, K-style for Curves and AB lines)
   - YouTurnGuidanceService: Stanley & Pure Pursuit controllers for turn following
@@ -188,8 +191,11 @@ Advanced features requiring careful architectural planning.
   - HeadlandDetectionService: Point-in-polygon, section detection, proximity warnings (197 lines)
   - CHead.cs: All detection methods delegate to Core service (168→183 lines with helper methods)
   - Boundary geometry services already in Core from Phase 3 (FenceLineService, TurnLineService, etc.)
-- CYouTurn is 2,897 lines - largest and most complex service completed
-- CBoundary, AgShare services deferred until needed
+- AgShare: Cloud field sharing fully migrated to Core
+  - AgShareClient: HTTP client with API key auth (137 lines in Core)
+  - AgShareUploaderService: Field upload with NE→WGS84 conversion (169 lines)
+  - AgShareDownloaderService: Field download with FieldFileWriter (266 lines)
+  - WinForms classes now thin wrappers delegating to Core (81, 117, 82 lines respectively)
 
 ---
 
