@@ -1,4 +1,7 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿using AgOpenGPS.Core.Models.Base;
+using AgOpenGPS.Core.Models.YouTurn;
+using AgOpenGPS.Core.Services.YouTurn;
+using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
 
@@ -11,6 +14,9 @@ namespace AgOpenGPS
         #region Fields
         //copy of the mainform address
         private readonly FormGPS mf;
+
+        // Core services for YouTurn algorithms
+        private static readonly YouTurnGuidanceService _coreGuidanceService = new YouTurnGuidanceService();
 
         /// <summary>/// triggered right after youTurnTriggerPoint is set /// </summary>
         public bool isYouTurnTriggered, isGoingStraightThrough = false;
@@ -2552,6 +2558,83 @@ namespace AgOpenGPS
         //determine distance from youTurn guidance line
         public bool DistanceFromYouTurnLine()
         {
+            int ptCount = ytList.Count;
+
+            if (ptCount > 0)
+            {
+                // Convert WinForms ytList to Core format
+                var coreTurnPath = new List<Vec3>(ytList.Count);
+                for (int i = 0; i < ytList.Count; i++)
+                {
+                    coreTurnPath.Add(new Vec3(ytList[i].easting, ytList[i].northing, ytList[i].heading));
+                }
+
+                // Create input DTO
+                var input = new YouTurnGuidanceInput
+                {
+                    TurnPath = coreTurnPath,
+                    PivotPosition = new Vec3(mf.pivotAxlePos.easting, mf.pivotAxlePos.northing, mf.pivotAxlePos.heading),
+                    SteerPosition = new Vec3(mf.steerAxlePos.easting, mf.steerAxlePos.northing, mf.steerAxlePos.heading),
+                    Wheelbase = mf.vehicle.VehicleConfig.Wheelbase,
+                    MaxSteerAngle = mf.vehicle.maxSteerAngle,
+                    UseStanley = mf.isStanleyUsed,
+                    StanleyHeadingErrorGain = mf.vehicle.stanleyHeadingErrorGain,
+                    StanleyDistanceErrorGain = mf.vehicle.stanleyDistanceErrorGain,
+                    GoalPointDistance = mf.vehicle.UpdateGoalPointDistance(),
+                    UTurnCompensation = mf.vehicle.uturnCompensation,
+                    FixHeading = mf.fixHeading,
+                    AvgSpeed = mf.avgSpeed,
+                    IsReverse = mf.isReverse,
+                    UTurnStyle = uTurnStyle
+                };
+
+                // Delegate to Core service
+                var output = _coreGuidanceService.CalculateGuidance(input);
+
+                // Check if turn complete
+                if (output.IsTurnComplete)
+                {
+                    CompleteYouTurn();
+                    return false;
+                }
+
+                // Unpack results to WinForms fields
+                distanceFromCurrentLine = output.DistanceFromCurrentLine;
+                steerAngleYT = output.SteerAngle;
+                rEastYT = output.REast;
+                rNorthYT = output.RNorth;
+                A = output.PointA;
+                B = output.PointB;
+                onA = A;
+
+                if (!mf.isStanleyUsed)
+                {
+                    goalPointYT.easting = output.GoalPoint.Easting;
+                    goalPointYT.northing = output.GoalPoint.Northing;
+                    radiusPointYT.easting = output.RadiusPoint.Easting;
+                    radiusPointYT.northing = output.RadiusPoint.Northing;
+                    ppRadiusYT = output.PPRadius;
+                }
+
+                // UI integration
+                mf.vehicle.modeActualXTE = output.ModeActualXTE;
+                mf.guidanceLineDistanceOff = output.GuidanceLineDistanceOff;
+                mf.guidanceLineSteerAngle = output.GuidanceLineSteerAngle;
+
+                return true;
+            }
+            else
+            {
+                CompleteYouTurn();
+                return false;
+            }
+        }
+
+        // Old implementation below - REPLACED by Core delegation above
+        // Keeping for reference during Phase 5.2 testing
+        /*
+        public bool DistanceFromYouTurnLine_OLD()
+        {
             //grab a copy from main - the steer position
             double minDistA = 1000000, minDistB = 1000000;
             int ptCount = ytList.Count;
@@ -2813,6 +2896,7 @@ namespace AgOpenGPS
                 return false;
             }
         }
+        */
 
         //Duh.... What does this do....
         public void DrawYouTurn()
