@@ -1,25 +1,28 @@
-// This file centralizes all coordinate conversion previously handled in CNMEA
-// Now uses LocalPlane, Wgs84, GeoCoord, and related structs (C# 7.1 compatible)
-
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.Linq;
-using System.Diagnostics;
 using AgLibrary.Logging;
 using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.Base;
 using AgOpenGPS.Core.Models.AgShare;
+using AgOpenGPS.Core.Services.AgShare;
 using AgOpenGPS.Forms;
 
 namespace AgOpenGPS
 {
+    /// <summary>
+    /// WinForms wrapper for AgShare upload functionality.
+    /// Delegates to Core AgShareUploaderService.
+    /// </summary>
     public class CAgShareUploader
     {
+        private static readonly AgShareUploaderService _uploaderService = new AgShareUploaderService();
 
-        // Create a snapshot from the current GPS session to upload
+        /// <summary>
+        /// Create a snapshot from the current GPS session to upload
+        /// </summary>
         public static FieldSnapshot CreateSnapshot(FormGPS gps)
         {
             string dir = Path.Combine(RegistrySettings.fieldsDirectory, gps.currentFieldDirectory);
@@ -62,141 +65,52 @@ namespace AgOpenGPS
             return snapshot;
         }
 
-        // Upload snapshot to AgShare using boundary with holes
+        /// <summary>
+        /// Upload snapshot to AgShare using boundary with holes
+        /// </summary>
         public static async Task UploadAsync(FieldSnapshot snapshot, AgShareClient client, FormGPS gps)
         {
             try
             {
-                if (snapshot.Boundaries == null || snapshot.Boundaries.Count == 0)
-                    return;
-
-                List<CoordinateDto> outer = ConvertBoundary(snapshot.Boundaries[0], snapshot.Converter);
-                if (outer == null || outer.Count < 3) return;
-
-                List<List<CoordinateDto>> holes = new List<List<CoordinateDto>>();
-                for (int i = 1; i < snapshot.Boundaries.Count; i++)
+                // Convert WinForms FieldSnapshot to Core FieldSnapshotInput
+                var input = new FieldSnapshotInput
                 {
-                    List<CoordinateDto> hole = ConvertBoundary(snapshot.Boundaries[i], snapshot.Converter);
-                    if (hole.Count >= 4) holes.Add(hole);
-                }
-
-                List<AbLineUploadDto> abLines = ConvertAbLines(snapshot.Tracks, snapshot.Converter);
-
-                bool isPublic = false;
-                try
-                {
-                    string json = await client.DownloadFieldAsync(snapshot.FieldId);
-                    AgShareFieldDto field = JsonConvert.DeserializeObject<AgShareFieldDto>(json);
-                    if (field != null) isPublic = field.IsPublic;
-                }
-                catch (Exception)
-                {
-                    Log.EventWriter("Failed to check field visibility on AgShare, defaulting to private.");
-                }
-
-                var boundary = new
-                {
-                    outer = outer,
-                    holes = holes
+                    FieldName = snapshot.FieldName,
+                    FieldId = snapshot.FieldId,
+                    Origin = new Wgs84(snapshot.OriginLat, snapshot.OriginLon),
+                    Convergence = snapshot.Convergence,
+                    Boundaries = snapshot.Boundaries.Select(b => b.Select(v => (Vec3)v).ToList()).ToList(),
+                    Tracks = snapshot.Tracks.Select(t => new TrackLineInput
+                    {
+                        Name = t.name,
+                        Mode = (Core.Models.AgShare.TrackMode)(int)t.mode, // Cast via int
+                        PtA = new Vec3(t.ptA.easting, t.ptA.northing, 0),
+                        PtB = new Vec3(t.ptB.easting, t.ptB.northing, 0),
+                        CurvePoints = t.curvePts.Select(v => (Vec3)v).ToList()
+                    }).ToList(),
+                    IsPublic = false
                 };
 
-                var payload = new
-                {
-                    name = snapshot.FieldName,
-                    isPublic = isPublic,
-                    origin = new { latitude = snapshot.OriginLat, longitude = snapshot.OriginLon },
-                    boundary = boundary,
-                    abLines = abLines,
-                    convergence = snapshot.Convergence,
-                    sourceId = (string)null
-                };
+                // Delegate to Core service
+                var result = await _uploaderService.UploadFieldAsync(
+                    input,
+                    client.GetCoreClient(),
+                    snapshot.FieldDirectory
+                );
 
-                var uploadResult = await client.UploadFieldAsync(snapshot.FieldId, payload);
-                bool ok = uploadResult.ok;
-                string message = uploadResult.message;
-
-                if (ok)
+                if (result.success)
                 {
-                    string txtPath = Path.Combine(snapshot.FieldDirectory, "agshare.txt");
-                    File.WriteAllText(txtPath, snapshot.FieldId.ToString());
-                    Log.EventWriter("Field uploaded to AgShare: " + snapshot.FieldName + " (" + snapshot.FieldId + ")");
+                    Log.EventWriter($"Field uploaded to AgShare: {snapshot.FieldName} ({result.fieldId})");
+                }
+                else
+                {
+                    Log.EventWriter($"Failed to upload field to AgShare: {result.message}");
                 }
             }
             catch (Exception ex)
             {
                 Log.EventWriter("Error uploading field to AgShare: " + ex.Message);
             }
-        }
-
-        // Convert local NE boundary to WGS84
-        private static List<CoordinateDto> ConvertBoundary(List<vec3> localFence, LocalPlane converter)
-        {
-            List<CoordinateDto> coords = new List<CoordinateDto>();
-            for (int i = 0; i < localFence.Count; i++)
-            {
-                GeoCoord geo = new GeoCoord(localFence[i].northing, localFence[i].easting);
-                Wgs84 wgs = converter.ConvertGeoCoordToWgs84(geo);
-                coords.Add(new CoordinateDto { Latitude = wgs.Latitude, Longitude = wgs.Longitude });
-            }
-
-            if (coords.Count > 1)
-            {
-                CoordinateDto first = coords[0];
-                CoordinateDto last = coords[coords.Count - 1];
-                if (first.Latitude != last.Latitude || first.Longitude != last.Longitude)
-                {
-                    coords.Add(first);
-                }
-            }
-
-            return coords;
-        }
-
-        // Convert track lines from local NE to WGS84 format
-        private static List<AbLineUploadDto> ConvertAbLines(List<CTrk> tracks, LocalPlane converter)
-        {
-            List<AbLineUploadDto> result = new List<AbLineUploadDto>();
-
-            foreach (CTrk ab in tracks)
-            {
-                if (ab.mode == TrackMode.AB)
-                {
-                    GeoCoord a = new GeoCoord(ab.ptA.northing, ab.ptA.easting);
-                    GeoCoord b = new GeoCoord(ab.ptB.northing, ab.ptB.easting);
-                    Wgs84 wgsA = converter.ConvertGeoCoordToWgs84(a);
-                    Wgs84 wgsB = converter.ConvertGeoCoordToWgs84(b);
-
-                    result.Add(new AbLineUploadDto
-                    {
-                        Name = ab.name,
-                        Type = "AB",
-                        Coords = new List<CoordinateDto>
-                        {
-                            new CoordinateDto { Latitude = wgsA.Latitude, Longitude = wgsA.Longitude },
-                            new CoordinateDto { Latitude = wgsB.Latitude, Longitude = wgsB.Longitude }
-                        }
-                    });
-                }
-                else if (ab.mode == TrackMode.Curve && ab.curvePts.Count >= 2)
-                {
-                    List<CoordinateDto> coords = new List<CoordinateDto>();
-                    foreach (vec3 pt in ab.curvePts)
-                    {
-                        GeoCoord geo = new GeoCoord(pt.northing, pt.easting);
-                        Wgs84 wgs = converter.ConvertGeoCoordToWgs84(geo);
-                        coords.Add(new CoordinateDto { Latitude = wgs.Latitude, Longitude = wgs.Longitude });
-                    }
-
-                    result.Add(new AbLineUploadDto
-                    {
-                        Name = ab.name,
-                        Type = "Curve",
-                        Coords = coords
-                    });
-                }
-            }
-
-            return result;
         }
     }
 }
