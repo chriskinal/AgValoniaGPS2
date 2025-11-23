@@ -38,6 +38,7 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Track Nudging** | Core/Services/Track/TrackNudgingService.cs | ✅ ITrackNudgingService, TrackNudgingService, ABLineNudgeInput, ABLineNudgeOutput, CurveNudgeInput, CurveNudgeOutput (WinForms delegates to Core - AB line and curve perpendicular offset with filtering and smoothing) |
 | **YouTurn Guidance** | Core/Services/YouTurn/YouTurnGuidanceService.cs | ✅ YouTurnGuidanceService, YouTurnGuidanceInput, YouTurnGuidanceOutput (WinForms delegates to Core - Stanley & Pure Pursuit controllers for U-turn following) |
 | **YouTurn Creation** | Core/Services/YouTurn/YouTurnCreationService.cs | ✅ YouTurnCreationService, YouTurnCreationInput, YouTurnCreationOutput, BoundaryTurnLine, YouTurnType (WinForms delegates to Core - All 6 turn types: Omega, Wide, K-style for Curves and AB lines) |
+| **Headland Detection** | Core/Services/Headland/HeadlandDetectionService.cs | ✅ HeadlandDetectionService, HeadlandDetectionInput, HeadlandDetectionOutput, BoundaryData, SectionCornerData, LookAheadConfig, SectionHeadlandStatus (WinForms delegates to Core - Point-in-polygon detection, section status, proximity warnings) |
 
 ---
 
@@ -171,18 +172,22 @@ Advanced features requiring careful architectural planning.
 |----------|---------|----------|-------|-------------|--------------|--------|
 | 5.1 | **CRecordedPath** | Classes/CRecordedPath.cs | 665 | Recorded path playback | Vehicle, Sim, Dubins, Guidance | ✅ |
 | 5.2 | **CYouTurn** | Classes/CYouTurn.cs | 2897 | U-turn generation and execution | Tool, Vehicle, ABLine, Curve, Boundary, Dubins | ✅ |
-| 5.3 | **CBoundary** | Classes/CBoundary.cs | 1000+ | Boundary and headland management | File I/O, multiple dependencies | 📋 |
+| 5.3 | **CBoundary** | Classes/CBoundary.cs | 1000+ | Boundary and headland management | File I/O, multiple dependencies | ✅ |
 | 5.4 | **AgShareClient** | AgShare/AgShareClient.cs | ? | Cloud field sharing | HTTP client, authentication | 📋 |
 | 5.5 | **AgShareUploader** | AgShare/AgShareUploader.cs | ? | Upload fields to cloud | AgShareClient | 📋 |
 | 5.6 | **AgShareDownloader** | AgShare/AgShareDownloader.cs | ? | Download shared fields | AgShareClient | 📋 |
 
 **Notes:**
-- **Phase 5.1-5.2 COMPLETE** ✅ - CRecordedPath and CYouTurn migrated to AgOpenGPS.Core
+- **Phase 5.1-5.3 COMPLETE** ✅ - CRecordedPath, CYouTurn, and CBoundary migrated to AgOpenGPS.Core
 - CRecordedPath: Path playback delegated to Core CurvePurePursuitGuidanceService (667→665 lines)
 - CYouTurn: Full migration with all 6 turn types (Omega, Wide, K-style for Curves and AB lines)
   - YouTurnGuidanceService: Stanley & Pure Pursuit controllers for turn following
   - YouTurnCreationService: Complete turn generation algorithms (2,847 lines added to Core)
   - WinForms DistanceFromYouTurnLine() delegates to Core guidance service
+- CBoundary: Headland detection delegated to Core (most boundary algorithms migrated in Phase 3)
+  - HeadlandDetectionService: Point-in-polygon, section detection, proximity warnings (197 lines)
+  - CHead.cs: All detection methods delegate to Core service (168→183 lines with helper methods)
+  - Boundary geometry services already in Core from Phase 3 (FenceLineService, TurnLineService, etc.)
 - CYouTurn is 2,897 lines - largest and most complex service completed
 - CBoundary, AgShare services deferred until needed
 
