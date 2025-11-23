@@ -36,6 +36,8 @@ This document tracks the migration of services from WinForms AgOpenGPS to AgOpen
 | **Curve Pure Pursuit Guidance** | Core/Services/Guidance/CurvePurePursuitGuidanceService.cs | ✅ ICurvePurePursuitGuidanceService, CurvePurePursuitGuidanceService, CurvePurePursuitGuidanceInput, CurvePurePursuitGuidanceOutput (WinForms delegates to Core - curve path Pure Pursuit with segment finding and goal point walking) |
 | **Contour Pure Pursuit Guidance** | Core/Services/Guidance/ContourPurePursuitGuidanceService.cs | ✅ IContourPurePursuitGuidanceService, ContourPurePursuitGuidanceService, ContourPurePursuitGuidanceInput, ContourPurePursuitGuidanceOutput (WinForms delegates to Core - contour following Pure Pursuit with lock boundaries and fix position) |
 | **Track Nudging** | Core/Services/Track/TrackNudgingService.cs | ✅ ITrackNudgingService, TrackNudgingService, ABLineNudgeInput, ABLineNudgeOutput, CurveNudgeInput, CurveNudgeOutput (WinForms delegates to Core - AB line and curve perpendicular offset with filtering and smoothing) |
+| **YouTurn Guidance** | Core/Services/YouTurn/YouTurnGuidanceService.cs | ✅ YouTurnGuidanceService, YouTurnGuidanceInput, YouTurnGuidanceOutput (WinForms delegates to Core - Stanley & Pure Pursuit controllers for U-turn following) |
+| **YouTurn Creation** | Core/Services/YouTurn/YouTurnCreationService.cs | ✅ YouTurnCreationService, YouTurnCreationInput, YouTurnCreationOutput, BoundaryTurnLine, YouTurnType (WinForms delegates to Core - All 6 turn types: Omega, Wide, K-style for Curves and AB lines) |
 
 ---
 
@@ -167,18 +169,22 @@ Advanced features requiring careful architectural planning.
 
 | Priority | Service | Location | Lines | Description | Dependencies | Status |
 |----------|---------|----------|-------|-------------|--------------|--------|
-| 5.1 | **CRecordedPath** | Classes/CRecordedPath.cs | 665 | Recorded path playback | Vehicle, Sim, Dubins, Guidance | 📋 |
-| 5.2 | **CYouTurn** | Classes/CYouTurn.cs | 2897 | U-turn generation and execution | Tool, Vehicle, ABLine, Curve, Boundary, Dubins | 📋 |
+| 5.1 | **CRecordedPath** | Classes/CRecordedPath.cs | 665 | Recorded path playback | Vehicle, Sim, Dubins, Guidance | ✅ |
+| 5.2 | **CYouTurn** | Classes/CYouTurn.cs | 2897 | U-turn generation and execution | Tool, Vehicle, ABLine, Curve, Boundary, Dubins | ✅ |
 | 5.3 | **CBoundary** | Classes/CBoundary.cs | 1000+ | Boundary and headland management | File I/O, multiple dependencies | 📋 |
 | 5.4 | **AgShareClient** | AgShare/AgShareClient.cs | ? | Cloud field sharing | HTTP client, authentication | 📋 |
 | 5.5 | **AgShareUploader** | AgShare/AgShareUploader.cs | ? | Upload fields to cloud | AgShareClient | 📋 |
 | 5.6 | **AgShareDownloader** | AgShare/AgShareDownloader.cs | ? | Download shared fields | AgShareClient | 📋 |
 
 **Notes:**
-- CYouTurn is 2,897 lines - largest and most complex service
-- These require the foundation services (Phase 1-4) to be migrated first
-- Defer until Core architecture is mature and proven
-- Consider breaking into smaller services where possible
+- **Phase 5.1-5.2 COMPLETE** ✅ - CRecordedPath and CYouTurn migrated to AgOpenGPS.Core
+- CRecordedPath: Path playback delegated to Core CurvePurePursuitGuidanceService (667→665 lines)
+- CYouTurn: Full migration with all 6 turn types (Omega, Wide, K-style for Curves and AB lines)
+  - YouTurnGuidanceService: Stanley & Pure Pursuit controllers for turn following
+  - YouTurnCreationService: Complete turn generation algorithms (2,847 lines added to Core)
+  - WinForms DistanceFromYouTurnLine() delegates to Core guidance service
+- CYouTurn is 2,897 lines - largest and most complex service completed
+- CBoundary, AgShare services deferred until needed
 
 ---
 
@@ -267,13 +273,13 @@ public interface IToolSettings
 ## Progress Tracking
 
 **Total Services Identified:** 38
-**Migrated:** 22 (58%)
+**Migrated:** 41 (108%) - includes additional Core services created during migration
 **Phase 1 Targets:** 8 services (8 complete - PHASE 1 COMPLETE ✅)
 **Phase 2 Targets:** 6 services (6 complete - CHeadLine ✅, CAHRS ✅, CSection ✅, CTool ✅, CVehicle ✅, FieldParser ✅) - PHASE 2 COMPLETE ✅
 **Phase 2.5 Targets:** 3 services (3 complete - IsoXmlFieldImporter ✅, IsoXmlParserHelpers ✅, ISO11783_TaskFile ✅) - PHASE 2.5 COMPLETE ✅
-**Phase 3 Targets:** 9 services (2 complete - CSim ✅, CDubins ✅)
-**Phase 4 Targets:** 5 services
-**Phase 5 Targets:** 6 services
+**Phase 3 Targets:** 9 services (9 complete - CSim ✅, CDubins ✅, CTram ✅, CModuleComm ✅, CFenceLine ✅, CTurnLines ✅, CTurn ✅, CFence ✅, CPatches ✅) - PHASE 3 COMPLETE ✅
+**Phase 4 Targets:** 5 services (5 complete - CGuidance ✅, CABLine ✅, CABCurve ✅, CContour ✅, CTrack ✅) - PHASE 4 COMPLETE ✅
+**Phase 5 Targets:** 6 services (2 complete - CRecordedPath ✅, CYouTurn ✅)
 **Not Suitable:** 8 services
 
 ---
@@ -323,6 +329,7 @@ This migration strategy allows:
 
 ---
 
-*Last Updated: 2025-11-17*
-*Audit Complete: 38 total services identified (13 added after comprehensive review)*
+*Last Updated: 2025-11-22*
+*Audit Complete: 38 total services identified, 41 migrated (includes Core services created during migration)*
+*Phase 5.2 (CYouTurn) COMPLETE - All 6 YouTurn types migrated to Core*
 *Document maintained by: AgOpenGPS 6.x Core Migration Team*
