@@ -404,31 +404,49 @@ public class MainViewModel : ReactiveObject
         // Convert simulated GPS data to regular GpsData and forward to GPS service
         var simulatedData = e.Data;
 
-        // Create Position from simulated data (includes WGS84 and UTM coordinates)
-        var position = new AgOpenGPS.Core.Models.GPS.Position
-        {
-            Latitude = simulatedData.Position.Latitude,
-            Longitude = simulatedData.Position.Longitude,
-            Altitude = simulatedData.Altitude,
-            Easting = simulatedData.LocalPosition.Easting,
-            Northing = simulatedData.LocalPosition.Northing,
-            Zone = 0, // Will be computed by coordinate conversion if needed
-            Hemisphere = 'N', // Default to North
-            Heading = simulatedData.HeadingDegrees,
-            Speed = simulatedData.SpeedKmh / 3.6 // Convert km/h to m/s
-        };
+        // Convert WGS84 to UTM using GPS service (it handles the conversion)
+        // Let the GPS service do the full conversion through its normal pipeline
+        var nmea = FormatGGASentence(
+            simulatedData.Position.Latitude,
+            simulatedData.Position.Longitude,
+            simulatedData.Altitude,
+            4, // RTK Fixed
+            simulatedData.SatellitesTracked,
+            simulatedData.Hdop);
 
-        // Create GpsData with simulated values
-        var gpsData = new AgOpenGPS.Core.Models.GPS.GpsData
-        {
-            CurrentPosition = position,
-            FixQuality = 4, // RTK Fixed
-            SatellitesInUse = simulatedData.SatellitesTracked,
-            Hdop = simulatedData.Hdop
-        };
+        // Parse through GPS service to get proper Position with UTM coordinates
+        _nmeaParser.ParseSentence(nmea);
+    }
 
-        // Update UI through the regular GPS data updated handler
-        Dispatcher.UIThread.Invoke(() => UpdateGpsProperties(gpsData));
+    private string FormatGGASentence(double lat, double lon, double altitude, int quality, int satellites, double hdop)
+    {
+        // Format latitude (DDMM.MMMM)
+        int latDeg = (int)Math.Abs(lat);
+        double latMin = (Math.Abs(lat) - latDeg) * 60.0;
+        string latHemi = lat >= 0 ? "N" : "S";
+        string latStr = $"{latDeg:00}{latMin:00.0000}";
+
+        // Format longitude (DDDMM.MMMM)
+        int lonDeg = (int)Math.Abs(lon);
+        double lonMin = (Math.Abs(lon) - lonDeg) * 60.0;
+        string lonHemi = lon >= 0 ? "E" : "W";
+        string lonStr = $"{lonDeg:000}{lonMin:00.0000}";
+
+        // Format time (HHMMSS.SS)
+        var now = DateTime.UtcNow;
+        string time = $"{now.Hour:00}{now.Minute:00}{now.Second:00}.{now.Millisecond / 10:00}";
+
+        // Build GGA sentence (without checksum for simplicity - parser should handle it)
+        var gga = $"$GPGGA,{time},{latStr},{latHemi},{lonStr},{lonHemi},{quality},{satellites:00},{hdop:0.0},{altitude:0.0},M,0.0,M,,";
+
+        // Calculate checksum
+        byte checksum = 0;
+        for (int i = 1; i < gga.Length; i++)
+        {
+            checksum ^= (byte)gga[i];
+        }
+
+        return $"{gga}*{checksum:X2}";
     }
 
     private void OnUdpDataReceived(object? sender, UdpDataReceivedEventArgs e)
