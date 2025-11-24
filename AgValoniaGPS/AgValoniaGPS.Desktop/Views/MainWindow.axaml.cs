@@ -958,11 +958,14 @@ public partial class MainWindow : Window
 
     private void SimulatorPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (SimulatorPanel != null && e.Pointer.Captured == sender)
+        if (SimulatorPanel != null)
         {
-            // Reset state
+            // Always release capture and reset state, regardless of whether we were dragging
             _isDraggingSimulator = false;
-            e.Pointer.Capture(null);
+            if (e.Pointer.Captured == sender)
+            {
+                e.Pointer.Capture(null);
+            }
             e.Handled = true;
         }
     }
