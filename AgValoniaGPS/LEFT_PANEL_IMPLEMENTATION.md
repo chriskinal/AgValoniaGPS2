@@ -79,20 +79,26 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ✅ 3. Configuration (Dropdown)
+### ✅ 3. Configuration (Floating Panel)
 - **Icon**: `Settings48.png`
-- **Type**: Dropdown menu
+- **Type**: Floating panel (2-column layout, 4 items per column)
 - **Function**: Vehicle, implement, and system configuration
-- **Sub-menu items**:
-  - [ ] Configuration (Vehicle setup)
-  - [ ] Auto Steer settings
-  - [ ] View All Settings
-  - [ ] Directories
-  - [ ] GPS Data
-  - [ ] Colors
-  - [ ] Multi-Section Colors
-  - [ ] HotKeys
+- **Panel items** (8 items total):
+  - **Left Column - Main Settings:**
+    - [x] Configuration (Vehicle setup) - Icon: `Settings48.png`
+    - [x] Auto Steer - Icon: `AutoSteerOff.png`
+    - [x] View All Settings - Icon: `ScreenShot.png`
+    - [x] Directories - Icon: `FileOpen.png`
+  - **Right Column - Data & Appearance:**
+    - [x] GPS Data - Icon: `GPSQuality.png`
+    - [x] Colors - Icon: `ColourPick.png`
+    - [x] Multi-Section Colors - Icon: `SectionMapping.png`
+    - [x] HotKeys - Icon: `ConD_KeyBoard.png`
 
+**Current Status**: ✅ **COMPLETE** - Implemented at `MainWindow.axaml:551-675`
+**Layout**: 2-column Grid (4 rows × 2 columns), aligned with left panel top (Canvas.Top="100")
+**ViewModel**: `IsConfigurationPanelVisible`, `ToggleConfigurationPanelCommand` in MainViewModel.cs
+**Drag Handlers**: `ConfigurationPanel_PointerPressed/Moved/Released` in MainWindow.axaml.cs
 **WinForms Reference**: `statusStrip2` → `toolStripDropDownButton1` (FormGPS.Designer.cs:1673-1780)
 
 ---

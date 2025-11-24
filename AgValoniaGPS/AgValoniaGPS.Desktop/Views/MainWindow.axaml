@@ -188,7 +188,8 @@
                     </Button>
 
                     <!-- 3. Configuration -->
-                    <Button Classes="LeftPanelButton" ToolTip.Tip="Configuration">
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Configuration"
+                            Command="{Binding ToggleConfigurationPanelCommand}">
                         <Image Source="/Assets/Icons/Settings48.png" Stretch="Uniform"/>
                     </Button>
 
@@ -540,6 +541,132 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/ABTracks.png" Width="28" Height="28"/>
                                 <TextBlock Text="Log Viewer" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- Configuration Panel (floating, toggleable, draggable) - 2 columns -->
+        <Canvas>
+            <Border x:Name="ConfigurationPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="100"
+                    IsVisible="{Binding IsConfigurationPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="400">
+                <StackPanel Spacing="4">
+                    <!-- Header with drag handle and close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          Height="32"
+                          Margin="0,0,0,8"
+                          Background="#DD2C3E50"
+                          Cursor="Hand"
+                          PointerPressed="ConfigurationPanel_PointerPressed"
+                          PointerMoved="ConfigurationPanel_PointerMoved"
+                          PointerReleased="ConfigurationPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag Handle Icon -->
+                        <TextBlock Grid.Column="0"
+                                   Text="≡"
+                                   Foreground="#AAA"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,8,0"
+                                   IsHitTestVisible="False"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1"
+                                   Text="Configuration"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                        <!-- Close Button -->
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Width="24" Height="24"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#888"
+                                FontSize="16"
+                                Cursor="Hand"
+                                Command="{Binding ToggleConfigurationPanelCommand}"
+                                ToolTip.Tip="Close"
+                                Margin="8,0,8,0"/>
+                    </Grid>
+
+                    <Separator Height="1" Background="#444" Margin="0,0,0,4"/>
+
+                    <!-- Two Column Layout - 8 items (4 per column) -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                        <!-- Left Column: Main Settings (4 items) -->
+                        <!-- Row 0: Configuration -->
+                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/Settings48.png" Width="28" Height="28"/>
+                                <TextBlock Text="Configuration" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: Auto Steer -->
+                        <Button Grid.Column="0" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/AutoSteerOff.png" Width="28" Height="28"/>
+                                <TextBlock Text="Auto Steer" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: View All Settings -->
+                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ScreenShot.png" Width="28" Height="28"/>
+                                <TextBlock Text="View All Settings" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: Directories -->
+                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/FileOpen.png" Width="28" Height="28"/>
+                                <TextBlock Text="Directories" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Right Column: Data & Appearance (4 items) -->
+                        <!-- Row 0: GPS Data -->
+                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/GPSQuality.png" Width="28" Height="28"/>
+                                <TextBlock Text="GPS Data" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: Colors -->
+                        <Button Grid.Column="1" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ColourPick.png" Width="28" Height="28"/>
+                                <TextBlock Text="Colors" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: Multi-Section Colors -->
+                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/SectionMapping.png" Width="28" Height="28"/>
+                                <TextBlock Text="Multi-Section Colors" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: HotKeys -->
+                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ConD_KeyBoard.png" Width="28" Height="28"/>
+                                <TextBlock Text="HotKeys" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
                     </Grid>
