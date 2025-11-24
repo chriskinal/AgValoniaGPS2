@@ -969,7 +969,7 @@
                         </Grid>
 
                         <!-- Row 3: Steer Angle Display -->
-                        <TextBlock Text="{Binding SimulatorSteerAngleDisplay, StringFormat='Steer Angle: {0}°'}"
+                        <TextBlock Text="{Binding SimulatorSteerAngleDisplay}"
                                    HorizontalAlignment="Center"
                                    FontSize="12"
                                    Foreground="#DDD"/>

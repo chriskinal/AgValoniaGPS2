@@ -909,6 +909,10 @@ public partial class MainWindow : Window
     {
         if (SimulatorPanel != null && sender is Grid header)
         {
+            // Don't handle if clicking on a button (let button handle it)
+            if (e.Source is Button)
+                return;
+
             _dragStartPoint = e.GetPosition(this);
             e.Pointer.Capture(header);
             // Suppress tooltip to prevent it from following during drag

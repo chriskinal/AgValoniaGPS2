@@ -684,6 +684,7 @@ public class MainViewModel : ReactiveObject
         set
         {
             this.RaiseAndSetIfChanged(ref _simulatorSteerAngle, value);
+            this.RaisePropertyChanged(nameof(SimulatorSteerAngleDisplay)); // Notify display property
             if (_isSimulatorEnabled)
             {
                 _simulatorService.SteerAngle = value;
@@ -691,7 +692,7 @@ public class MainViewModel : ReactiveObject
         }
     }
 
-    public string SimulatorSteerAngleDisplay => _simulatorSteerAngle.ToString("F1");
+    public string SimulatorSteerAngleDisplay => $"Steer Angle: {_simulatorSteerAngle:F1}°";
 
     // Navigation settings properties (forwarded from service)
     public bool IsGridOn
