@@ -210,8 +210,9 @@
                         <Image Source="/Assets/Icons/AutoSteerConf.png" Stretch="Uniform"/>
                     </Button>
 
-                    <!-- 7. AgIO -->
-                    <Button Classes="LeftPanelButton" ToolTip.Tip="Start AgIO">
+                    <!-- 7. AgIO / Data I/O -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Data I/O"
+                            Click="BtnDataIO_Click">
                         <Image Source="/Assets/Icons/AgIO.png" Stretch="Uniform"/>
                     </Button>
                 </StackPanel>

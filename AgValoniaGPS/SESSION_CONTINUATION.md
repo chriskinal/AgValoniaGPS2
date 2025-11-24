@@ -1,14 +1,14 @@
 # Session Continuation - Left Panel Implementation
 
 **Date**: 2025-01-23
-**Status**: 6 of 8 left panel buttons complete (75%)
-**Last Commit**: [Pending] - "feat: Field Tools floating panel implementation"
+**Status**: 7 of 8 left panel buttons complete (87.5%)
+**Last Commit**: [Pending] - "feat: Wire AgIO button to Data I/O dialog"
 
 ---
 
 ## What We've Accomplished This Session
 
-### ✅ Completed Floating Panels (6/8)
+### ✅ Completed Buttons (7/8)
 
 1. **File Menu Panel** (Button 0)
    - Draggable Canvas-based floating panel
@@ -73,6 +73,14 @@
    - Drag handlers: `FieldToolsPanel_PointerPressed/Moved/Released`
    - Build status: ✅ Successful (0 errors)
 
+7. **AgIO / Data I/O Button** (Button 7)
+   - Direct action button (not a floating panel)
+   - Opens existing **DataIODialog** for NTRIP configuration
+   - Dialog features: NTRIP caster settings, UDP forwarding, GGA reporting
+   - Implementation: Wired to existing `BtnDataIO_Click` event handler
+   - No new code required - leveraged existing dialog
+   - Build status: ✅ Successful (0 errors)
+
 ### 🎯 Established Pattern - Draggable Floating Panel Template
 
 **XAML Structure:**
@@ -133,20 +141,21 @@ TogglePanelCommand = new RelayCommand(() =>
 
 ---
 
-## What's Next - Remaining 2 Buttons
+## What's Next - Remaining 1 Button
 
-### 📋 Remaining Left Panel Buttons (Priority Order)
+### 📋 Remaining Left Panel Button
 
-6. **AutoSteer Config** (Direct Button → Dialog/Panel)
+6. **AutoSteer Config** (Floating Panel - To Be Created)
    - WinForms: `btnAutoSteerConfig` (FormGPS.Designer.cs:1818)
-   - Opens: AutoSteer configuration dialog (Gain settings, Look-ahead distance, Minimum speed, Stanley/Pure Pursuit mode, Wheel/axle settings)
+   - Type: New floating panel (similar to Tools/Configuration panels)
+   - Panel items to include:
+     - Gain settings
+     - Look-ahead distance
+     - Minimum speed
+     - Stanley/Pure Pursuit mode selector
+     - Wheel/axle settings
    - Icon: `AutoSteerConf.png` ✅ Already in Assets/Icons/
-
-8. **AgIO** (Direct Button → Launch/Connect)
-   - WinForms: `btnStartAgIO` (FormGPS.Designer.cs:1844)
-   - Function: Launch/connect to AgIO communication hub
-   - Action: Start AgIO application or open connection dialog
-   - Icon: `AgIO.png` ✅ Already in Assets/Icons/
+   - Status: **Requires new panel design and implementation**
 
 ---
 
@@ -265,8 +274,8 @@ git log --oneline -5
 ---
 
 **Session Duration**: ~4 hours
-**Progress**: 75% complete (6 of 8 buttons) 🎉
-**Estimated Remaining**: ~2 hours (pattern is well-established, remaining buttons should go faster)
+**Progress**: 87.5% complete (7 of 8 buttons) 🎉
+**Remaining**: 1 button (AutoSteer Config - requires new panel design)
 **Icons Copied**: 38 icons total
   - Tools panel: 13 icons (WizardWand, Chart, AutoSteerOn, ConS_SourcesHeading, AutoManualIsAuto, ConS_SourcesRoll, Boundary, ConD_ExtraGuides, ABSmooth, TrashContourRef, ABTracks, Webcam, YouTurnReverse)
   - Configuration panel: 8 icons (Settings48, AutoSteerOff, ScreenShot, FileOpen, GPSQuality, ColourPick, SectionMapping, ConD_KeyBoard)

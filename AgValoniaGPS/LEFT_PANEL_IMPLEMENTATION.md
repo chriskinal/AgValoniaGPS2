@@ -1,6 +1,6 @@
 # Left Panel Implementation Checklist
 
-**Status**: In Progress (6/8 buttons complete)
+**Status**: In Progress (7/8 buttons complete - 87.5%)
 **Target**: Implement complete left navigation panel for AgValoniaGPS
 **Last Updated**: 2025-01-23
 
@@ -155,26 +155,33 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ❌ 6. AutoSteer Config (Direct Button)
+### ❌ 6. AutoSteer Config (Floating Panel)
 - **Icon**: `AutoSteerConf.png`
-- **Type**: Direct action button
-- **Function**: Open AutoSteer configuration dialog
-- **Opens**: Steering parameters setup
+- **Type**: Floating panel (to be created)
+- **Function**: Open AutoSteer configuration panel
+- **Panel items** (to be designed):
   - [ ] Gain settings
   - [ ] Look-ahead distance
   - [ ] Minimum speed
   - [ ] Stanley/Pure Pursuit mode
   - [ ] Wheel/axle settings
+- **Status**: Panel not yet created - requires design and implementation
+- **Note**: This will be a new floating panel similar to Tools/Configuration panels
 
 **WinForms Reference**: `btnAutoSteerConfig` (FormGPS.Designer.cs:1818)
 
 ---
 
-### ❌ 7. AgIO (Direct Button)
+### ✅ 7. AgIO / Data I/O (Direct Button)
 - **Icon**: `AgIO.png`
 - **Type**: Direct action button
-- **Function**: Launch/connect to AgIO communication hub
-- **Action**: Start AgIO application or open connection dialog
+- **Function**: Open Data I/O configuration dialog
+- **Opens**: DataIODialog (existing dialog for NTRIP configuration)
+  - NTRIP connection settings (Caster address, port, mount point, credentials)
+  - UDP forwarding configuration
+  - GGA reporting interval
+- **Implementation**: Wired to existing `BtnDataIO_Click` handler
+- **Build status**: ✅ Successful (0 errors)
 
 **WinForms Reference**: `btnStartAgIO` (FormGPS.Designer.cs:1844)
 
