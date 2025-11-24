@@ -917,6 +917,7 @@
                                 Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                 Command="{Binding ToggleSimulatorPanelCommand}"
+                                Cursor="Hand"
                                 ToolTip.Tip="Close panel"/>
                     </Grid>
 
@@ -957,7 +958,7 @@
                             </Button>
                             <Slider Grid.Column="1" Margin="0"
                                     Minimum="-40" Maximum="40"
-                                    Value="{Binding SimulatorSteerAngle}"
+                                    Value="{Binding SimulatorSteerAngle, Mode=TwoWay}"
                                     TickFrequency="5"
                                     IsSnapToTickEnabled="True"
                                     ToolTip.Tip="Steering angle"/>
@@ -969,7 +970,7 @@
                         </Grid>
 
                         <!-- Row 3: Steer Angle Display -->
-                        <TextBlock Text="{Binding SimulatorSteerAngleDisplay}"
+                        <TextBlock Text="{Binding SimulatorSteerAngleDisplay, Mode=OneWay}"
                                    HorizontalAlignment="Center"
                                    FontSize="12"
                                    Foreground="#DDD"/>

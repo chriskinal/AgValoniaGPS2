@@ -909,9 +909,14 @@ public partial class MainWindow : Window
     {
         if (SimulatorPanel != null && sender is Grid header)
         {
-            // Don't handle if clicking on a button (let button handle it)
-            if (e.Source is Button)
-                return;
+            // Don't handle if clicking on or within a button (let button handle it)
+            var element = e.Source as Control;
+            while (element != null)
+            {
+                if (element is Button)
+                    return; // Let the button handle the click
+                element = element.Parent as Control;
+            }
 
             _dragStartPoint = e.GetPosition(this);
             e.Pointer.Capture(header);
