@@ -20,8 +20,10 @@ public class MainViewModel : ReactiveObject
     private readonly INtripClientService _ntripService;
     private readonly AgOpenGPS.Core.Interfaces.Services.IDisplaySettingsService _displaySettings;
     private readonly AgOpenGPS.Core.Interfaces.Services.IFieldStatisticsService _fieldStatistics;
+    private readonly AgOpenGPS.Core.Interfaces.Services.IGpsSimulationService _simulatorService;
     private readonly VehicleConfiguration _vehicleConfig;
     private readonly NmeaParserService _nmeaParser;
+    private readonly DispatcherTimer _simulatorTimer;
 
     private string _statusMessage = "Starting...";
     private double _latitude;
@@ -58,6 +60,7 @@ public class MainViewModel : ReactiveObject
         INtripClientService ntripService,
         AgOpenGPS.Core.Interfaces.Services.IDisplaySettingsService displaySettings,
         AgOpenGPS.Core.Interfaces.Services.IFieldStatisticsService fieldStatistics,
+        AgOpenGPS.Core.Interfaces.Services.IGpsSimulationService simulatorService,
         VehicleConfiguration vehicleConfig)
     {
         _udpService = udpService;
@@ -67,6 +70,7 @@ public class MainViewModel : ReactiveObject
         _ntripService = ntripService;
         _displaySettings = displaySettings;
         _fieldStatistics = fieldStatistics;
+        _simulatorService = simulatorService;
         _vehicleConfig = vehicleConfig;
         _nmeaParser = new NmeaParserService(gpsService);
 
@@ -77,9 +81,21 @@ public class MainViewModel : ReactiveObject
         _ntripService.ConnectionStatusChanged += OnNtripConnectionChanged;
         _ntripService.RtcmDataReceived += OnRtcmDataReceived;
         _fieldService.ActiveFieldChanged += OnActiveFieldChanged;
+        _simulatorService.GpsDataUpdated += OnSimulatorGpsDataUpdated;
 
         // Note: NOT subscribing to DisplaySettings events - using direct property access instead
         // to avoid threading issues with ReactiveUI
+
+        // Initialize simulator service with default position (will be updated when GPS gets fix)
+        _simulatorService.Initialize(new AgOpenGPS.Core.Models.Wgs84(40.7128, -74.0060)); // Default to NYC coordinates
+        _simulatorService.StepDistance = 0; // Stationary initially
+
+        // Create simulator timer (100ms tick rate, matching WinForms implementation)
+        _simulatorTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100)
+        };
+        _simulatorTimer.Tick += OnSimulatorTick;
 
         // Initialize commands immediately (with MainThreadScheduler they're thread-safe)
         InitializeCommands();
@@ -376,6 +392,45 @@ public class MainViewModel : ReactiveObject
         Heading = data.CurrentPosition.Heading;
     }
 
+    // Simulator event handlers
+    private void OnSimulatorTick(object? sender, EventArgs e)
+    {
+        // Call simulator Tick with current steer angle
+        _simulatorService.Tick(SimulatorSteerAngle);
+    }
+
+    private void OnSimulatorGpsDataUpdated(object? sender, GpsSimulationEventArgs e)
+    {
+        // Convert simulated GPS data to regular GpsData and forward to GPS service
+        var simulatedData = e.Data;
+
+        // Create Position from simulated data (includes WGS84 and UTM coordinates)
+        var position = new AgOpenGPS.Core.Models.GPS.Position
+        {
+            Latitude = simulatedData.Position.Latitude,
+            Longitude = simulatedData.Position.Longitude,
+            Altitude = simulatedData.Altitude,
+            Easting = simulatedData.LocalPosition.Easting,
+            Northing = simulatedData.LocalPosition.Northing,
+            Zone = 0, // Will be computed by coordinate conversion if needed
+            Hemisphere = 'N', // Default to North
+            Heading = simulatedData.HeadingDegrees,
+            Speed = simulatedData.SpeedKmh / 3.6 // Convert km/h to m/s
+        };
+
+        // Create GpsData with simulated values
+        var gpsData = new AgOpenGPS.Core.Models.GPS.GpsData
+        {
+            CurrentPosition = position,
+            FixQuality = 4, // RTK Fixed
+            SatellitesInUse = simulatedData.SatellitesTracked,
+            Hdop = simulatedData.Hdop
+        };
+
+        // Update UI through the regular GPS data updated handler
+        Dispatcher.UIThread.Invoke(() => UpdateGpsProperties(gpsData));
+    }
+
     private void OnUdpDataReceived(object? sender, UdpDataReceivedEventArgs e)
     {
         var now = DateTime.Now;
@@ -591,6 +646,53 @@ public class MainViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _isFieldToolsPanelVisible, value);
     }
 
+    private bool _isSimulatorPanelVisible;
+    public bool IsSimulatorPanelVisible
+    {
+        get => _isSimulatorPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isSimulatorPanelVisible, value);
+    }
+
+    // Simulator properties
+    private bool _isSimulatorEnabled;
+    public bool IsSimulatorEnabled
+    {
+        get => _isSimulatorEnabled;
+        set
+        {
+            if (this.RaiseAndSetIfChanged(ref _isSimulatorEnabled, value))
+            {
+                // Start or stop simulator timer based on enabled state
+                if (value)
+                {
+                    _simulatorTimer.Start();
+                    StatusMessage = "Simulator ON";
+                }
+                else
+                {
+                    _simulatorTimer.Stop();
+                    StatusMessage = "Simulator OFF";
+                }
+            }
+        }
+    }
+
+    private double _simulatorSteerAngle;
+    public double SimulatorSteerAngle
+    {
+        get => _simulatorSteerAngle;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _simulatorSteerAngle, value);
+            if (_isSimulatorEnabled)
+            {
+                _simulatorService.SteerAngle = value;
+            }
+        }
+    }
+
+    public string SimulatorSteerAngleDisplay => _simulatorSteerAngle.ToString("F1");
+
     // Navigation settings properties (forwarded from service)
     public bool IsGridOn
     {
@@ -674,6 +776,17 @@ public class MainViewModel : ReactiveObject
     public ICommand? IncreaseBrightnessCommand { get; private set; }
     public ICommand? DecreaseBrightnessCommand { get; private set; }
 
+    // Simulator Commands
+    public ICommand? ToggleSimulatorPanelCommand { get; private set; }
+    public ICommand? ResetSimulatorCommand { get; private set; }
+    public ICommand? ResetSteerAngleCommand { get; private set; }
+    public ICommand? SimulatorForwardCommand { get; private set; }
+    public ICommand? SimulatorStopCommand { get; private set; }
+    public ICommand? SimulatorReverseCommand { get; private set; }
+    public ICommand? SimulatorReverseDirectionCommand { get; private set; }
+    public ICommand? SimulatorSteerLeftCommand { get; private set; }
+    public ICommand? SimulatorSteerRightCommand { get; private set; }
+
     private void InitializeCommands()
     {
         // Use simple RelayCommand to avoid ReactiveCommand threading issues
@@ -746,6 +859,61 @@ public class MainViewModel : ReactiveObject
         DecreaseBrightnessCommand = new RelayCommand(() =>
         {
             Brightness -= 5;
+        });
+
+        // Simulator commands
+        ToggleSimulatorPanelCommand = new RelayCommand(() =>
+        {
+            IsSimulatorPanelVisible = !IsSimulatorPanelVisible;
+        });
+
+        ResetSimulatorCommand = new RelayCommand(() =>
+        {
+            _simulatorService.Reset();
+            SimulatorSteerAngle = 0;
+        });
+
+        ResetSteerAngleCommand = new RelayCommand(() =>
+        {
+            SimulatorSteerAngle = 0;
+        });
+
+        SimulatorForwardCommand = new RelayCommand(() =>
+        {
+            _simulatorService.IsAcceleratingForward = true;
+            _simulatorService.IsAcceleratingBackward = false;
+        });
+
+        SimulatorStopCommand = new RelayCommand(() =>
+        {
+            _simulatorService.IsAcceleratingForward = false;
+            _simulatorService.IsAcceleratingBackward = false;
+        });
+
+        SimulatorReverseCommand = new RelayCommand(() =>
+        {
+            _simulatorService.IsAcceleratingBackward = true;
+            _simulatorService.IsAcceleratingForward = false;
+        });
+
+        SimulatorReverseDirectionCommand = new RelayCommand(() =>
+        {
+            // Reverse direction by adding 180 degrees to current heading
+            var newHeading = _simulatorService.HeadingRadians + Math.PI;
+            // Normalize to 0-2π range
+            if (newHeading > Math.PI * 2)
+                newHeading -= Math.PI * 2;
+            _simulatorService.SetHeading(newHeading);
+        });
+
+        SimulatorSteerLeftCommand = new RelayCommand(() =>
+        {
+            SimulatorSteerAngle -= 5.0; // 5 degree increments
+        });
+
+        SimulatorSteerRightCommand = new RelayCommand(() =>
+        {
+            SimulatorSteerAngle += 5.0; // 5 degree increments
         });
     }
 

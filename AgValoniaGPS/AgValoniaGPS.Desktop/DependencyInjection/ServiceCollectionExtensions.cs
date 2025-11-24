@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AgOpenGPS.Core.Interfaces.Services.IGpsService, AgOpenGPS.Core.Services.GpsService>();
         services.AddSingleton<AgOpenGPS.Core.Interfaces.Services.IDisplaySettingsService, AgOpenGPS.Core.Services.DisplaySettingsService>();
         services.AddSingleton<AgOpenGPS.Core.Interfaces.Services.IFieldStatisticsService, AgOpenGPS.Core.Services.FieldStatisticsService>();
+        services.AddSingleton<AgOpenGPS.Core.Interfaces.Services.IGpsSimulationService, AgOpenGPS.Core.Services.GpsSimulationService>();
 
         // Local services (not yet migrated to Core)
         services.AddSingleton<IFieldService, FieldService>();

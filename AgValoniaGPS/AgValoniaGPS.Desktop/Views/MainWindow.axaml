@@ -390,7 +390,8 @@
 
                 <!-- Settings -->
                 <Button Classes="ModernButton" Content="🌐 Language" HorizontalAlignment="Stretch" Margin="0,2"/>
-                <Button Classes="ModernButton" Content="🎮 Simulator" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="🎮 Simulator" HorizontalAlignment="Stretch" Margin="0,2"
+                        Command="{Binding ToggleSimulatorPanelCommand}"/>
                 <Button Classes="ModernButton" Content="📍 Enter Sim Coords" HorizontalAlignment="Stretch" Margin="0,2"/>
 
                 <Separator Height="1" Background="#444" Margin="0,4"/>
@@ -884,6 +885,126 @@
                             </StackPanel>
                         </Button>
                     </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- GPS SIMULATOR PANEL (Draggable) -->
+        <Canvas>
+            <Border x:Name="SimulatorPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="400" Canvas.Top="100"
+                    IsVisible="{Binding IsSimulatorPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="320">
+                <StackPanel Spacing="4">
+                    <!-- Header: Drag handle + Title + Close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" Height="32" Margin="0,0,0,8"
+                          Background="#DD2C3E50" Cursor="Hand"
+                          PointerPressed="SimulatorPanel_PointerPressed"
+                          PointerMoved="SimulatorPanel_PointerMoved"
+                          PointerReleased="SimulatorPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag handle -->
+                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1" Text="GPS Simulator" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <!-- Close button -->
+                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
+                                Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                Command="{Binding ToggleSimulatorPanelCommand}"
+                                ToolTip.Tip="Close panel"/>
+                    </Grid>
+
+                    <Separator Background="#555" Height="1"/>
+
+                    <!-- Simulator Controls -->
+                    <StackPanel Spacing="8" Margin="12">
+                        <!-- Simulator Enable/Disable -->
+                        <CheckBox Content="Simulator Enabled"
+                                  IsChecked="{Binding IsSimulatorEnabled}"
+                                  FontWeight="Bold"
+                                  FontSize="13"
+                                  Margin="0,0,0,8"/>
+
+                        <!-- Row 1: Reset Position and Reset Steering -->
+                        <Grid ColumnDefinitions="*,*">
+                            <Button Grid.Column="0" Classes="ModernButton" Margin="0,0,4,0"
+                                    Command="{Binding ResetSimulatorCommand}"
+                                    ToolTip.Tip="Reset to starting position">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="🔄" FontSize="16"/>
+                                    <TextBlock Text="Reset" FontSize="12"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" Classes="ModernButton" Margin="4,0,0,0"
+                                    Command="{Binding ResetSteerAngleCommand}"
+                                    ToolTip.Tip="Reset steering to 0° (straight ahead)">
+                                <TextBlock Text=">0&lt;" FontSize="14" FontWeight="Bold"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Row 2: Steering Controls -->
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Button Grid.Column="0" Classes="ModernButton" Width="40" Margin="0,0,8,0"
+                                    Command="{Binding SimulatorSteerLeftCommand}"
+                                    ToolTip.Tip="Steer left">
+                                <TextBlock Text="◀" FontSize="16"/>
+                            </Button>
+                            <Slider Grid.Column="1" Margin="0"
+                                    Minimum="-40" Maximum="40"
+                                    Value="{Binding SimulatorSteerAngle}"
+                                    TickFrequency="5"
+                                    IsSnapToTickEnabled="True"
+                                    ToolTip.Tip="Steering angle"/>
+                            <Button Grid.Column="2" Classes="ModernButton" Width="40" Margin="8,0,0,0"
+                                    Command="{Binding SimulatorSteerRightCommand}"
+                                    ToolTip.Tip="Steer right">
+                                <TextBlock Text="▶" FontSize="16"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Row 3: Steer Angle Display -->
+                        <TextBlock Text="{Binding SimulatorSteerAngleDisplay, StringFormat='Steer Angle: {0}°'}"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="#DDD"/>
+
+                        <Separator Background="#555" Height="1" Margin="0,4"/>
+
+                        <!-- Row 4: Speed Controls (3 buttons in a row) -->
+                        <Grid ColumnDefinitions="*,*,*">
+                            <Button Grid.Column="0" Classes="ModernButton" Margin="0,0,4,0"
+                                    Command="{Binding SimulatorReverseCommand}"
+                                    ToolTip.Tip="Accelerate backward">
+                                <TextBlock Text="▼" FontSize="18"/>
+                            </Button>
+                            <Button Grid.Column="1" Classes="ModernButton" Margin="4,0,4,0"
+                                    Command="{Binding SimulatorStopCommand}"
+                                    ToolTip.Tip="Stop">
+                                <TextBlock Text="■" FontSize="18"/>
+                            </Button>
+                            <Button Grid.Column="2" Classes="ModernButton" Margin="4,0,0,0"
+                                    Command="{Binding SimulatorForwardCommand}"
+                                    ToolTip.Tip="Accelerate forward">
+                                <TextBlock Text="▲" FontSize="18"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Row 5: Reverse Direction -->
+                        <Button Classes="ModernButton"
+                                Command="{Binding SimulatorReverseDirectionCommand}"
+                                ToolTip.Tip="Reverse direction (180° turn)">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="↻" FontSize="16"/>
+                                <TextBlock Text="Reverse Direction" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Canvas>

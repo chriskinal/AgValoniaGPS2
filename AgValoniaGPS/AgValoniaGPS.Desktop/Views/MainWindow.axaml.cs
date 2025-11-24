@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     private bool _isDraggingConfiguration = false;
     private bool _isDraggingJobMenu = false;
     private bool _isDraggingFieldTools = false;
+    private bool _isDraggingSimulator = false;
     private Avalonia.Point _dragStartPoint;
     private DateTime _leftPanelPressTime;
     private const int TapTimeThresholdMs = 300;
@@ -903,6 +904,64 @@ public partial class MainWindow : Window
         }
     }
 
+    // Simulator Panel drag handlers
+    private void SimulatorPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (SimulatorPanel != null && sender is Grid header)
+        {
+            _isDraggingSimulator = true;
+            _dragStartPoint = e.GetPosition(this);
+
+            // Suppress tooltip during drag
+            ToolTip.SetIsOpen(header, false);
+
+            e.Pointer.Capture(header);
+            e.Handled = true;
+        }
+    }
+
+    private void SimulatorPanel_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_isDraggingSimulator && SimulatorPanel != null && sender is Grid header)
+        {
+            // Suppress tooltip during drag
+            ToolTip.SetIsOpen(header, false);
+
+            var currentPoint = e.GetPosition(this);
+            var delta = currentPoint - _dragStartPoint;
+
+            var currentLeft = Canvas.GetLeft(SimulatorPanel);
+            var currentTop = Canvas.GetTop(SimulatorPanel);
+
+            if (double.IsNaN(currentLeft)) currentLeft = 400;
+            if (double.IsNaN(currentTop)) currentTop = 100;
+
+            var newLeft = currentLeft + delta.X;
+            var newTop = currentTop + delta.Y;
+
+            // Constrain to window bounds
+            newLeft = Math.Max(0, Math.Min(newLeft, this.Bounds.Width - SimulatorPanel.Bounds.Width));
+            newTop = Math.Max(0, Math.Min(newTop, this.Bounds.Height - SimulatorPanel.Bounds.Height));
+
+            Canvas.SetLeft(SimulatorPanel, newLeft);
+            Canvas.SetTop(SimulatorPanel, newTop);
+
+            _dragStartPoint = currentPoint;
+            e.Handled = true;
+        }
+    }
+
+    private void SimulatorPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (SimulatorPanel != null && e.Pointer.Captured == sender)
+        {
+            // Reset state
+            _isDraggingSimulator = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+    }
+
     // Helper method to check if pointer is over any UI panel
     private bool IsPointerOverUIPanel(PointerEventArgs e)
     {
@@ -1037,6 +1096,23 @@ public partial class MainWindow : Window
             if (double.IsNaN(top)) top = 100;
 
             var panelBounds = new Rect(left, top, FieldToolsPanel.Bounds.Width, FieldToolsPanel.Bounds.Height);
+
+            if (panelBounds.Contains(position))
+            {
+                return true;
+            }
+        }
+
+        // Check simulator panel
+        if (SimulatorPanel != null && SimulatorPanel.IsVisible && SimulatorPanel.Bounds.Width > 0 && SimulatorPanel.Bounds.Height > 0)
+        {
+            double left = Canvas.GetLeft(SimulatorPanel);
+            double top = Canvas.GetTop(SimulatorPanel);
+
+            if (double.IsNaN(left)) left = 400;
+            if (double.IsNaN(top)) top = 100;
+
+            var panelBounds = new Rect(left, top, SimulatorPanel.Bounds.Width, SimulatorPanel.Bounds.Height);
 
             if (panelBounds.Contains(position))
             {
