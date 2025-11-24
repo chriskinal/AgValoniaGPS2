@@ -556,6 +556,13 @@ public class MainViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _isNavigationPanelVisible, value);
     }
 
+    private bool _isFileMenuPanelVisible;
+    public bool IsFileMenuPanelVisible
+    {
+        get => _isFileMenuPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isFileMenuPanelVisible, value);
+    }
+
     // Navigation settings properties (forwarded from service)
     public bool IsGridOn
     {
@@ -625,6 +632,7 @@ public class MainViewModel : ReactiveObject
 
     // Commands
     public ICommand? ToggleNavigationPanelCommand { get; private set; }
+    public ICommand? ToggleFileMenuPanelCommand { get; private set; }
     public ICommand? ToggleGridCommand { get; private set; }
     public ICommand? ToggleDayNightCommand { get; private set; }
     public ICommand? Toggle2D3DCommand { get; private set; }
@@ -641,6 +649,11 @@ public class MainViewModel : ReactiveObject
         ToggleNavigationPanelCommand = new RelayCommand(() =>
         {
             IsNavigationPanelVisible = !IsNavigationPanelVisible;
+        });
+
+        ToggleFileMenuPanelCommand = new RelayCommand(() =>
+        {
+            IsFileMenuPanelVisible = !IsFileMenuPanelVisible;
         });
 
         ToggleGridCommand = new RelayCommand(() =>

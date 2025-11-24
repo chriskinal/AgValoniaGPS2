@@ -54,6 +54,30 @@
             <Setter Property="Background" Value="#DD475A6E"/>
         </Style>
 
+        <!-- Left Panel Button Style (for image-based icons) -->
+        <Style Selector="Button.LeftPanelButton">
+            <Setter Property="Background" Value="#DD34495E"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="Height" Value="64"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.LeftPanelButton:pointerover">
+            <Setter Property="Background" Value="#DD475A6E"/>
+        </Style>
+        <Style Selector="Button.LeftPanelButton:pressed">
+            <Setter Property="Background" Value="#DD3E5872"/>
+        </Style>
+
+        <!-- Left Panel Separator -->
+        <Style Selector="Separator.LeftPanelSeparator">
+            <Setter Property="Background" Value="#444"/>
+            <Setter Property="Height" Value="2"/>
+            <Setter Property="Margin" Value="8,4"/>
+        </Style>
+
         <!-- Status Indicator Style -->
         <Style Selector="Border.StatusBox">
             <Setter Property="Background" Value="#DD1E2930"/>
@@ -64,15 +88,12 @@
 
     <!-- Main Grid with OpenGL as background -->
     <Grid>
-        <!-- OpenGL Map Render Area (fills entire window) -->
-        <controls:OpenGLMapControl x:Name="MapControl" ZIndex="0" />
-
-        <!-- Transparent overlay to capture mouse events for OpenGL control -->
-        <Panel ZIndex="1" Background="Transparent"
-               PointerPressed="MapOverlay_PointerPressed"
-               PointerMoved="MapOverlay_PointerMoved"
-               PointerReleased="MapOverlay_PointerReleased"
-               PointerWheelChanged="MapOverlay_PointerWheelChanged" />
+        <!-- OpenGL Map Render Area (fills entire window) with pointer events -->
+        <controls:OpenGLMapControl x:Name="MapControl" ZIndex="0"
+                                   PointerPressed="MapOverlay_PointerPressed"
+                                   PointerMoved="MapOverlay_PointerMoved"
+                                   PointerReleased="MapOverlay_PointerReleased"
+                                   PointerWheelChanged="MapOverlay_PointerWheelChanged" />
 
         <!-- TOP STATUS BAR: RTK Status -->
         <Border Classes="FloatingPanel"
@@ -118,20 +139,80 @@
             </StackPanel>
         </Border>
 
-        <!-- LEFT SIDEBAR: Navigation Menu (vertical) -->
-        <Border Classes="FloatingPanel"
-                ZIndex="10"
-                Margin="20"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                IsHitTestVisible="True">
-            <StackPanel Spacing="8">
-                <Button Classes="IconButton" Content="🗺️" ToolTip.Tip="Navigation Settings" Command="{Binding ToggleNavigationPanelCommand}"/>
-                <Button Classes="IconButton" Content="🔧" ToolTip.Tip="Config"/>
-                <Button Classes="IconButton" Content="📐" ToolTip.Tip="Boundaries"/>
-                <Button Classes="IconButton" Content="🚜" ToolTip.Tip="Vehicle"/>
-            </StackPanel>
-        </Border>
+        <!-- LEFT SIDEBAR: Main Navigation Panel (Draggable & Rotatable) -->
+        <Canvas>
+            <Border x:Name="LeftNavigationPanel"
+                    ZIndex="10"
+                    Classes="FloatingPanel"
+                    Canvas.Left="20" Canvas.Top="100"
+                    IsHitTestVisible="True"
+                    PointerPressed="LeftPanelBorder_PointerPressed"
+                    PointerMoved="LeftPanelBorder_PointerMoved"
+                    PointerReleased="LeftPanelBorder_PointerReleased">
+                <StackPanel x:Name="LeftPanelStack" Spacing="6" Orientation="Vertical">
+                    <!-- Touch Handle: Tap to rotate, Hold to drag -->
+                    <Grid Height="40" Margin="0"
+                          Background="#DD2C3E50"
+                          Cursor="Hand"
+                          PointerPressed="LeftPanel_PointerPressed"
+                          PointerMoved="LeftPanel_PointerMoved"
+                          PointerReleased="LeftPanel_PointerReleased"
+                          ToolTip.Tip="Tap to rotate | Hold and drag to move">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                            <TextBlock Text="≡" Foreground="#AAA" FontSize="20" FontWeight="Bold" IsHitTestVisible="False"/>
+                            <TextBlock Text="⟲" Foreground="#AAA" FontSize="18" FontWeight="Bold" IsHitTestVisible="False"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Separator Classes="LeftPanelSeparator" Margin="0,4,0,4"/>
+
+                    <!-- 0. File/Application Menu -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="File Menu"
+                            Command="{Binding ToggleFileMenuPanelCommand}">
+                        <Image Source="/Assets/Icons/fileMenu.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <Separator Classes="LeftPanelSeparator"/>
+
+                    <!-- 1. Navigation Settings -->
+                    <Button Classes="LeftPanelButton"
+                            ToolTip.Tip="Navigation Settings"
+                            Command="{Binding ToggleNavigationPanelCommand}">
+                        <Image Source="/Assets/Icons/NavigationSettings.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 2. Special Functions -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Special Functions">
+                        <Image Source="/Assets/Icons/SpecialFunctions.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 3. Configuration -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Configuration">
+                        <Image Source="/Assets/Icons/Settings48.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 4. Job Menu -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Job Menu">
+                        <Image Source="/Assets/Icons/JobActive.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 5. Field Tools -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Field Tools">
+                        <Image Source="/Assets/Icons/FieldTools.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 6. AutoSteer Config -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="AutoSteer Configuration">
+                        <Image Source="/Assets/Icons/AutoSteerConf.png" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- 7. AgIO -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Start AgIO">
+                        <Image Source="/Assets/Icons/AgIO.png" Stretch="Uniform"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Canvas>
 
         <!-- Navigation Settings Panel (floating, toggleable) -->
         <Border Classes="FloatingPanel"
@@ -182,6 +263,87 @@
                         ToolTip.Tip="Increase brightness"/>
             </Grid>
         </Border>
+
+        <!-- File Menu Panel (floating, toggleable, draggable) -->
+        <Canvas>
+            <Border x:Name="FileMenuPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="100"
+                    IsVisible="{Binding IsFileMenuPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="200">
+                <StackPanel Spacing="4">
+                    <!-- Header with drag handle and close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          Height="32"
+                          Margin="0,0,0,8"
+                          Background="#DD2C3E50"
+                          Cursor="Hand"
+                          PointerPressed="FileMenuPanel_PointerPressed"
+                          PointerMoved="FileMenuPanel_PointerMoved"
+                          PointerReleased="FileMenuPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag Handle Icon -->
+                        <TextBlock Grid.Column="0"
+                                   Text="≡"
+                                   Foreground="#AAA"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,8,0"
+                                   IsHitTestVisible="False"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1"
+                                   Text="File Menu"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                        <!-- Close Button -->
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Width="24" Height="24"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#888"
+                                FontSize="16"
+                                Cursor="Hand"
+                                Command="{Binding ToggleFileMenuPanelCommand}"
+                                ToolTip.Tip="Close"
+                                Margin="8,0,8,0"/>
+                    </Grid>
+
+                <Separator Height="1" Background="#444" Margin="0,0,0,4"/>
+
+                <!-- Profile -->
+                <Button Classes="ModernButton" Content="📁 New Profile" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="📂 Load Profile" HorizontalAlignment="Stretch" Margin="0,2"/>
+
+                <Separator Height="1" Background="#444" Margin="0,4"/>
+
+                <!-- Settings -->
+                <Button Classes="ModernButton" Content="🌐 Language" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="🎮 Simulator" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="📍 Enter Sim Coords" HorizontalAlignment="Stretch" Margin="0,2"/>
+
+                <Separator Height="1" Background="#444" Margin="0,4"/>
+
+                <!-- Mode & Tools -->
+                <Button Classes="ModernButton" Content="🔒 Kiosk Mode" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="🔄 Reset ALL" HorizontalAlignment="Stretch" Margin="0,2"/>
+
+                <Separator Height="1" Background="#444" Margin="0,4"/>
+
+                <!-- Info & Help -->
+                <Button Classes="ModernButton" Content="ℹ️ About" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="🌐 AgShare API" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="❓ Help" HorizontalAlignment="Stretch" Margin="0,2"/>
+            </StackPanel>
+        </Border>
+        </Canvas>
 
         <!-- BOTTOM BAR: Function Buttons (horizontal) -->
         <Border Classes="FloatingPanel"
