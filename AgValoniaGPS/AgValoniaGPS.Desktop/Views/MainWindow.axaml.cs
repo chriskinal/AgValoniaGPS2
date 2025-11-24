@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private bool _isDraggingSection = false;
     private bool _isDraggingLeftPanel = false;
     private bool _isDraggingFileMenu = false;
+    private bool _isDraggingViewSettings = false;
     private Avalonia.Point _dragStartPoint;
     private DateTime _leftPanelPressTime;
     private const int TapTimeThresholdMs = 300;
@@ -563,6 +564,75 @@ public partial class MainWindow : Window
         }
     }
 
+    // View Settings Panel drag handlers
+    private void ViewSettingsPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Sender is the header Grid
+        if (ViewSettingsPanel != null && sender is Grid header)
+        {
+            _dragStartPoint = e.GetPosition(this);
+            e.Pointer.Capture(header);
+
+            // Close any open tooltips to prevent position issues during drag
+            ToolTip.SetIsOpen(header, false);
+
+            e.Handled = true;
+        }
+    }
+
+    private void ViewSettingsPanel_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (ViewSettingsPanel != null && e.Pointer.Captured == sender && sender is Grid header)
+        {
+            var currentPoint = e.GetPosition(this);
+            var distance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) +
+                                    Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
+
+            // Start dragging if moved beyond threshold
+            if (!_isDraggingViewSettings && distance > TapDistanceThreshold)
+            {
+                _isDraggingViewSettings = true;
+                // Ensure tooltip stays closed while dragging
+                ToolTip.SetIsOpen(header, false);
+            }
+
+            if (_isDraggingViewSettings)
+            {
+                var delta = currentPoint - _dragStartPoint;
+
+                // Calculate new position
+                double newLeft = Canvas.GetLeft(ViewSettingsPanel) + delta.X;
+                double newTop = Canvas.GetTop(ViewSettingsPanel) + delta.Y;
+
+                // Constrain to window bounds
+                double maxLeft = Bounds.Width - ViewSettingsPanel.Bounds.Width;
+                double maxTop = Bounds.Height - ViewSettingsPanel.Bounds.Height;
+
+                newLeft = Math.Clamp(newLeft, 0, Math.Max(0, maxLeft));
+                newTop = Math.Clamp(newTop, 0, Math.Max(0, maxTop));
+
+                // Update position
+                Canvas.SetLeft(ViewSettingsPanel, newLeft);
+                Canvas.SetTop(ViewSettingsPanel, newTop);
+
+                _dragStartPoint = currentPoint;
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void ViewSettingsPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (ViewSettingsPanel != null && e.Pointer.Captured == sender)
+        {
+            // Reset state
+            _isDraggingViewSettings = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+    }
+
     // Helper method to check if pointer is over any UI panel
     private bool IsPointerOverUIPanel(PointerEventArgs e)
     {
@@ -612,6 +682,23 @@ public partial class MainWindow : Window
             if (double.IsNaN(top)) top = 100;
 
             var panelBounds = new Rect(left, top, FileMenuPanel.Bounds.Width, FileMenuPanel.Bounds.Height);
+
+            if (panelBounds.Contains(position))
+            {
+                return true;
+            }
+        }
+
+        // Check view settings panel
+        if (ViewSettingsPanel != null && ViewSettingsPanel.IsVisible && ViewSettingsPanel.Bounds.Width > 0 && ViewSettingsPanel.Bounds.Height > 0)
+        {
+            double left = Canvas.GetLeft(ViewSettingsPanel);
+            double top = Canvas.GetTop(ViewSettingsPanel);
+
+            if (double.IsNaN(left)) left = 90;
+            if (double.IsNaN(top)) top = 200;
+
+            var panelBounds = new Rect(left, top, ViewSettingsPanel.Bounds.Width, ViewSettingsPanel.Bounds.Height);
 
             if (panelBounds.Contains(position))
             {

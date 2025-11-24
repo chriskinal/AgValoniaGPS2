@@ -547,13 +547,13 @@ public class MainViewModel : ReactiveObject
         }
     }
 
-    // ========== Navigation Settings ==========
+    // ========== View Settings ==========
 
-    private bool _isNavigationPanelVisible;
-    public bool IsNavigationPanelVisible
+    private bool _isViewSettingsPanelVisible;
+    public bool IsViewSettingsPanelVisible
     {
-        get => _isNavigationPanelVisible;
-        set => this.RaiseAndSetIfChanged(ref _isNavigationPanelVisible, value);
+        get => _isViewSettingsPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isViewSettingsPanelVisible, value);
     }
 
     private bool _isFileMenuPanelVisible;
@@ -631,7 +631,7 @@ public class MainViewModel : ReactiveObject
         : "??";
 
     // Commands
-    public ICommand? ToggleNavigationPanelCommand { get; private set; }
+    public ICommand? ToggleViewSettingsPanelCommand { get; private set; }
     public ICommand? ToggleFileMenuPanelCommand { get; private set; }
     public ICommand? ToggleGridCommand { get; private set; }
     public ICommand? ToggleDayNightCommand { get; private set; }
@@ -646,9 +646,9 @@ public class MainViewModel : ReactiveObject
     {
         // Use simple RelayCommand to avoid ReactiveCommand threading issues
         // Use property setters instead of service methods to ensure PropertyChanged fires
-        ToggleNavigationPanelCommand = new RelayCommand(() =>
+        ToggleViewSettingsPanelCommand = new RelayCommand(() =>
         {
-            IsNavigationPanelVisible = !IsNavigationPanelVisible;
+            IsViewSettingsPanelVisible = !IsViewSettingsPanelVisible;
         });
 
         ToggleFileMenuPanelCommand = new RelayCommand(() =>

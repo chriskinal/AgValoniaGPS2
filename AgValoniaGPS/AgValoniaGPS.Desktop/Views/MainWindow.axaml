@@ -174,10 +174,10 @@
 
                     <Separator Classes="LeftPanelSeparator"/>
 
-                    <!-- 1. Navigation Settings -->
+                    <!-- 1. View Settings -->
                     <Button Classes="LeftPanelButton"
-                            ToolTip.Tip="Navigation Settings"
-                            Command="{Binding ToggleNavigationPanelCommand}">
+                            ToolTip.Tip="View Settings"
+                            Command="{Binding ToggleViewSettingsPanelCommand}">
                         <Image Source="/Assets/Icons/NavigationSettings.png" Stretch="Uniform"/>
                     </Button>
 
@@ -214,55 +214,114 @@
             </Border>
         </Canvas>
 
-        <!-- Navigation Settings Panel (floating, toggleable) -->
-        <Border Classes="FloatingPanel"
-                ZIndex="15"
-                Margin="90,100,0,0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                IsVisible="{Binding IsNavigationPanelVisible}"
-                IsHitTestVisible="True">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" MinWidth="180">
-                <!-- Row 0: Camera Tilt -->
-                <Button Grid.Row="0" Grid.Column="0" Margin="2" Padding="8"
-                        Content="Tilt ▼" Command="{Binding DecreaseCameraPitchCommand}"
-                        ToolTip.Tip="Tilt camera down"/>
-                <Button Grid.Row="0" Grid.Column="1" Margin="2" Padding="8"
-                        Content="Tilt ▲" Command="{Binding IncreaseCameraPitchCommand}"
-                        ToolTip.Tip="Tilt camera up"/>
+        <!-- View Settings Panel (floating, toggleable, draggable) -->
+        <Canvas>
+            <Border x:Name="ViewSettingsPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="200"
+                    IsVisible="{Binding IsViewSettingsPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="200">
+                <StackPanel Spacing="4">
+                    <!-- Header with drag handle and close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          Height="32"
+                          Margin="0,0,0,8"
+                          Background="#DD2C3E50"
+                          Cursor="Hand"
+                          PointerPressed="ViewSettingsPanel_PointerPressed"
+                          PointerMoved="ViewSettingsPanel_PointerMoved"
+                          PointerReleased="ViewSettingsPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag Handle Icon -->
+                        <TextBlock Grid.Column="0"
+                                   Text="≡"
+                                   Foreground="#AAA"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,8,0"
+                                   IsHitTestVisible="False"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1"
+                                   Text="View Settings"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                        <!-- Close Button -->
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Width="24" Height="24"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#888"
+                                FontSize="16"
+                                Cursor="Hand"
+                                Command="{Binding ToggleViewSettingsPanelCommand}"
+                                ToolTip.Tip="Close"
+                                Margin="8,0,8,0"/>
+                    </Grid>
 
-                <!-- Row 1: 2D/3D View Mode -->
-                <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" Padding="8"
-                        Content="2D/3D" Command="{Binding Toggle2D3DCommand}"
-                        ToolTip.Tip="Toggle between 2D overhead and 3D perspective view"/>
+                    <Separator Height="1" Background="#444" Margin="0,0,0,4"/>
 
-                <!-- Row 2: North-Up & Grid -->
-                <Button Grid.Row="2" Grid.Column="0" Margin="2" Padding="8"
-                        Content="North" Command="{Binding ToggleNorthUpCommand}"
-                        ToolTip.Tip="Toggle north-up/track-up mode"/>
-                <Button Grid.Row="2" Grid.Column="1" Margin="2" Padding="8"
-                        Content="Grid" Command="{Binding ToggleGridCommand}"
-                        ToolTip.Tip="Toggle grid display"/>
+                    <!-- Camera Controls -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                        <Button Grid.Row="0" Grid.Column="0" Classes="ModernButton"
+                                Content="🎥 Tilt ▼" Margin="2"
+                                Command="{Binding DecreaseCameraPitchCommand}"
+                                ToolTip.Tip="Tilt camera down"/>
+                        <Button Grid.Row="0" Grid.Column="1" Classes="ModernButton"
+                                Content="🎥 Tilt ▲" Margin="2"
+                                Command="{Binding IncreaseCameraPitchCommand}"
+                                ToolTip.Tip="Tilt camera up"/>
+                        <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Classes="ModernButton"
+                                Content="📐 2D/3D" Margin="2"
+                                Command="{Binding Toggle2D3DCommand}"
+                                ToolTip.Tip="Toggle 2D/3D view"/>
+                    </Grid>
 
-                <!-- Row 3: Day/Night Mode & GPS Hz -->
-                <Button Grid.Row="3" Grid.Column="0" Margin="2" Padding="8"
-                        Content="Day/Night"
-                        Command="{Binding ToggleDayNightCommand}"
-                        ToolTip.Tip="Toggle day/night mode"/>
-                <TextBlock Grid.Row="3" Grid.Column="1" Margin="2" Padding="8"
-                           Text="10 Hz" HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Foreground="White" FontWeight="Bold" FontSize="12"/>
+                    <Separator Height="1" Background="#444" Margin="0,4"/>
 
-                <!-- Row 4: Brightness Controls -->
-                <Button Grid.Row="4" Grid.Column="0" Margin="2" Padding="8"
-                        Content="{Binding BrightnessDisplay, StringFormat='Bright- {0}'}"
-                        Command="{Binding DecreaseBrightnessCommand}"
-                        ToolTip.Tip="Decrease brightness"/>
-                <Button Grid.Row="4" Grid.Column="1" Margin="2" Padding="8"
-                        Content="Bright+" Command="{Binding IncreaseBrightnessCommand}"
-                        ToolTip.Tip="Increase brightness"/>
-            </Grid>
-        </Border>
+                    <!-- Display Options -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                        <Button Grid.Row="0" Grid.Column="0" Classes="ModernButton"
+                                Content="🧭 North" Margin="2"
+                                Command="{Binding ToggleNorthUpCommand}"
+                                ToolTip.Tip="North-up/Track-up"/>
+                        <Button Grid.Row="0" Grid.Column="1" Classes="ModernButton"
+                                Content="⊞ Grid" Margin="2"
+                                Command="{Binding ToggleGridCommand}"
+                                ToolTip.Tip="Toggle grid"/>
+                        <Button Grid.Row="1" Grid.Column="0" Classes="ModernButton"
+                                Content="☀️ Day/Night" Margin="2"
+                                Command="{Binding ToggleDayNightCommand}"
+                                ToolTip.Tip="Day/Night mode"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1"
+                                   Text="📡 10 Hz" Margin="2" Padding="8"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontWeight="Bold" FontSize="12"/>
+                    </Grid>
+
+                    <Separator Height="1" Background="#444" Margin="0,4"/>
+
+                    <!-- Brightness -->
+                    <Grid ColumnDefinitions="*,*">
+                        <Button Grid.Column="0" Classes="ModernButton"
+                                Content="{Binding BrightnessDisplay, StringFormat='💡 -{0}'}" Margin="2"
+                                Command="{Binding DecreaseBrightnessCommand}"
+                                ToolTip.Tip="Decrease brightness"/>
+                        <Button Grid.Column="1" Classes="ModernButton"
+                                Content="💡 +" Margin="2"
+                                Command="{Binding IncreaseBrightnessCommand}"
+                                ToolTip.Tip="Increase brightness"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
 
         <!-- File Menu Panel (floating, toggleable, draggable) -->
         <Canvas>
