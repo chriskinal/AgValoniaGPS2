@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     private bool _isDraggingViewSettings = false;
     private bool _isDraggingTools = false;
     private bool _isDraggingConfiguration = false;
+    private bool _isDraggingJobMenu = false;
     private Avalonia.Point _dragStartPoint;
     private DateTime _leftPanelPressTime;
     private const int TapTimeThresholdMs = 300;
@@ -773,6 +774,70 @@ public partial class MainWindow : Window
         }
     }
 
+    // Job Menu Panel drag handlers
+    private void JobMenuPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (JobMenuPanel != null && sender is Grid header)
+        {
+            _dragStartPoint = e.GetPosition(this);
+            e.Pointer.Capture(header);
+            // Suppress tooltip to prevent it from following during drag
+            ToolTip.SetIsOpen(header, false);
+            e.Handled = true;
+        }
+    }
+
+    private void JobMenuPanel_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (JobMenuPanel != null && e.Pointer.Captured == sender && sender is Grid header)
+        {
+            var currentPoint = e.GetPosition(this);
+            var distance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) +
+                                    Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
+
+            // Only start dragging if moved beyond threshold
+            if (!_isDraggingJobMenu && distance > TapDistanceThreshold)
+            {
+                _isDraggingJobMenu = true;
+                // Suppress tooltip when dragging starts
+                ToolTip.SetIsOpen(header, false);
+            }
+
+            if (_isDraggingJobMenu)
+            {
+                var delta = currentPoint - _dragStartPoint;
+
+                double newLeft = Canvas.GetLeft(JobMenuPanel) + delta.X;
+                double newTop = Canvas.GetTop(JobMenuPanel) + delta.Y;
+
+                // Constrain to window bounds
+                double maxLeft = Bounds.Width - JobMenuPanel.Bounds.Width;
+                double maxTop = Bounds.Height - JobMenuPanel.Bounds.Height;
+
+                newLeft = Math.Clamp(newLeft, 0, Math.Max(0, maxLeft));
+                newTop = Math.Clamp(newTop, 0, Math.Max(0, maxTop));
+
+                Canvas.SetLeft(JobMenuPanel, newLeft);
+                Canvas.SetTop(JobMenuPanel, newTop);
+
+                _dragStartPoint = currentPoint;
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void JobMenuPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (JobMenuPanel != null && e.Pointer.Captured == sender)
+        {
+            // Reset state
+            _isDraggingJobMenu = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+    }
+
     // Helper method to check if pointer is over any UI panel
     private bool IsPointerOverUIPanel(PointerEventArgs e)
     {
@@ -873,6 +938,23 @@ public partial class MainWindow : Window
             if (double.IsNaN(top)) top = 100;
 
             var panelBounds = new Rect(left, top, ConfigurationPanel.Bounds.Width, ConfigurationPanel.Bounds.Height);
+
+            if (panelBounds.Contains(position))
+            {
+                return true;
+            }
+        }
+
+        // Check job menu panel
+        if (JobMenuPanel != null && JobMenuPanel.IsVisible && JobMenuPanel.Bounds.Width > 0 && JobMenuPanel.Bounds.Height > 0)
+        {
+            double left = Canvas.GetLeft(JobMenuPanel);
+            double top = Canvas.GetTop(JobMenuPanel);
+
+            if (double.IsNaN(left)) left = 90;
+            if (double.IsNaN(top)) top = 100;
+
+            var panelBounds = new Rect(left, top, JobMenuPanel.Bounds.Width, JobMenuPanel.Bounds.Height);
 
             if (panelBounds.Contains(position))
             {

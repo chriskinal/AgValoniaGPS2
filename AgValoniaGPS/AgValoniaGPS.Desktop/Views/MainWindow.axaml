@@ -194,7 +194,8 @@
                     </Button>
 
                     <!-- 4. Job Menu -->
-                    <Button Classes="LeftPanelButton" ToolTip.Tip="Job Menu">
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Job Menu"
+                            Command="{Binding ToggleJobMenuPanelCommand}">
                         <Image Source="/Assets/Icons/JobActive.png" Stretch="Uniform"/>
                     </Button>
 
@@ -667,6 +668,114 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/ConD_KeyBoard.png" Width="28" Height="28"/>
                                 <TextBlock Text="HotKeys" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- Job Menu Panel (Button 4) - Start New Field -->
+        <Canvas>
+            <Border x:Name="JobMenuPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="100"
+                    IsVisible="{Binding IsJobMenuPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="400">
+                <StackPanel Spacing="4">
+                    <!-- Header: Drag handle + Title + Close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" Height="32" Margin="0,0,0,8"
+                          Background="#DD2C3E50" Cursor="Hand"
+                          PointerPressed="JobMenuPanel_PointerPressed"
+                          PointerMoved="JobMenuPanel_PointerMoved"
+                          PointerReleased="JobMenuPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag handle -->
+                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1" Text="Start New Field" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <!-- Close button -->
+                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
+                                Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
+                                Command="{Binding ToggleJobMenuPanelCommand}" Cursor="Hand"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <Separator Background="#404040" Height="1" Margin="0,0,0,4"/>
+
+                    <!-- Menu Items: 2-column layout (5 rows × 2 columns) -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                        <!-- Row 0: ISO-XML, Close -->
+                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ISOXML.png" Width="28" Height="28"/>
+                                <TextBlock Text="ISO-XML" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/FileClose.png" Width="28" Height="28"/>
+                                <TextBlock Text="Close" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: From KML, Drive In -->
+                        <Button Grid.Column="0" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/GoogleEarth.png" Width="28" Height="28"/>
+                                <TextBlock Text="From KML" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/SteerDriveOn.png" Width="28" Height="28"/>
+                                <TextBlock Text="Drive In" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: From Existing, Open -->
+                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/FileExisting.png" Width="28" Height="28"/>
+                                <TextBlock Text="From Existing" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/FileOpen.png" Width="28" Height="28"/>
+                                <TextBlock Text="Open" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: New From Default, Resume -->
+                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/Reset_Default.png" Width="28" Height="28"/>
+                                <TextBlock Text="New From Default" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/pathResumeLast.png" Width="28" Height="28"/>
+                                <TextBlock Text="Resume" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 4: AgShare Download, AgShare Upload -->
+                        <Button Grid.Column="0" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
+                                <TextBlock Text="AgShare Download" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
+                                <TextBlock Text="AgShare Upload" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
                     </Grid>

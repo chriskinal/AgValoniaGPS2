@@ -103,16 +103,27 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ✅ 4. Job Menu (Direct Button)
+### ✅ 4. Job Menu (Floating Panel)
 - **Icon**: `JobActive.png`
-- **Type**: Direct action button
-- **Function**: Field/job selection and management
-- **Opens**: Job management dialog
-  - [ ] Open field
-  - [ ] Save field
-  - [ ] Field list
-  - [ ] Job name/date settings
-  - [ ] Field statistics
+- **Type**: Floating panel (2-column layout, 5 items per column)
+- **Title**: "Start New Field"
+- **Panel items** (10 items total, matching AgOpenGPS 6.8.0):
+  - **Left Column - Field Creation:**
+    - ISO-XML (ISOXML.png)
+    - From KML (GoogleEarth.png)
+    - From Existing (FileExisting.png)
+    - New From Default (Reset_Default.png)
+    - AgShare Download (AgShare.png)
+  - **Right Column - Field Actions:**
+    - Close (FileClose.png)
+    - Drive In (SteerDriveOn.png)
+    - Open (FileOpen.png)
+    - Resume (pathResumeLast.png)
+    - AgShare Upload (AgShare.png)
+- **Layout**: 5 rows × 2 columns, 44px button height, 28px icons, 12px font
+- **ViewModel**: `IsJobMenuPanelVisible`, `ToggleJobMenuPanelCommand`
+- **Drag handlers**: `JobMenuPanel_PointerPressed/Moved/Released`
+- **Build status**: ✅ Successful (0 errors)
 
 **WinForms Reference**: `btnJobMenu` (FormGPS.Designer.cs:1868)
 
