@@ -909,45 +909,50 @@ public partial class MainWindow : Window
     {
         if (SimulatorPanel != null && sender is Grid header)
         {
-            _isDraggingSimulator = true;
             _dragStartPoint = e.GetPosition(this);
-
-            // Suppress tooltip during drag
-            ToolTip.SetIsOpen(header, false);
-
             e.Pointer.Capture(header);
+            // Suppress tooltip to prevent it from following during drag
+            ToolTip.SetIsOpen(header, false);
             e.Handled = true;
         }
     }
 
     private void SimulatorPanel_PointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_isDraggingSimulator && SimulatorPanel != null && sender is Grid header)
+        if (SimulatorPanel != null && e.Pointer.Captured == sender && sender is Grid header)
         {
-            // Suppress tooltip during drag
-            ToolTip.SetIsOpen(header, false);
-
             var currentPoint = e.GetPosition(this);
-            var delta = currentPoint - _dragStartPoint;
+            var distance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) +
+                                    Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
 
-            var currentLeft = Canvas.GetLeft(SimulatorPanel);
-            var currentTop = Canvas.GetTop(SimulatorPanel);
+            // Only start dragging if moved beyond threshold
+            if (!_isDraggingSimulator && distance > TapDistanceThreshold)
+            {
+                _isDraggingSimulator = true;
+                // Suppress tooltip when dragging starts
+                ToolTip.SetIsOpen(header, false);
+            }
 
-            if (double.IsNaN(currentLeft)) currentLeft = 400;
-            if (double.IsNaN(currentTop)) currentTop = 100;
+            if (_isDraggingSimulator)
+            {
+                var delta = currentPoint - _dragStartPoint;
 
-            var newLeft = currentLeft + delta.X;
-            var newTop = currentTop + delta.Y;
+                double newLeft = Canvas.GetLeft(SimulatorPanel) + delta.X;
+                double newTop = Canvas.GetTop(SimulatorPanel) + delta.Y;
 
-            // Constrain to window bounds
-            newLeft = Math.Max(0, Math.Min(newLeft, this.Bounds.Width - SimulatorPanel.Bounds.Width));
-            newTop = Math.Max(0, Math.Min(newTop, this.Bounds.Height - SimulatorPanel.Bounds.Height));
+                // Constrain to window bounds
+                double maxLeft = Bounds.Width - SimulatorPanel.Bounds.Width;
+                double maxTop = Bounds.Height - SimulatorPanel.Bounds.Height;
 
-            Canvas.SetLeft(SimulatorPanel, newLeft);
-            Canvas.SetTop(SimulatorPanel, newTop);
+                newLeft = Math.Clamp(newLeft, 0, Math.Max(0, maxLeft));
+                newTop = Math.Clamp(newTop, 0, Math.Max(0, maxTop));
 
-            _dragStartPoint = currentPoint;
-            e.Handled = true;
+                Canvas.SetLeft(SimulatorPanel, newLeft);
+                Canvas.SetTop(SimulatorPanel, newTop);
+
+                _dragStartPoint = currentPoint;
+                e.Handled = true;
+            }
         }
     }
 
