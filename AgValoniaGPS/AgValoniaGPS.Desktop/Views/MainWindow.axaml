@@ -900,20 +900,22 @@
                     MinWidth="320">
                 <StackPanel Spacing="4">
                     <!-- Header: Drag handle + Title + Close button -->
-                    <Grid ColumnDefinitions="Auto,*,Auto" Height="32" Margin="0,0,0,8"
-                          Background="#DD2C3E50" Cursor="Hand"
-                          PointerPressed="SimulatorPanel_PointerPressed"
-                          PointerMoved="SimulatorPanel_PointerMoved"
-                          PointerReleased="SimulatorPanel_PointerReleased"
-                          ToolTip.Tip="Drag to move">
-                        <!-- Drag handle -->
-                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
-                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                        <!-- Title -->
-                        <TextBlock Grid.Column="1" Text="GPS Simulator" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <!-- Close button -->
-                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
+                    <Grid ColumnDefinitions="*,Auto" Height="32" Margin="0,0,0,8" Background="#DD2C3E50">
+                        <!-- Draggable area (drag handle + title) -->
+                        <Grid Grid.Column="0" ColumnDefinitions="Auto,*" Cursor="Hand"
+                              PointerPressed="SimulatorPanel_PointerPressed"
+                              PointerMoved="SimulatorPanel_PointerMoved"
+                              PointerReleased="SimulatorPanel_PointerReleased"
+                              ToolTip.Tip="Drag to move">
+                            <!-- Drag handle -->
+                            <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                       Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                            <!-- Title -->
+                            <TextBlock Grid.Column="1" Text="GPS Simulator" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <!-- Close button (separate from drag area) -->
+                        <Button Grid.Column="1" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
                                 Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                 Command="{Binding ToggleSimulatorPanelCommand}"

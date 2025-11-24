@@ -872,29 +872,34 @@ public class MainViewModel : ReactiveObject
         {
             _simulatorService.Reset();
             SimulatorSteerAngle = 0;
+            StatusMessage = "Simulator Reset";
         });
 
         ResetSteerAngleCommand = new RelayCommand(() =>
         {
             SimulatorSteerAngle = 0;
+            StatusMessage = "Steer Angle Reset to 0°";
         });
 
         SimulatorForwardCommand = new RelayCommand(() =>
         {
             _simulatorService.IsAcceleratingForward = true;
             _simulatorService.IsAcceleratingBackward = false;
+            StatusMessage = "Sim: Accelerating Forward";
         });
 
         SimulatorStopCommand = new RelayCommand(() =>
         {
             _simulatorService.IsAcceleratingForward = false;
             _simulatorService.IsAcceleratingBackward = false;
+            StatusMessage = "Sim: Stopped";
         });
 
         SimulatorReverseCommand = new RelayCommand(() =>
         {
             _simulatorService.IsAcceleratingBackward = true;
             _simulatorService.IsAcceleratingForward = false;
+            StatusMessage = "Sim: Accelerating Reverse";
         });
 
         SimulatorReverseDirectionCommand = new RelayCommand(() =>
@@ -905,16 +910,19 @@ public class MainViewModel : ReactiveObject
             if (newHeading > Math.PI * 2)
                 newHeading -= Math.PI * 2;
             _simulatorService.SetHeading(newHeading);
+            StatusMessage = "Sim: Direction Reversed";
         });
 
         SimulatorSteerLeftCommand = new RelayCommand(() =>
         {
             SimulatorSteerAngle -= 5.0; // 5 degree increments
+            StatusMessage = $"Steer: {SimulatorSteerAngle:F1}°";
         });
 
         SimulatorSteerRightCommand = new RelayCommand(() =>
         {
             SimulatorSteerAngle += 5.0; // 5 degree increments
+            StatusMessage = $"Steer: {SimulatorSteerAngle:F1}°";
         });
     }
 
