@@ -390,19 +390,24 @@ public class MainViewModel : ViewModelBase
 - [x] Cleaned up debug output
 - [x] Improved touch interface - combined tap-to-rotate and hold-to-drag into single 40px touch area
 - [x] Removed separate rotation button for cleaner, more touch-friendly design
-- [ ] Next: Add ViewModel commands for remaining 7 buttons and implement dropdown menus
+- [x] Implemented File Menu as draggable floating panel (proof of concept)
+- [x] Added ViewModel command (ToggleFileMenuPanelCommand) and property (IsFileMenuPanelVisible)
+- [x] Created File Menu panel with Canvas positioning and drag handlers
+- [x] Fixed tooltip lag during drag for both File Menu and Left Panel
+- [x] File Menu includes 11 menu items organized in groups (Profile, Settings, Mode & Tools, Info & Help)
+- [ ] Next: Implement remaining 6 button panels (Special Functions, Configuration, Job Menu, Field Tools, AutoSteer Config, AgIO)
 
 ### Next Session Goals
-1. Add ViewModel commands for 7 buttons (Navigation already has command)
-   - File Menu (dropdown)
-   - Special Functions (dropdown)
-   - Configuration (dropdown)
-   - Job Menu (direct)
-   - Field Tools (dropdown)
-   - AutoSteer Config (direct)
-   - AgIO (direct)
-2. Implement dropdown menus (MenuFlyout) for 4 dropdown buttons
-3. Create placeholder dialogs for direct action buttons
+1. Implement remaining button panels using File Menu as template:
+   - [x] File Menu (floating panel) ✅ COMPLETE
+   - [ ] Special Functions (floating panel)
+   - [ ] Configuration (floating panel)
+   - [ ] Job Menu (direct action/dialog)
+   - [ ] Field Tools (floating panel)
+   - [ ] AutoSteer Config (direct action/dialog)
+   - [ ] AgIO (direct action/dialog)
+2. Add ViewModel commands and properties for each panel
+3. Wire up placeholder functionality for menu items
 
 ---
 
