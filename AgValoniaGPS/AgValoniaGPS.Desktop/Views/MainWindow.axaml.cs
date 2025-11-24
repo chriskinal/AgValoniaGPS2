@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private bool _isDraggingLeftPanel = false;
     private bool _isDraggingFileMenu = false;
     private bool _isDraggingViewSettings = false;
+    private bool _isDraggingTools = false;
     private Avalonia.Point _dragStartPoint;
     private DateTime _leftPanelPressTime;
     private const int TapTimeThresholdMs = 300;
@@ -633,6 +634,75 @@ public partial class MainWindow : Window
         }
     }
 
+    // Tools Panel drag handlers
+    private void ToolsPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Sender is the header Grid
+        if (ToolsPanel != null && sender is Grid header)
+        {
+            _dragStartPoint = e.GetPosition(this);
+            e.Pointer.Capture(header);
+
+            // Close any open tooltips to prevent position issues during drag
+            ToolTip.SetIsOpen(header, false);
+
+            e.Handled = true;
+        }
+    }
+
+    private void ToolsPanel_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (ToolsPanel != null && e.Pointer.Captured == sender && sender is Grid header)
+        {
+            var currentPoint = e.GetPosition(this);
+            var distance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) +
+                                    Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
+
+            // Start dragging if moved beyond threshold
+            if (!_isDraggingTools && distance > TapDistanceThreshold)
+            {
+                _isDraggingTools = true;
+                // Ensure tooltip stays closed while dragging
+                ToolTip.SetIsOpen(header, false);
+            }
+
+            if (_isDraggingTools)
+            {
+                var delta = currentPoint - _dragStartPoint;
+
+                // Calculate new position
+                double newLeft = Canvas.GetLeft(ToolsPanel) + delta.X;
+                double newTop = Canvas.GetTop(ToolsPanel) + delta.Y;
+
+                // Constrain to window bounds
+                double maxLeft = Bounds.Width - ToolsPanel.Bounds.Width;
+                double maxTop = Bounds.Height - ToolsPanel.Bounds.Height;
+
+                newLeft = Math.Clamp(newLeft, 0, Math.Max(0, maxLeft));
+                newTop = Math.Clamp(newTop, 0, Math.Max(0, maxTop));
+
+                // Update position
+                Canvas.SetLeft(ToolsPanel, newLeft);
+                Canvas.SetTop(ToolsPanel, newTop);
+
+                _dragStartPoint = currentPoint;
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void ToolsPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (ToolsPanel != null && e.Pointer.Captured == sender)
+        {
+            // Reset state
+            _isDraggingTools = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+    }
+
     // Helper method to check if pointer is over any UI panel
     private bool IsPointerOverUIPanel(PointerEventArgs e)
     {
@@ -699,6 +769,23 @@ public partial class MainWindow : Window
             if (double.IsNaN(top)) top = 200;
 
             var panelBounds = new Rect(left, top, ViewSettingsPanel.Bounds.Width, ViewSettingsPanel.Bounds.Height);
+
+            if (panelBounds.Contains(position))
+            {
+                return true;
+            }
+        }
+
+        // Check tools panel
+        if (ToolsPanel != null && ToolsPanel.IsVisible && ToolsPanel.Bounds.Width > 0 && ToolsPanel.Bounds.Height > 0)
+        {
+            double left = Canvas.GetLeft(ToolsPanel);
+            double top = Canvas.GetTop(ToolsPanel);
+
+            if (double.IsNaN(left)) left = 90;
+            if (double.IsNaN(top)) top = 100;
+
+            var panelBounds = new Rect(left, top, ToolsPanel.Bounds.Width, ToolsPanel.Bounds.Height);
 
             if (panelBounds.Contains(position))
             {

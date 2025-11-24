@@ -181,8 +181,9 @@
                         <Image Source="/Assets/Icons/NavigationSettings.png" Stretch="Uniform"/>
                     </Button>
 
-                    <!-- 2. Special Functions -->
-                    <Button Classes="LeftPanelButton" ToolTip.Tip="Special Functions">
+                    <!-- 2. Tools -->
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Tools"
+                            Command="{Binding ToggleToolsPanelCommand}">
                         <Image Source="/Assets/Icons/SpecialFunctions.png" Stretch="Uniform"/>
                     </Button>
 
@@ -402,6 +403,148 @@
                 <Button Classes="ModernButton" Content="❓ Help" HorizontalAlignment="Stretch" Margin="0,2"/>
             </StackPanel>
         </Border>
+        </Canvas>
+
+        <!-- Tools Panel (floating, toggleable, draggable) - 2 columns -->
+        <Canvas>
+            <Border x:Name="ToolsPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="100"
+                    IsVisible="{Binding IsToolsPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="400">
+                <StackPanel Spacing="4">
+                    <!-- Header with drag handle and close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          Height="32"
+                          Margin="0,0,0,8"
+                          Background="#DD2C3E50"
+                          Cursor="Hand"
+                          PointerPressed="ToolsPanel_PointerPressed"
+                          PointerMoved="ToolsPanel_PointerMoved"
+                          PointerReleased="ToolsPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag Handle Icon -->
+                        <TextBlock Grid.Column="0"
+                                   Text="≡"
+                                   Foreground="#AAA"
+                                   FontSize="20"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Margin="8,0,8,0"
+                                   IsHitTestVisible="False"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1"
+                                   Text="Tools"
+                                   Foreground="White"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+                        <!-- Close Button -->
+                        <Button Grid.Column="2"
+                                Content="✕"
+                                Width="24" Height="24"
+                                Padding="0"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#888"
+                                FontSize="16"
+                                Cursor="Hand"
+                                Command="{Binding ToggleToolsPanelCommand}"
+                                ToolTip.Tip="Close"
+                                Margin="8,0,8,0"/>
+                    </Grid>
+
+                    <Separator Height="1" Background="#444" Margin="0,0,0,4"/>
+
+                    <!-- Two Column Layout - 10 items (5 per column) -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                        <!-- Left Column: Wizards & Charts (5 items) -->
+                        <!-- Row 0: Steer Wizard -->
+                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/WizardWand.png" Width="28" Height="28"/>
+                                <TextBlock Text="Steer Wizard" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: Steer Chart -->
+                        <Button Grid.Column="0" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/AutoSteerOn.png" Width="28" Height="28"/>
+                                <TextBlock Text="Steer Chart" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: Heading Chart -->
+                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ConS_SourcesHeading.png" Width="28" Height="28"/>
+                                <TextBlock Text="Heading Chart" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: XTE Chart -->
+                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/AutoManualIsAuto.png" Width="28" Height="28"/>
+                                <TextBlock Text="XTE Chart" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 4: Roll Correction Chart -->
+                        <Button Grid.Column="0" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ConS_SourcesRoll.png" Width="28" Height="28"/>
+                                <TextBlock Text="Roll Correction Chart" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Right Column: Tools (5 items) -->
+                        <!-- Row 0: Boundary Tool -->
+                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/Boundary.png" Width="28" Height="28"/>
+                                <TextBlock Text="Boundary Tool" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: Smooth AB Curve -->
+                        <Button Grid.Column="1" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ABSmooth.png" Width="28" Height="28"/>
+                                <TextBlock Text="Smooth AB Curve" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: Delete Contour Paths -->
+                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/TrashContourRef.png" Width="28" Height="28"/>
+                                <TextBlock Text="Delete Contour Paths" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: Offset Fix -->
+                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/YouTurnReverse.png" Width="28" Height="28"/>
+                                <TextBlock Text="Offset Fix" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 4: Log Viewer -->
+                        <Button Grid.Column="1" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/ABTracks.png" Width="28" Height="28"/>
+                                <TextBlock Text="Log Viewer" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
         </Canvas>
 
         <!-- BOTTOM BAR: Function Buttons (horizontal) -->

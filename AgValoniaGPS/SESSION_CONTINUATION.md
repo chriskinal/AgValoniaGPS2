@@ -1,14 +1,14 @@
 # Session Continuation - Left Panel Implementation
 
 **Date**: 2025-01-23
-**Status**: 2 of 8 left panel buttons complete
-**Last Commit**: d0956a4 - "feat: Rename Navigation Settings to View Settings and convert to floating panel template"
+**Status**: 3 of 8 left panel buttons complete (37.5%)
+**Last Commit**: [Pending] - "feat: Tools floating panel implementation with AgOpen icons"
 
 ---
 
 ## What We've Accomplished This Session
 
-### ✅ Completed Floating Panels (2/8)
+### ✅ Completed Floating Panels (3/8)
 
 1. **File Menu Panel** (Button 0)
    - Draggable Canvas-based floating panel
@@ -24,6 +24,18 @@
      - Display Options: 🧭 North, ⊞ Grid, ☀️ Day/Night, 📡 GPS Hz
      - Brightness: 💡 Decrease/Increase
    - ViewModel: `IsViewSettingsPanelVisible`, `ToggleViewSettingsPanelCommand`
+
+3. **Tools Panel** (Button 2) - RENAMED from "Special Functions"
+   - Draggable Canvas-based floating panel with **2-column layout**
+   - **10 menu items** (matching AgOpenGPS 6.8.0) with AgOpen PNG icons
+   - **Left Column - Wizards & Charts**: Steer Wizard, Steer Chart, Heading Chart, XTE Chart, Roll Correction Chart
+   - **Right Column - Tools**: Boundary Tool, Smooth AB Curve, Delete Contour Paths, Offset Fix, Log Viewer
+   - Positioned with top aligned to left panel (Canvas.Top="100")
+   - Compact design: 5 rows × 2 columns, 44px button height, 12px font
+   - All icons sourced from Button Images Library (including Config/ subfolder)
+   - ViewModel: `IsToolsPanelVisible`, `ToggleToolsPanelCommand`
+   - Drag handlers: `ToolsPanel_PointerPressed/Moved/Released`
+   - Build status: ✅ Successful (0 errors)
 
 ### 🎯 Established Pattern - Draggable Floating Panel Template
 
@@ -85,14 +97,9 @@ TogglePanelCommand = new RelayCommand(() =>
 
 ---
 
-## What's Next - Remaining 6 Buttons
+## What's Next - Remaining 5 Buttons
 
 ### 📋 Remaining Left Panel Buttons (Priority Order)
-
-3. **Special Functions** (Dropdown → Floating Panel)
-   - WinForms: `toolStripDropDownButton4` (FormGPS.Designer.cs:947-1010)
-   - Sub-items: Steer Wizard, Steer Charts, Boundary Tool, Event Viewer, Guidelines, Smooth AB Curve, Delete Contour Paths, Webcam, Offset Fix
-   - Icon: `SpecialFunctions.png` ✅ Already in Assets/Icons/
 
 4. **Configuration** (Dropdown → Floating Panel)
    - WinForms: `toolStripDropDownButton1` (FormGPS.Designer.cs:1673-1780)
@@ -125,7 +132,7 @@ TogglePanelCommand = new RelayCommand(() =>
 
 ## How to Continue - Step-by-Step Guide
 
-### For Next Floating Panel (e.g., Special Functions):
+### For Next Floating Panel (e.g., Configuration):
 
 1. **Read WinForms menu items** from `SourceCode/GPS/Forms/FormGPS.Designer.cs`
    - Search for the button/dropdown definition (line references above)
@@ -134,40 +141,41 @@ TogglePanelCommand = new RelayCommand(() =>
 2. **Add ViewModel properties and command:**
 ```csharp
 // In MainViewModel.cs
-private bool _isSpecialFunctionsPanelVisible;
-public bool IsSpecialFunctionsPanelVisible
+private bool _isConfigurationPanelVisible;
+public bool IsConfigurationPanelVisible
 {
-    get => _isSpecialFunctionsPanelVisible;
-    set => this.RaiseAndSetIfChanged(ref _isSpecialFunctionsPanelVisible, value);
+    get => _isConfigurationPanelVisible;
+    set => this.RaiseAndSetIfChanged(ref _isConfigurationPanelVisible, value);
 }
 
-public ICommand? ToggleSpecialFunctionsPanelCommand { get; private set; }
+public ICommand? ToggleConfigurationPanelCommand { get; private set; }
 
 // In InitializeCommands():
-ToggleSpecialFunctionsPanelCommand = new RelayCommand(() =>
+ToggleConfigurationPanelCommand = new RelayCommand(() =>
 {
-    IsSpecialFunctionsPanelVisible = !IsSpecialFunctionsPanelVisible;
+    IsConfigurationPanelVisible = !IsConfigurationPanelVisible;
 });
 ```
 
-3. **Update left panel button in XAML** (MainWindow.axaml ~line 185):
+3. **Update left panel button in XAML** (MainWindow.axaml ~line 190):
 ```xml
-<Button Classes="LeftPanelButton" ToolTip.Tip="Special Functions"
-        Command="{Binding ToggleSpecialFunctionsPanelCommand}">
-    <Image Source="/Assets/Icons/SpecialFunctions.png" Stretch="Uniform"/>
+<Button Classes="LeftPanelButton" ToolTip.Tip="Configuration"
+        Command="{Binding ToggleConfigurationPanelCommand}">
+    <Image Source="/Assets/Icons/Settings48.png" Stretch="Uniform"/>
 </Button>
 ```
 
-4. **Create floating panel in XAML** (after View Settings panel):
-   - Use the template pattern shown above
+4. **Create floating panel in XAML** (after Tools panel ~line 550):
+   - Use the established pattern (see Tools panel as reference)
    - Add all menu items as `<Button Classes="ModernButton" .../>`
+   - Include AgOpen PNG icons from Button Images Library
    - Organize with `<Separator/>` between groups
-   - Add emoji icons for visual clarity
+   - Use `<StackPanel Orientation="Horizontal" Spacing="8">` for icon + text layout
 
 5. **Add drag handlers in code-behind** (MainWindow.axaml.cs):
-   - Add drag state field: `private bool _isDraggingSpecialFunctions = false;`
-   - Copy the three handler methods from File Menu or View Settings
-   - Update `IsPointerOverUIPanel()` to include new panel
+   - Add drag state field: `private bool _isDraggingConfiguration = false;`
+   - Copy the three handler methods from Tools panel (they're identical pattern)
+   - Update `IsPointerOverUIPanel()` to include Configuration panel
 
 6. **Build and test:**
 ```bash
@@ -178,7 +186,7 @@ dotnet build AgValoniaGPS.Desktop/AgValoniaGPS.Desktop.csproj
 7. **Commit when working:**
 ```bash
 git add -A
-git commit -m "feat: Special Functions floating panel implementation"
+git commit -m "feat: Configuration floating panel implementation"
 ```
 
 ---
@@ -198,10 +206,13 @@ git commit -m "feat: Special Functions floating panel implementation"
 
 ### Important Patterns Established
 1. **Unified Floating Panel Approach** - All buttons now use draggable panels instead of mixed dropdown/flyout/panel types
-2. **Touch-Friendly Design** - Large tap targets, emoji icons, clear visual hierarchy
-3. **Tooltip Lag Fix** - `ToolTip.SetIsOpen(header, false)` prevents tooltips from following during drag
-4. **Canvas Positioning** - Absolute positioning with window bounds constraints
-5. **Consistent Naming** - "View Settings" not "Navigation Settings" (more accurate for a navigation app)
+2. **AgOpen Icons Over Emojis** - Tools panel uses PNG icons from Button Images Library for authentic AgOpenGPS look
+3. **Icon + Text Layout** - `<StackPanel Orientation="Horizontal" Spacing="8">` with Image and TextBlock for each button
+4. **Organized Grouping** - Use separators and section headers (e.g., "Charts") to organize related items
+5. **Touch-Friendly Design** - Large tap targets (Height="48" for main items, Height="40" for sub-items)
+6. **Tooltip Lag Fix** - `ToolTip.SetIsOpen(header, false)` prevents tooltips from following during drag
+7. **Canvas Positioning** - Absolute positioning with window bounds constraints
+8. **Consistent Naming** - "View Settings" not "Navigation Settings", "Tools" not "Special Functions"
 
 ---
 
@@ -229,10 +240,11 @@ git log --oneline -5
 - **Latest commit**: d0956a4
 - **Files changed**: 369 files (206 insertions, 60 deletions)
 - **Build status**: ✅ Successful (14 warnings, 0 errors)
-- **Next button**: Special Functions (Button 2)
+- **Next button**: Configuration (Button 3)
 
 ---
 
-**Session Duration**: ~2 hours
-**Progress**: 25% complete (2 of 8 buttons)
-**Estimated Remaining**: ~6 hours (following established pattern makes it faster)
+**Session Duration**: ~3 hours
+**Progress**: 37.5% complete (3 of 8 buttons)
+**Estimated Remaining**: ~5 hours (pattern is well-established, remaining buttons should go faster)
+**Icons Copied**: 13 new icons for Tools panel (WizardWand, Chart, AutoSteerOn, ConS_SourcesHeading, AutoManualIsAuto, ConS_SourcesRoll, Boundary, ConD_ExtraGuides, ABSmooth, TrashContourRef, ABTracks, Webcam, YouTurnReverse)
