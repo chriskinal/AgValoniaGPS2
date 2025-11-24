@@ -20,6 +20,7 @@ public partial class MainWindow : Window
     private bool _isDraggingTools = false;
     private bool _isDraggingConfiguration = false;
     private bool _isDraggingJobMenu = false;
+    private bool _isDraggingFieldTools = false;
     private Avalonia.Point _dragStartPoint;
     private DateTime _leftPanelPressTime;
     private const int TapTimeThresholdMs = 300;
@@ -838,6 +839,70 @@ public partial class MainWindow : Window
         }
     }
 
+    // Field Tools Panel drag handlers
+    private void FieldToolsPanel_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (FieldToolsPanel != null && sender is Grid header)
+        {
+            _dragStartPoint = e.GetPosition(this);
+            e.Pointer.Capture(header);
+            // Suppress tooltip to prevent it from following during drag
+            ToolTip.SetIsOpen(header, false);
+            e.Handled = true;
+        }
+    }
+
+    private void FieldToolsPanel_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (FieldToolsPanel != null && e.Pointer.Captured == sender && sender is Grid header)
+        {
+            var currentPoint = e.GetPosition(this);
+            var distance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) +
+                                    Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
+
+            // Only start dragging if moved beyond threshold
+            if (!_isDraggingFieldTools && distance > TapDistanceThreshold)
+            {
+                _isDraggingFieldTools = true;
+                // Suppress tooltip when dragging starts
+                ToolTip.SetIsOpen(header, false);
+            }
+
+            if (_isDraggingFieldTools)
+            {
+                var delta = currentPoint - _dragStartPoint;
+
+                double newLeft = Canvas.GetLeft(FieldToolsPanel) + delta.X;
+                double newTop = Canvas.GetTop(FieldToolsPanel) + delta.Y;
+
+                // Constrain to window bounds
+                double maxLeft = Bounds.Width - FieldToolsPanel.Bounds.Width;
+                double maxTop = Bounds.Height - FieldToolsPanel.Bounds.Height;
+
+                newLeft = Math.Clamp(newLeft, 0, Math.Max(0, maxLeft));
+                newTop = Math.Clamp(newTop, 0, Math.Max(0, maxTop));
+
+                Canvas.SetLeft(FieldToolsPanel, newLeft);
+                Canvas.SetTop(FieldToolsPanel, newTop);
+
+                _dragStartPoint = currentPoint;
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void FieldToolsPanel_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (FieldToolsPanel != null && e.Pointer.Captured == sender)
+        {
+            // Reset state
+            _isDraggingFieldTools = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+    }
+
     // Helper method to check if pointer is over any UI panel
     private bool IsPointerOverUIPanel(PointerEventArgs e)
     {
@@ -955,6 +1020,23 @@ public partial class MainWindow : Window
             if (double.IsNaN(top)) top = 100;
 
             var panelBounds = new Rect(left, top, JobMenuPanel.Bounds.Width, JobMenuPanel.Bounds.Height);
+
+            if (panelBounds.Contains(position))
+            {
+                return true;
+            }
+        }
+
+        // Check field tools panel
+        if (FieldToolsPanel != null && FieldToolsPanel.IsVisible && FieldToolsPanel.Bounds.Width > 0 && FieldToolsPanel.Bounds.Height > 0)
+        {
+            double left = Canvas.GetLeft(FieldToolsPanel);
+            double top = Canvas.GetTop(FieldToolsPanel);
+
+            if (double.IsNaN(left)) left = 90;
+            if (double.IsNaN(top)) top = 100;
+
+            var panelBounds = new Rect(left, top, FieldToolsPanel.Bounds.Width, FieldToolsPanel.Bounds.Height);
 
             if (panelBounds.Contains(position))
             {

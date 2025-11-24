@@ -129,19 +129,25 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ✅ 5. Field Tools (Dropdown)
+### ✅ 5. Field Tools (Floating Panel)
 - **Icon**: `FieldTools.png`
-- **Type**: Dropdown menu
-- **Function**: Field-specific operations (boundaries, headland, tram)
-- **Sub-menu items**:
-  - [ ] Boundaries
-  - [ ] Headland
-  - [ ] Headland Build
-  - [ ] Tram Lines
-  - [ ] Trams Multi
-  - [ ] Delete Applied
-  - [ ] Flag by Lat/Lon
-  - [ ] Recorded Path
+- **Type**: Floating panel (2-column layout, 4 items per column)
+- **Title**: "Field Tools"
+- **Panel items** (8 items total, matching AgOpenGPS 6.8.0):
+  - **Left Column - Boundaries & Headland:**
+    - Boundary (Boundary.png)
+    - Headland (Build) (Headache.png)
+    - Tramlines (TramMulti.png)
+    - Flag By Lat Lon (FlagRed.png)
+  - **Right Column - Operations:**
+    - Headland (HeadlandBuild.png)
+    - TramLines (TramAll.png)
+    - Delete Applied (TrashApplied.png)
+    - Recorded Path (RecPath.png)
+- **Layout**: 4 rows × 2 columns, 44px button height, 28px icons, 12px font
+- **ViewModel**: `IsFieldToolsPanelVisible`, `ToggleFieldToolsPanelCommand`
+- **Drag handlers**: `FieldToolsPanel_PointerPressed/Moved/Released`
+- **Build status**: ✅ Successful (0 errors)
 
 **WinForms Reference**: `statusStrip1` → `toolStripBtnFieldTools` (FormGPS.Designer.cs:1887-1990)
 

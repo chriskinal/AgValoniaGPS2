@@ -200,7 +200,8 @@
                     </Button>
 
                     <!-- 5. Field Tools -->
-                    <Button Classes="LeftPanelButton" ToolTip.Tip="Field Tools">
+                    <Button Classes="LeftPanelButton" ToolTip.Tip="Field Tools"
+                            Command="{Binding ToggleFieldToolsPanelCommand}">
                         <Image Source="/Assets/Icons/FieldTools.png" Stretch="Uniform"/>
                     </Button>
 
@@ -776,6 +777,100 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
                                 <TextBlock Text="AgShare Upload" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- Field Tools Panel (Button 5) -->
+        <Canvas>
+            <Border x:Name="FieldToolsPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="15"
+                    Canvas.Left="90" Canvas.Top="100"
+                    IsVisible="{Binding IsFieldToolsPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="400">
+                <StackPanel Spacing="4">
+                    <!-- Header: Drag handle + Title + Close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" Height="32" Margin="0,0,0,8"
+                          Background="#DD2C3E50" Cursor="Hand"
+                          PointerPressed="FieldToolsPanel_PointerPressed"
+                          PointerMoved="FieldToolsPanel_PointerMoved"
+                          PointerReleased="FieldToolsPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <!-- Drag handle -->
+                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <!-- Title -->
+                        <TextBlock Grid.Column="1" Text="Field Tools" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <!-- Close button -->
+                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
+                                Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
+                                Command="{Binding ToggleFieldToolsPanelCommand}" Cursor="Hand"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <Separator Background="#404040" Height="1" Margin="0,0,0,4"/>
+
+                    <!-- Menu Items: 2-column layout (4 rows × 2 columns) -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                        <!-- Row 0: Boundary, Headland -->
+                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/Boundary.png" Width="28" Height="28"/>
+                                <TextBlock Text="Boundary" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/HeadlandBuild.png" Width="28" Height="28"/>
+                                <TextBlock Text="Headland" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 1: Headland (Build), TramLines -->
+                        <Button Grid.Column="0" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/Headache.png" Width="28" Height="28"/>
+                                <TextBlock Text="Headland (Build)" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="1" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/TramAll.png" Width="28" Height="28"/>
+                                <TextBlock Text="TramLines" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 2: Tramlines, Delete Applied -->
+                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/TramMulti.png" Width="28" Height="28"/>
+                                <TextBlock Text="Tramlines" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/TrashApplied.png" Width="28" Height="28"/>
+                                <TextBlock Text="Delete Applied" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 3: Flag By Lat Lon, Recorded Path -->
+                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/FlagRed.png" Width="28" Height="28"/>
+                                <TextBlock Text="Flag By Lat Lon" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Image Source="/Assets/Icons/RecPath.png" Width="28" Height="28"/>
+                                <TextBlock Text="Recorded Path" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
                     </Grid>
