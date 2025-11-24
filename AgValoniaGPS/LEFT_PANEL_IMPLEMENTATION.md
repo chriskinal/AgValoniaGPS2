@@ -1,6 +1,6 @@
 # Left Panel Implementation Checklist
 
-**Status**: In Progress (3/8 buttons complete)
+**Status**: In Progress (6/8 buttons complete)
 **Target**: Implement complete left navigation panel for AgValoniaGPS
 **Last Updated**: 2025-01-23
 
@@ -155,7 +155,7 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ✅ 6. AutoSteer Config (Direct Button)
+### ❌ 6. AutoSteer Config (Direct Button)
 - **Icon**: `AutoSteerConf.png`
 - **Type**: Direct action button
 - **Function**: Open AutoSteer configuration dialog
@@ -170,7 +170,7 @@ The left panel is the **main navigation anchor** for AgValoniaGPS. It's a single
 
 ---
 
-### ✅ 7. AgIO (Direct Button)
+### ❌ 7. AgIO (Direct Button)
 - **Icon**: `AgIO.png`
 - **Type**: Direct action button
 - **Function**: Launch/connect to AgIO communication hub
