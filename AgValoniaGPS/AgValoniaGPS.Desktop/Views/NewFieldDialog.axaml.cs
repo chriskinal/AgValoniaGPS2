@@ -9,57 +9,35 @@ namespace AgValoniaGPS.Desktop.Views;
 
 public partial class NewFieldDialog : Window
 {
-    public NewFieldDialog()
+    private readonly Position _currentPosition;
+
+    public NewFieldDialog(Position currentPosition)
     {
+        _currentPosition = currentPosition;
         InitializeComponent();
+
+        // Display current GPS position
+        TxtCurrentPosition.Text = $"Latitude: {currentPosition.Latitude:F6}, Longitude: {currentPosition.Longitude:F6}";
+    }
+
+    // Parameterless constructor for designer
+    public NewFieldDialog() : this(new Position { Latitude = 0, Longitude = 0 })
+    {
     }
 
     private void BtnCreate_Click(object? sender, RoutedEventArgs e)
     {
         var fieldName = TxtFieldName.Text?.Trim();
-        var latText = TxtLatitude.Text?.Trim();
-        var lonText = TxtLongitude.Text?.Trim();
 
-        // Validate inputs
+        // Validate field name
         if (string.IsNullOrWhiteSpace(fieldName))
         {
             ShowError("Please enter a field name.");
             return;
         }
 
-        if (!double.TryParse(latText, NumberStyles.Float, CultureInfo.InvariantCulture, out double latitude))
-        {
-            ShowError("Please enter a valid latitude.");
-            return;
-        }
-
-        if (!double.TryParse(lonText, NumberStyles.Float, CultureInfo.InvariantCulture, out double longitude))
-        {
-            ShowError("Please enter a valid longitude.");
-            return;
-        }
-
-        // Validate latitude/longitude ranges
-        if (latitude < -90 || latitude > 90)
-        {
-            ShowError("Latitude must be between -90 and 90 degrees.");
-            return;
-        }
-
-        if (longitude < -180 || longitude > 180)
-        {
-            ShowError("Longitude must be between -180 and 180 degrees.");
-            return;
-        }
-
-        var origin = new Position
-        {
-            Latitude = latitude,
-            Longitude = longitude,
-            Altitude = 0
-        };
-
-        Close((Success: true, FieldName: fieldName, Origin: origin));
+        // Use the current GPS position as the field origin
+        Close((Success: true, FieldName: fieldName, Origin: _currentPosition));
     }
 
     private void BtnCancel_Click(object? sender, RoutedEventArgs e)

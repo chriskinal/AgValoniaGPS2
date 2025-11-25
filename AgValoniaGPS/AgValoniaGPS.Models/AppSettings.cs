@@ -47,6 +47,11 @@ namespace AgValoniaGPS.Models
         public int GpsUpdateRate { get; set; } = 10; // Hz
         public bool UseRtk { get; set; } = true;
 
+        // Field management
+        public string FieldsDirectory { get; set; } = string.Empty; // Will default to Documents/AgValoniaGPS/Fields
+        public string CurrentFieldName { get; set; } = string.Empty; // Currently open field
+        public string LastOpenedField { get; set; } = string.Empty; // Last field that was opened
+
         // First run
         public bool IsFirstRun { get; set; } = true;
         public DateTime LastRunDate { get; set; } = DateTime.MinValue;

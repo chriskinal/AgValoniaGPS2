@@ -33,6 +33,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INtripClientService, NtripClientService>();
         services.AddSingleton<ISettingsService, SettingsService>();
 
+        // Field file I/O services
+        services.AddSingleton<FieldPlaneFileService>();
+        services.AddSingleton<BoundaryFileService>();
+
         return services;
     }
 

@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AgValoniaGPS.ViewModels;
 using AgValoniaGPS.Services;
 using AgValoniaGPS.Services.Interfaces;
+using AgValoniaGPS.Models;
 
 namespace AgValoniaGPS.Desktop.Views;
 
@@ -343,6 +344,147 @@ public partial class MainWindow : Window
                 }
             }
         }
+    }
+
+    private async void BtnNewField_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var fieldPlaneFileService = App.Services.GetRequiredService<FieldPlaneFileService>();
+
+        // Get current GPS position or use default
+        double latitude = ViewModel.Latitude;
+        double longitude = ViewModel.Longitude;
+
+        // If no GPS fix, use default coordinates (New York)
+        if (latitude == 0 && longitude == 0)
+        {
+            latitude = 40.7128;
+            longitude = -74.0060;
+        }
+
+        var currentPosition = new Position
+        {
+            Latitude = latitude,
+            Longitude = longitude,
+            Altitude = 0
+        };
+
+        // Pass current GPS position to the dialog
+        var dialog = new NewFieldDialog(currentPosition);
+        var result = await dialog.ShowDialog<(bool Success, string FieldName, Position Origin)>(this);
+
+        if (result.Success && !string.IsNullOrWhiteSpace(result.FieldName))
+        {
+            try
+            {
+                // Create field directory
+                var fieldDirectory = Path.Combine(settingsService.Settings.FieldsDirectory, result.FieldName);
+
+                if (Directory.Exists(fieldDirectory))
+                {
+                    ViewModel.StatusMessage = $"Field '{result.FieldName}' already exists!";
+                    return;
+                }
+
+                // Create directory and Field.txt
+                fieldPlaneFileService.CreateField(fieldDirectory, result.Origin);
+
+                // Update view model
+                ViewModel.CurrentFieldName = result.FieldName;
+                ViewModel.IsFieldOpen = true;
+
+                // Save to settings
+                settingsService.Settings.CurrentFieldName = result.FieldName;
+                settingsService.Settings.LastOpenedField = result.FieldName;
+
+                ViewModel.StatusMessage = $"Created field: {result.FieldName}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error creating field: {ex.Message}";
+            }
+        }
+    }
+
+    private async void BtnOpenField_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var fieldService = App.Services.GetRequiredService<IFieldService>();
+        var fieldPlaneFileService = App.Services.GetRequiredService<FieldPlaneFileService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Open field selection dialog
+        var dialog = new FieldSelectionDialog(fieldService, settingsService.Settings.FieldsDirectory);
+        var dialogResult = await dialog.ShowDialog<bool>(this);
+
+        if (dialogResult && dialog.SelectedField != null)
+        {
+            try
+            {
+                // Load field data
+                var fieldDirectory = dialog.SelectedField.DirectoryPath;
+                var fieldName = Path.GetFileName(fieldDirectory);
+
+                // Load boundary if it exists
+                var boundary = boundaryFileService.LoadBoundary(fieldDirectory);
+
+                // Update view model
+                ViewModel.CurrentFieldName = fieldName;
+                ViewModel.IsFieldOpen = true;
+
+                // Save to settings
+                settingsService.Settings.CurrentFieldName = fieldName;
+                settingsService.Settings.LastOpenedField = fieldName;
+
+                // Render boundary on map
+                if (MapControl != null && boundary != null)
+                {
+                    MapControl.SetBoundary(boundary);
+
+                    // Center camera on boundary
+                    if (boundary.OuterBoundary != null && boundary.OuterBoundary.Points.Count > 0)
+                    {
+                        double sumE = 0, sumN = 0;
+                        foreach (var point in boundary.OuterBoundary.Points)
+                        {
+                            sumE += point.Easting;
+                            sumN += point.Northing;
+                        }
+                        double centerE = sumE / boundary.OuterBoundary.Points.Count;
+                        double centerN = sumN / boundary.OuterBoundary.Points.Count;
+
+                        MapControl.Pan(centerE, centerN);
+                    }
+                }
+
+                ViewModel.StatusMessage = $"Opened field: {fieldName}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error opening field: {ex.Message}";
+            }
+        }
+    }
+
+    private void BtnCloseField_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+
+        // Clear current field
+        ViewModel.CurrentFieldName = string.Empty;
+        ViewModel.IsFieldOpen = false;
+
+        // Clear boundary from map
+        if (MapControl != null)
+        {
+            MapControl.SetBoundary(null);
+        }
+
+        ViewModel.StatusMessage = "Field closed";
     }
 
     // Drag functionality for Section Control

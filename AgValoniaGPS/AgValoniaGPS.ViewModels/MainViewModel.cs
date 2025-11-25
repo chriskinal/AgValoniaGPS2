@@ -701,6 +701,21 @@ public class MainViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _isSimulatorPanelVisible, value);
     }
 
+    // Field management properties
+    private bool _isFieldOpen;
+    public bool IsFieldOpen
+    {
+        get => _isFieldOpen;
+        set => this.RaiseAndSetIfChanged(ref _isFieldOpen, value);
+    }
+
+    private string _currentFieldName = string.Empty;
+    public string CurrentFieldName
+    {
+        get => _currentFieldName;
+        set => this.RaiseAndSetIfChanged(ref _currentFieldName, value);
+    }
+
     // Simulator properties
     private bool _isSimulatorEnabled;
     public bool IsSimulatorEnabled
@@ -710,6 +725,10 @@ public class MainViewModel : ReactiveObject
         {
             if (this.RaiseAndSetIfChanged(ref _isSimulatorEnabled, value))
             {
+                // Save to settings
+                _settingsService.Settings.SimulatorEnabled = value;
+                _settingsService.Save();
+
                 // Start or stop simulator timer based on enabled state
                 if (value)
                 {
@@ -760,6 +779,7 @@ public class MainViewModel : ReactiveObject
         // Save coordinates to settings so they persist
         _settingsService.Settings.SimulatorLatitude = latitude;
         _settingsService.Settings.SimulatorLongitude = longitude;
+        _settingsService.Save();
 
         StatusMessage = $"Simulator reset to {latitude:F7}, {longitude:F7}";
     }

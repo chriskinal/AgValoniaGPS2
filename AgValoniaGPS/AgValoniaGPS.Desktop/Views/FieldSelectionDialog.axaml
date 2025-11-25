@@ -2,12 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+        xmlns:local="clr-namespace:AgValoniaGPS.Desktop.Views"
+        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
         x:Class="AgValoniaGPS.Desktop.Views.FieldSelectionDialog"
-        Title="Field Selection"
-        Width="600" Height="450"
+        Title="Load Field"
+        Width="700" Height="500"
         WindowStartupLocation="CenterOwner"
-        Background="#2C3E50"
+        Background="#E8E8E8"
         CanResize="True">
 
     <Window.Styles>
@@ -50,65 +51,105 @@
         </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="20">
-        <!-- Header -->
-        <StackPanel Grid.Row="0" Spacing="10" Margin="0,0,0,20">
-            <TextBlock Text="Field Selection" FontSize="24" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="Select or create a field to begin working" Foreground="#BDC3C7" FontSize="14"/>
-        </StackPanel>
+    <Grid RowDefinitions="Auto,*,Auto" Margin="0">
+        <!-- Header: Load File button -->
+        <Button Grid.Row="0" Content="Load File"
+                Background="#D0D0D0"
+                Foreground="Black"
+                BorderBrush="#A0A0A0"
+                BorderThickness="0,0,0,1"
+                CornerRadius="0"
+                Padding="10"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Left"/>
 
-        <!-- Fields List -->
-        <Border Grid.Row="1"
-                Background="#34495E"
-                CornerRadius="8"
-                Padding="1"
-                Margin="0,0,0,20">
-            <Grid RowDefinitions="Auto,*">
-                <!-- Fields Directory -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10" Margin="10,10,10,0">
-                    <TextBlock Text="Fields Directory:" Foreground="White" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TxtFieldsDirectory"
-                             Width="300"
-                             Watermark="C:\AgOpenGPS\Fields"
-                             Background="#2C3E50"
-                             Foreground="White"
-                             BorderBrush="#7F8C8D"
-                             CornerRadius="4"/>
-                    <Button Classes="ModernButton" Content="Browse..." Click="BtnBrowse_Click"/>
-                    <Button Classes="ModernButton" Content="Refresh" Click="BtnRefresh_Click"/>
-                </StackPanel>
+        <!-- Fields DataGrid -->
+        <DataGrid x:Name="FieldsGrid"
+                  x:FieldModifier="private"
+                  x:DataType="local:FieldInfo"
+                  Grid.Row="1"
+                  Margin="6"
+                  Background="#C8D8E8"
+                  BorderThickness="1"
+                  BorderBrush="#A0A0A0"
+                  GridLinesVisibility="All"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  AutoGenerateColumns="False"
+                  RowBackground="#C8D8E8">
 
-                <!-- Fields List -->
-                <ScrollViewer Grid.Row="1" Margin="10">
-                    <ListBox x:Name="FieldsList"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             SelectionMode="Single"
-                             SelectionChanged="FieldsList_SelectionChanged">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="{Binding}"
-                                               Foreground="White"
-                                               FontSize="16"
-                                               FontWeight="SemiBold"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </ScrollViewer>
-            </Grid>
-        </Border>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Field"
+                                    Binding="{Binding Name}"
+                                    Width="*"
+                                    FontSize="14"
+                                    FontWeight="SemiBold"/>
+                <DataGridTextColumn Header="Distance"
+                                    Binding="{Binding Distance, StringFormat=\{0:F2\}}"
+                                    Width="120"
+                                    FontSize="14"/>
+                <DataGridTextColumn Header="Area"
+                                    Binding="{Binding Area, StringFormat=\{0:F1\}}"
+                                    Width="120"
+                                    FontSize="14"/>
+            </DataGrid.Columns>
+        </DataGrid>
 
         <!-- Action Buttons -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                <Button Classes="DangerButton" Content="Delete Field" Click="BtnDeleteField_Click"/>
-            </StackPanel>
+        <Grid Grid.Row="2"
+              ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+              Background="#D0D0D0"
+              Height="80">
 
-            <Button Grid.Column="1" Classes="ModernButton" Content="New Field..." Click="BtnNewField_Click" Margin="0,0,10,0"/>
-            <Button Grid.Column="2" Classes="ModernButton" Content="Open" Click="BtnOpen_Click" Margin="0,0,10,0"/>
-            <Button Grid.Column="3" Classes="ModernButton" Content="Cancel" Click="BtnCancel_Click"/>
+            <!-- Delete Field Button -->
+            <Button Grid.Column="0" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
+                    Click="BtnDeleteField_Click">
+                <StackPanel Spacing="4">
+                    <Image Source="/Assets/Icons/TrashApplied.png" Width="32" Height="32"/>
+                    <TextBlock Text="Delete Field" FontSize="10" TextAlignment="Center" Foreground="Black"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Sort Button -->
+            <Button Grid.Column="1" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
+                    Click="BtnSort_Click">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="A" FontSize="16" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Z ↓" FontSize="14" FontWeight="Bold" Foreground="Orange" HorizontalAlignment="Center" Margin="0,-8,0,0"/>
+                    <TextBlock Text="Sort" FontSize="10" TextAlignment="Center" Foreground="Black"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Spacer -->
+            <Border Grid.Column="2"/>
+
+            <!-- Cancel Button -->
+            <Button Grid.Column="3" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
+                    Click="BtnCancel_Click">
+                <StackPanel Spacing="4">
+                    <Ellipse Width="32" Height="32" Fill="#E74C3C">
+                        <Ellipse.OpacityMask>
+                            <RadialGradientBrush>
+                                <GradientStop Color="White" Offset="0"/>
+                                <GradientStop Color="White" Offset="1"/>
+                            </RadialGradientBrush>
+                        </Ellipse.OpacityMask>
+                    </Ellipse>
+                    <TextBlock Text="✕" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,-40,0,0"/>
+                    <TextBlock Text="Cancel" FontSize="10" TextAlignment="Center" Foreground="Black" Margin="0,8,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <!-- Use Selected Button -->
+            <Button Grid.Column="4" Margin="10" Width="120" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
+                    Click="BtnOpen_Click">
+                <StackPanel Spacing="4">
+                    <Image Source="/Assets/Icons/FileOpen.png" Width="32" Height="32"/>
+                    <TextBlock Text="Use Selected" FontSize="10" TextAlignment="Center" Foreground="Black"/>
+                </StackPanel>
+            </Button>
         </Grid>
     </Grid>
 </Window>

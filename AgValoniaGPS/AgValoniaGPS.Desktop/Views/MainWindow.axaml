@@ -719,7 +719,9 @@
                                 <TextBlock Text="ISO-XML" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="1" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnCloseField_Click"
+                                IsEnabled="{Binding IsFieldOpen}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/FileClose.png" Width="28" Height="28"/>
                                 <TextBlock Text="Close" VerticalAlignment="Center" FontSize="12"/>
@@ -747,7 +749,8 @@
                                 <TextBlock Text="From Existing" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="1" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnOpenField_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/FileOpen.png" Width="28" Height="28"/>
                                 <TextBlock Text="Open" VerticalAlignment="Center" FontSize="12"/>
@@ -755,9 +758,10 @@
                         </Button>
 
                         <!-- Row 3: New From Default, Resume -->
-                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="0" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnNewField_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Image Source="/Assets/Icons/Reset_Default.png" Width="28" Height="28"/>
+                                <Image Source="/Assets/Icons/FileNew.png" Width="28" Height="28"/>
                                 <TextBlock Text="New From Default" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
@@ -782,6 +786,17 @@
                             </StackPanel>
                         </Button>
                     </Grid>
+
+                    <!-- Current Field Display -->
+                    <Border Background="#DD1E8449" CornerRadius="6" Padding="8,4" Margin="0,8,0,0"
+                            IsVisible="{Binding IsFieldOpen}">
+                        <TextBlock Text="{Binding CurrentFieldName, StringFormat='Current Field: {0}'}"
+                                   Foreground="White"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap"
+                                   HorizontalAlignment="Center"/>
+                    </Border>
                 </StackPanel>
             </Border>
         </Canvas>

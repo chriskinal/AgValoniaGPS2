@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="350"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
         x:Class="AgValoniaGPS.Desktop.Views.NewFieldDialog"
         Title="New Field"
-        Width="500" Height="350"
+        Width="500" Height="300"
         WindowStartupLocation="CenterOwner"
         Background="#2C3E50"
         CanResize="False">
@@ -41,7 +41,7 @@
         <!-- Header -->
         <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,20">
             <TextBlock Text="Create New Field" FontSize="20" FontWeight="Bold" Foreground="White"/>
-            <TextBlock Text="Enter field details and origin coordinates" Foreground="#BDC3C7" FontSize="12"/>
+            <TextBlock Text="Enter field name - origin will be set to current GPS position" Foreground="#BDC3C7" FontSize="12"/>
         </StackPanel>
 
         <!-- Form -->
@@ -52,20 +52,16 @@
                 <TextBox x:Name="TxtFieldName" Watermark="Enter field name"/>
             </StackPanel>
 
-            <!-- Origin Latitude -->
-            <StackPanel>
-                <TextBlock Classes="Label" Text="Origin Latitude (decimal degrees):"/>
-                <TextBox x:Name="TxtLatitude" Watermark="e.g., 32.5904365"/>
-            </StackPanel>
-
-            <!-- Origin Longitude -->
-            <StackPanel>
-                <TextBlock Classes="Label" Text="Origin Longitude (decimal degrees):"/>
-                <TextBox x:Name="TxtLongitude" Watermark="e.g., -87.1804022"/>
-            </StackPanel>
+            <!-- GPS Position Display -->
+            <Border Background="#34495E" CornerRadius="6" Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Current GPS Position:" Foreground="#95A5A6" FontSize="12" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="TxtCurrentPosition" Text="Latitude: -, Longitude: -" Foreground="White" FontSize="11"/>
+                </StackPanel>
+            </Border>
 
             <!-- Helper text -->
-            <TextBlock Text="💡 Tip: Use current GPS position or enter coordinates manually"
+            <TextBlock Text="💡 Tip: The field origin will be set to your current GPS position when you create the field"
                        Foreground="#95A5A6"
                        FontSize="11"
                        TextWrapping="Wrap"/>

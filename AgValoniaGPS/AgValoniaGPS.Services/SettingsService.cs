@@ -40,8 +40,9 @@ namespace AgValoniaGPS.Services
 
                 if (!File.Exists(_settingsFilePath))
                 {
-                    // First run - use defaults
+                    // First run - use defaults and set up fields directory
                     Settings = new AppSettings { IsFirstRun = true };
+                    InitializeFieldsDirectory();
                     return false;
                 }
 
@@ -61,6 +62,13 @@ namespace AgValoniaGPS.Services
                     Settings = loadedSettings;
                     Settings.IsFirstRun = false;
                     Settings.LastRunDate = DateTime.Now;
+
+                    // Ensure fields directory is set
+                    if (string.IsNullOrEmpty(Settings.FieldsDirectory))
+                    {
+                        InitializeFieldsDirectory();
+                    }
+
                     SettingsLoaded?.Invoke(this, Settings);
                     return true;
                 }
@@ -71,6 +79,22 @@ namespace AgValoniaGPS.Services
             {
                 Settings = new AppSettings();
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Initialize fields directory to default location
+        /// </summary>
+        private void InitializeFieldsDirectory()
+        {
+            // Default to Documents/AgValoniaGPS/Fields (cross-platform compatible)
+            var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            Settings.FieldsDirectory = Path.Combine(documentsPath, "AgValoniaGPS", "Fields");
+
+            // Create the directory if it doesn't exist
+            if (!Directory.Exists(Settings.FieldsDirectory))
+            {
+                Directory.CreateDirectory(Settings.FieldsDirectory);
             }
         }
 

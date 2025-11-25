@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Controls;
@@ -10,10 +11,19 @@ using AgValoniaGPS.Models;
 
 namespace AgValoniaGPS.Desktop.Views;
 
+public class FieldInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public double Distance { get; set; }
+    public double Area { get; set; }
+    public string DirectoryPath { get; set; } = string.Empty;
+}
+
 public partial class FieldSelectionDialog : Window
 {
     private readonly IFieldService _fieldService = null!;
     private string _fieldsRootDirectory = string.Empty;
+    private ObservableCollection<FieldInfo> _fields = new();
     public Field? SelectedField { get; private set; }
 
     // Parameterless constructor for XAML preview (not used at runtime)
@@ -28,106 +38,87 @@ public partial class FieldSelectionDialog : Window
 
         InitializeComponent();
 
-        // Set initial directory
-        TxtFieldsDirectory.Text = _fieldsRootDirectory;
-
         // Load fields
         LoadFieldsList();
     }
 
     private void LoadFieldsList()
     {
-        _fieldsRootDirectory = TxtFieldsDirectory.Text ?? string.Empty;
+        _fields.Clear();
 
         if (string.IsNullOrWhiteSpace(_fieldsRootDirectory) || !Directory.Exists(_fieldsRootDirectory))
         {
-            FieldsList.ItemsSource = new List<string> { "(No fields directory set or directory not found)" };
+            FieldsGrid.ItemsSource = _fields;
             return;
         }
 
-        var fields = _fieldService.GetAvailableFields(_fieldsRootDirectory);
+        var fieldNames = _fieldService.GetAvailableFields(_fieldsRootDirectory);
 
-        if (fields.Count == 0)
+        foreach (var fieldName in fieldNames)
         {
-            FieldsList.ItemsSource = new List<string> { "(No fields found)" };
-        }
-        else
-        {
-            FieldsList.ItemsSource = fields;
-        }
-    }
-
-    private async void BtnBrowse_Click(object? sender, RoutedEventArgs e)
-    {
-        var storageProvider = StorageProvider;
-        var folders = await storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
-        {
-            Title = "Select Fields Directory",
-            AllowMultiple = false
-        });
-
-        if (folders.Count > 0)
-        {
-            TxtFieldsDirectory.Text = folders[0].Path.LocalPath;
-            LoadFieldsList();
-        }
-    }
-
-    private void BtnRefresh_Click(object? sender, RoutedEventArgs e)
-    {
-        LoadFieldsList();
-    }
-
-    private void FieldsList_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        // Enable/disable buttons based on selection
-    }
-
-    private async void BtnNewField_Click(object? sender, RoutedEventArgs e)
-    {
-        var dialog = new NewFieldDialog();
-        var result = await dialog.ShowDialog<(bool Success, string FieldName, Position Origin)?>(this);
-
-        if (result.HasValue && result.Value.Success)
-        {
-            try
+            var fieldDirectory = Path.Combine(_fieldsRootDirectory, fieldName);
+            var fieldInfo = new FieldInfo
             {
-                var field = _fieldService.CreateField(
-                    _fieldsRootDirectory,
-                    result.Value.FieldName,
-                    result.Value.Origin);
+                Name = fieldName,
+                Distance = 0.0, // TODO: Calculate actual distance from current position
+                Area = CalculateFieldArea(fieldDirectory),
+                DirectoryPath = fieldDirectory
+            };
+            _fields.Add(fieldInfo);
+        }
 
-                SelectedField = field;
-                _fieldService.SetActiveField(field);
-                Close(true);
-            }
-            catch (Exception ex)
+        FieldsGrid.ItemsSource = _fields;
+    }
+
+    private double CalculateFieldArea(string fieldDirectory)
+    {
+        try
+        {
+            var boundaryService = new BoundaryFileService();
+            var boundary = boundaryService.LoadBoundary(fieldDirectory);
+
+            if (boundary?.OuterBoundary?.Points != null && boundary.OuterBoundary.Points.Count > 2)
             {
-                // Show error (could use a message box here)
-                var errorDialog = new Window
+                // Calculate area using shoelace formula
+                double area = 0;
+                var points = boundary.OuterBoundary.Points;
+                for (int i = 0; i < points.Count; i++)
                 {
-                    Title = "Error",
-                    Width = 400,
-                    Height = 150,
-                    Content = new StackPanel
-                    {
-                        Margin = new Avalonia.Thickness(20),
-                        Children =
-                        {
-                            new TextBlock { Text = $"Failed to create field: {ex.Message}" }
-                        }
-                    }
-                };
-                await errorDialog.ShowDialog(this);
+                    int j = (i + 1) % points.Count;
+                    area += points[i].Easting * points[j].Northing;
+                    area -= points[j].Easting * points[i].Northing;
+                }
+                // Convert to hectares (area is in square meters, 1 hectare = 10000 m²)
+                return Math.Abs(area) / 2.0 / 10000.0;
             }
+        }
+        catch
+        {
+            // If we can't load boundary, return 0
+        }
+
+        return 0.0;
+    }
+
+    private void BtnSort_Click(object? sender, RoutedEventArgs e)
+    {
+        // Toggle sort order between ascending and descending
+        var sorted = _fields.OrderBy(f => f.Name).ToList();
+        _fields.Clear();
+        foreach (var field in sorted)
+        {
+            _fields.Add(field);
         }
     }
 
     private async void BtnDeleteField_Click(object? sender, RoutedEventArgs e)
     {
-        if (FieldsList.SelectedItem is string fieldName &&
-            !fieldName.StartsWith("("))
+        if (FieldsGrid.SelectedItem is FieldInfo selectedField)
         {
+            // Create buttons with click handlers
+            var btnYes = new Button { Content = "Yes", Width = 80 };
+            var btnNo = new Button { Content = "No", Width = 80 };
+
             var confirmDialog = new Window
             {
                 Title = "Confirm Delete",
@@ -140,7 +131,7 @@ public partial class FieldSelectionDialog : Window
                     Spacing = 20,
                     Children =
                     {
-                        new TextBlock { Text = $"Are you sure you want to delete field '{fieldName}'?" },
+                        new TextBlock { Text = $"Are you sure you want to delete field '{selectedField.Name}'?" },
                         new StackPanel
                         {
                             Orientation = Avalonia.Layout.Orientation.Horizontal,
@@ -148,22 +139,25 @@ public partial class FieldSelectionDialog : Window
                             Spacing = 10,
                             Children =
                             {
-                                new Button { Content = "Yes", Tag = true },
-                                new Button { Content = "No", Tag = false }
+                                btnYes,
+                                btnNo
                             }
                         }
                     }
                 }
             };
 
+            // Wire up button click handlers
+            btnYes.Click += (s, e) => confirmDialog.Close(true);
+            btnNo.Click += (s, e) => confirmDialog.Close(false);
+
             var result = await confirmDialog.ShowDialog<bool?>(this);
             if (result == true)
             {
                 try
                 {
-                    var fieldDirectory = Path.Combine(_fieldsRootDirectory, fieldName);
-                    _fieldService.DeleteField(fieldDirectory);
-                    LoadFieldsList();
+                    _fieldService.DeleteField(selectedField.DirectoryPath);
+                    _fields.Remove(selectedField);
                 }
                 catch (Exception ex)
                 {
@@ -184,15 +178,13 @@ public partial class FieldSelectionDialog : Window
         }
     }
 
-    private void BtnOpen_Click(object? sender, RoutedEventArgs e)
+    private async void BtnOpen_Click(object? sender, RoutedEventArgs e)
     {
-        if (FieldsList.SelectedItem is string fieldName &&
-            !fieldName.StartsWith("("))
+        if (FieldsGrid.SelectedItem is FieldInfo selectedField)
         {
             try
             {
-                var fieldDirectory = Path.Combine(_fieldsRootDirectory, fieldName);
-                SelectedField = _fieldService.LoadField(fieldDirectory);
+                SelectedField = _fieldService.LoadField(selectedField.DirectoryPath);
                 _fieldService.SetActiveField(SelectedField);
                 Close(true);
             }
@@ -210,7 +202,7 @@ public partial class FieldSelectionDialog : Window
                         Margin = new Avalonia.Thickness(20)
                     }
                 };
-                errorDialog.ShowDialog(this);
+                await errorDialog.ShowDialog(this);
             }
         }
     }
