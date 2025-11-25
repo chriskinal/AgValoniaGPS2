@@ -220,6 +220,41 @@
 - ✅ Proper 5-meter vehicle size scaling
 - ✅ Professional agricultural navigation appearance
 
+## Phase 7.5: GPS Simulator Integration
+
+### Simulator Service Integration
+- ✅ Integrated IGpsSimulationService from AgOpenGPS.Core
+- ✅ Created LocalPlane for WGS84 to UTM coordinate conversion
+- ✅ Implemented direct GPS data injection (bypasses NMEA parsing)
+- ✅ Added 100ms simulation tick rate matching WinForms version
+
+### Simulator UI Panel
+- ✅ Created floating GPS Simulator panel with drag support
+- ✅ Implemented Enable/Disable checkbox for simulator activation
+- ✅ Added Reset button (return to start position)
+- ✅ Created steer angle reset button (>0<)
+- ✅ Implemented steering controls (left/right arrows)
+- ✅ Added horizontal slider for manual steering (-40° to +40°)
+- ✅ Created speed controls (forward ▲, stop ■, reverse ▼)
+- ✅ Added reverse direction button (180° flip)
+- ✅ Implemented real-time steer angle display
+
+### Simulation Logic
+- ✅ Fixed GPS data flow using UpdateGpsData() directly
+- ✅ Implemented proper coordinate conversion (WGS84 → UTM)
+- ✅ Created GpsData objects with complete Position data
+- ✅ Fixed vehicle rotation direction (negated heading for OpenGL)
+- ✅ Fixed stop button functionality (sets StepDistance = 0)
+- ✅ Fixed acceleration buttons (reset speed before accelerating)
+- ✅ Added acceleration model with smooth speed transitions
+
+### Bug Fixes
+- ✅ Fixed rotation direction (compass vs math convention)
+- ✅ Fixed stop button (now immediately stops movement)
+- ✅ Fixed forward/reverse buttons (proper speed reset)
+- ✅ Fixed property change notifications for steer angle display
+- ✅ Fixed pointer capture for drag-and-drop panel interaction
+
 ## Key Improvements Over Original
 
 ### Architecture
@@ -295,6 +330,7 @@ The AgValoniaGPS application now features:
 - ✅ **NTRIP RTK corrections** with full protocol implementation and configuration UI
 - ✅ **Interactive map controls** with mouse pan and zoom
 - ✅ **Textured vehicle rendering** that rotates based on GPS heading
+- ✅ **GPS Simulator** with full control panel for testing without hardware
 - ✅ **Clean architecture** ready for feature expansion
 
 The application represents a complete architectural reimagining of AgOpenGPS with:
@@ -305,6 +341,9 @@ The application represents a complete architectural reimagining of AgOpenGPS wit
 - Professional-grade code organization
 
 **It's starting to look and feel like a proper agricultural navigation application!** 🚜
+
+### Simulator Testing Capability
+The integrated GPS simulator allows full testing of vehicle movement, steering, and GPS data flow without requiring physical GPS hardware. This dramatically improves development speed and enables indoor testing.
 
 ## Next Steps (Future Phases)
 
@@ -345,4 +384,4 @@ The application represents a complete architectural reimagining of AgOpenGPS wit
 **UI Framework**: Avalonia 11.3.6
 **Graphics**: OpenGL ES 3.0 (Silk.NET + ANGLE)
 **Architecture**: MVVM + Dependency Injection
-**Status**: Phase 7 Complete - Foundation Ready for Feature Expansion
+**Status**: Phase 7.5 Complete - GPS Simulator Fully Integrated

@@ -8,30 +8,31 @@ When starting a new session, use this prompt to quickly restore context:
 I'm continuing work on the AgValoniaGPS project - a complete architectural
 reimagining of AgOpenGPS using Avalonia UI and modern .NET 8.
 
-We've completed Phase 7 (vehicle texture rendering). The application now has:
+We've completed Phase 7.5 (GPS Simulator integration). The application now has:
 - Cross-platform Avalonia UI with floating status panels
 - OpenGL ES 3.0 map rendering with textured tractor vehicle
 - UDP communication with module status tracking
 - NMEA GPS parsing with real-time position updates
 - NTRIP client for RTK corrections
 - Mouse-based map pan/zoom controls
+- GPS Simulator for testing without hardware
 
 Please read:
-1. C:\Users\chrisk\source\AgOpenGPS\AgValoniaGPS\MIGRATION_ACHIEVEMENTS.md
-2. C:\Users\chrisk\source\AgOpenGPS\AgValoniaGPS\CONTINUATION_GUIDE.md
+1. C:\Users\chrisk\Documents\AgValoniaGPS2\AgValoniaGPS\MIGRATION_ACHIEVEMENTS.md
+2. C:\Users\chrisk\Documents\AgValoniaGPS2\AgValoniaGPS\CONTINUATION_GUIDE.md
 
-The codebase is at: C:\Users\chrisk\source\AgOpenGPS\AgValoniaGPS\
+The codebase is at: C:\Users\chrisk\Documents\AgValoniaGPS2\AgValoniaGPS\
 
 What should we work on next?
 ```
 
 ## Project Overview
 
-**Location**: `C:\Users\chrisk\source\AgOpenGPS\AgValoniaGPS\`
+**Location**: `C:\Users\chrisk\Documents\AgValoniaGPS2\AgValoniaGPS\`
 
 **Purpose**: Cross-platform agricultural guidance application built with Avalonia UI, replacing the Windows Forms-based AgOpenGPS with a modern, maintainable architecture.
 
-**Current Status**: Phase 7 Complete - Foundation ready for feature expansion
+**Current Status**: Phase 7.5 Complete - GPS Simulator fully integrated for hardware-free testing
 
 ## Architecture
 
@@ -95,7 +96,7 @@ AgValoniaGPS/
 
 ```bash
 # Navigate to solution directory
-cd C:\Users\chrisk\source\AgOpenGPS\AgValoniaGPS
+cd C:\Users\chrisk\Documents\AgValoniaGPS2\AgValoniaGPS
 
 # Build
 dotnet build AgValoniaGPS.Desktop/AgValoniaGPS.Desktop.csproj
@@ -136,11 +137,22 @@ dotnet run --project AgValoniaGPS.Desktop/AgValoniaGPS.Desktop.csproj
 - ✅ Mouse zoom (wheel, 2x-100x)
 - ✅ Real-time vehicle position updates
 
+### GPS Simulator
+- ✅ Full GPS simulation without hardware
+- ✅ Floating simulator control panel
+- ✅ Speed controls (forward, stop, reverse)
+- ✅ Steering controls (left/right, slider, reset)
+- ✅ Direction reversal (180° flip)
+- ✅ Real-time vehicle movement on map
+- ✅ Proper coordinate conversion (WGS84 → UTM)
+- ✅ 100ms tick rate matching WinForms version
+
 ### UI
 - ✅ Modern floating panel design
 - ✅ GPS status panel
 - ✅ Module status indicators
 - ✅ NTRIP status panel
+- ✅ GPS Simulator panel
 - ✅ Data I/O dialog for NTRIP config
 
 ## What Needs Work (Future Phases)
@@ -289,20 +301,25 @@ Matrix4x4 model = Matrix4x4.CreateRotationZ(headingRadians) *
 Matrix4x4 mvp = model * view * projection;
 ```
 
-## Testing with Real Hardware
+## Testing Options
 
-### Required Hardware Setup
+### GPS Simulator (Recommended for Development)
+The integrated GPS simulator allows full testing without any hardware:
+1. Click **SIM** button on left panel to open simulator control panel
+2. Check **Simulator Enabled** to activate simulation
+3. Use speed controls: **▲** Forward, **■** Stop, **▼** Reverse
+4. Use steering controls: **◀ ▶** arrows or horizontal slider
+5. Click **Reset** to return to starting position
+6. Watch the tractor move and steer in real-time on the map
+
+**This is the fastest way to test and develop features!**
+
+### Real Hardware Setup
+For testing with actual equipment:
 1. **GPS Module** - Sends NMEA via UDP to port 9999
 2. **AutoSteer Module** - Arduino-based, communicates via PGN messages
 3. **Machine Module** - Receives section control commands
 4. **IMU Module** - BNO085 or similar, sends orientation data
-
-### GPS Simulator Option
-Can simulate GPS by sending NMEA sentences to UDP port 9999:
-```
-$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47
-$GPVTG,054.7,T,034.4,M,005.5,N,010.2,K*48
-```
 
 ### NTRIP Testing
 Free NTRIP casters for testing:
@@ -361,7 +378,7 @@ tasklist | findstr AgValoniaGPS
 ## Reference Documentation
 
 ### Original AgOpenGPS
-Location: `C:\Users\chrisk\source\AgOpenGPS\SourceCode\`
+Location: `C:\Users\chrisk\Documents\AgValoniaGPS2\SourceCode\`
 Main form: `GPS\FormGPS.cs` (~15,000 lines - good reference for features)
 
 ### Avalonia Documentation

@@ -535,7 +535,9 @@ void main()
         else
         {
             // In 2D mode, rotate vehicle based on heading
-            vehicleModel = CreateModelMatrix((float)_vehicleX, (float)_vehicleY, (float)_vehicleHeading);
+            // Negate heading because AgOpenGPS uses compass convention (clockwise, 0=North)
+            // while OpenGL rotation is counterclockwise (math convention)
+            vehicleModel = CreateModelMatrix((float)_vehicleX, (float)_vehicleY, -(float)_vehicleHeading);
         }
         float[] vehicleMvp = MultiplyMatrices(mvp, vehicleModel);
 
