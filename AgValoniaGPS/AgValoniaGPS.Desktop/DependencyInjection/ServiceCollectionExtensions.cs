@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IFieldService, FieldService>();
         services.AddSingleton<IGuidanceService, GuidanceService>();
         services.AddSingleton<INtripClientService, NtripClientService>();
+        services.AddSingleton<ISettingsService, SettingsService>();
 
         return services;
     }

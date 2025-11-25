@@ -22,6 +22,7 @@ public class MainViewModel : ReactiveObject
     private readonly AgOpenGPS.Core.Interfaces.Services.IFieldStatisticsService _fieldStatistics;
     private readonly AgOpenGPS.Core.Interfaces.Services.IGpsSimulationService _simulatorService;
     private readonly VehicleConfiguration _vehicleConfig;
+    private readonly ISettingsService _settingsService;
     private readonly NmeaParserService _nmeaParser;
     private readonly DispatcherTimer _simulatorTimer;
     private AgOpenGPS.Core.Models.LocalPlane? _simulatorLocalPlane;
@@ -62,7 +63,8 @@ public class MainViewModel : ReactiveObject
         AgOpenGPS.Core.Interfaces.Services.IDisplaySettingsService displaySettings,
         AgOpenGPS.Core.Interfaces.Services.IFieldStatisticsService fieldStatistics,
         AgOpenGPS.Core.Interfaces.Services.IGpsSimulationService simulatorService,
-        VehicleConfiguration vehicleConfig)
+        VehicleConfiguration vehicleConfig,
+        ISettingsService settingsService)
     {
         _udpService = udpService;
         _gpsService = gpsService;
@@ -73,6 +75,7 @@ public class MainViewModel : ReactiveObject
         _fieldStatistics = fieldStatistics;
         _simulatorService = simulatorService;
         _vehicleConfig = vehicleConfig;
+        _settingsService = settingsService;
         _nmeaParser = new NmeaParserService(gpsService);
 
         // Subscribe to events
@@ -101,11 +104,46 @@ public class MainViewModel : ReactiveObject
         // Initialize commands immediately (with MainThreadScheduler they're thread-safe)
         InitializeCommands();
 
-        // Load settings - defer to avoid threading issues during construction
-        Dispatcher.UIThread.Post(() => _displaySettings.LoadSettings(), DispatcherPriority.Background);
+        // Load display settings first, then restore our app settings on top
+        // This ensures AppSettings takes precedence over DisplaySettings
+        Dispatcher.UIThread.Post(() =>
+        {
+            _displaySettings.LoadSettings();
+            RestoreSettings();
+        }, DispatcherPriority.Background);
 
         // Start UDP communication
         InitializeAsync();
+    }
+
+    private void RestoreSettings()
+    {
+        var settings = _settingsService.Settings;
+
+        // Restore NTRIP settings
+        NtripCasterAddress = settings.NtripCasterIp;
+        NtripCasterPort = settings.NtripCasterPort;
+        NtripMountPoint = settings.NtripMountPoint;
+        NtripUsername = settings.NtripUsername;
+        NtripPassword = settings.NtripPassword;
+
+        // Restore UI state (through _displaySettings service)
+        _displaySettings.IsGridOn = settings.GridVisible;
+
+        // IMPORTANT: Notify bindings that IsGridOn changed
+        // (setting _displaySettings directly doesn't trigger property change notification)
+        this.RaisePropertyChanged(nameof(IsGridOn));
+
+        // Restore simulator settings
+        if (settings.SimulatorEnabled)
+        {
+            // Initialize simulator with saved coordinates
+            _simulatorService.Initialize(new AgOpenGPS.Core.Models.Wgs84(
+                settings.SimulatorLatitude,
+                settings.SimulatorLongitude));
+            _simulatorService.StepDistance = settings.SimulatorSpeed;
+            Console.WriteLine($"  Restored simulator: {settings.SimulatorLatitude},{settings.SimulatorLongitude}");
+        }
     }
 
     public async System.Threading.Tasks.Task ConnectToNtripAsync()
@@ -703,6 +741,36 @@ public class MainViewModel : ReactiveObject
     }
 
     public string SimulatorSteerAngleDisplay => $"Steer Angle: {_simulatorSteerAngle:F1}°";
+
+    /// <summary>
+    /// Set new starting coordinates for the simulator
+    /// </summary>
+    public void SetSimulatorCoordinates(double latitude, double longitude)
+    {
+        // Reinitialize simulator with new coordinates
+        _simulatorService.Initialize(new AgOpenGPS.Core.Models.Wgs84(latitude, longitude));
+        _simulatorService.StepDistance = 0;
+
+        // Clear LocalPlane so it will be recreated with new origin on next GPS data update
+        _simulatorLocalPlane = null;
+
+        // Reset steering
+        SimulatorSteerAngle = 0;
+
+        // Save coordinates to settings so they persist
+        _settingsService.Settings.SimulatorLatitude = latitude;
+        _settingsService.Settings.SimulatorLongitude = longitude;
+
+        StatusMessage = $"Simulator reset to {latitude:F7}, {longitude:F7}";
+    }
+
+    /// <summary>
+    /// Get current simulator position
+    /// </summary>
+    public AgOpenGPS.Core.Models.Wgs84 GetSimulatorPosition()
+    {
+        return _simulatorService.CurrentPosition;
+    }
 
     // Navigation settings properties (forwarded from service)
     public bool IsGridOn

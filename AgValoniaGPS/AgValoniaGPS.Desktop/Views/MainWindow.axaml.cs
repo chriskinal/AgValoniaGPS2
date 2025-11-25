@@ -4,9 +4,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Layout;
 using Microsoft.Extensions.DependencyInjection;
 using AgValoniaGPS.ViewModels;
 using AgValoniaGPS.Services;
+using AgValoniaGPS.Services.Interfaces;
 
 namespace AgValoniaGPS.Desktop.Views;
 
@@ -40,6 +43,9 @@ public partial class MainWindow : Window
         // Handle window resize to keep section control in bounds
         this.PropertyChanged += MainWindow_PropertyChanged;
 
+        // Load window settings AFTER window is opened to avoid Avalonia overriding them
+        this.Opened += MainWindow_Opened;
+
         // Subscribe to GPS position changes
         if (ViewModel != null)
         {
@@ -48,6 +54,83 @@ public partial class MainWindow : Window
 
         // Add keyboard shortcut for 3D mode toggle (F3)
         this.KeyDown += MainWindow_KeyDown;
+
+        // Save window settings on close
+        this.Closing += MainWindow_Closing;
+    }
+
+    private void MainWindow_Opened(object? sender, EventArgs e)
+    {
+        // Load settings after window is opened
+        LoadWindowSettings();
+    }
+
+    private void LoadWindowSettings()
+    {
+        if (App.Services == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var settings = settingsService.Settings;
+
+        // Apply window size and position
+        if (settings.WindowWidth > 0 && settings.WindowHeight > 0)
+        {
+            Width = settings.WindowWidth;
+            Height = settings.WindowHeight;
+        }
+
+        if (settings.WindowX >= 0 && settings.WindowY >= 0)
+        {
+            Position = new PixelPoint((int)settings.WindowX, (int)settings.WindowY);
+        }
+
+        if (settings.WindowMaximized)
+        {
+            WindowState = WindowState.Maximized;
+        }
+
+        // Apply simulator panel position if saved
+        if (SimulatorPanel != null && !double.IsNaN(settings.SimulatorPanelX) && !double.IsNaN(settings.SimulatorPanelY))
+        {
+            Canvas.SetLeft(SimulatorPanel, settings.SimulatorPanelX);
+            Canvas.SetTop(SimulatorPanel, settings.SimulatorPanelY);
+        }
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (App.Services == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var settings = settingsService.Settings;
+
+        // Save window state
+        settings.WindowMaximized = WindowState == WindowState.Maximized;
+
+        if (WindowState == WindowState.Normal)
+        {
+            settings.WindowWidth = Width;
+            settings.WindowHeight = Height;
+            settings.WindowX = Position.X;
+            settings.WindowY = Position.Y;
+        }
+
+        // Save simulator panel position
+        if (SimulatorPanel != null)
+        {
+            settings.SimulatorPanelX = Canvas.GetLeft(SimulatorPanel);
+            settings.SimulatorPanelY = Canvas.GetTop(SimulatorPanel);
+            settings.SimulatorPanelVisible = SimulatorPanel.IsVisible;
+        }
+
+        // Save UI state
+        if (ViewModel != null)
+        {
+            settings.SimulatorEnabled = ViewModel.IsSimulatorEnabled;
+            settings.GridVisible = ViewModel.IsGridOn;
+        }
+
+        // Settings will be saved automatically by App.Exit handler
     }
 
     private void MainWindow_KeyDown(object? sender, KeyEventArgs e)
@@ -138,6 +221,69 @@ public partial class MainWindow : Window
             DataContext = ViewModel
         };
         dialog.ShowDialog(this);
+    }
+
+    private async void BtnEnterSimCoords_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+
+        // Check if simulator is enabled
+        if (!ViewModel.IsSimulatorEnabled)
+        {
+            // Show message that simulator must be enabled first
+            var messageBox = new Window
+            {
+                Title = "Simulator Not Enabled",
+                Width = 400,
+                Height = 200,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Background = new SolidColorBrush(Color.FromRgb(30, 30, 30))
+            };
+
+            var stack = new StackPanel
+            {
+                Margin = new Thickness(24),
+                Spacing = 16
+            };
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = "Please enable the simulator first.",
+                FontSize = 16,
+                Foreground = Brushes.White,
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+            });
+
+            var okButton = new Button
+            {
+                Content = "OK",
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Padding = new Thickness(24, 8),
+                Background = new SolidColorBrush(Color.FromRgb(0, 120, 212)),
+                Foreground = Brushes.White,
+                BorderThickness = new Thickness(0)
+            };
+            okButton.Click += (s, args) => messageBox.Close();
+            stack.Children.Add(okButton);
+
+            messageBox.Content = stack;
+            await messageBox.ShowDialog(this);
+            return;
+        }
+
+        // Get current simulator position
+        var currentPos = ViewModel.GetSimulatorPosition();
+
+        // Open the dialog
+        var dialog = new SimCoordsDialog(currentPos.Latitude, currentPos.Longitude);
+        await dialog.ShowDialog(this);
+
+        // If OK was clicked, update simulator coordinates
+        if (dialog.DialogResult)
+        {
+            ViewModel.SetSimulatorCoordinates(dialog.Latitude, dialog.Longitude);
+        }
     }
 
     private void Btn3DToggle_Click(object? sender, RoutedEventArgs e)

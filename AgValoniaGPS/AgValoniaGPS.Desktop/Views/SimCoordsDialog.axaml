@@ -1,0 +1,103 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="350"
+        x:Class="AgValoniaGPS.Desktop.Views.SimCoordsDialog"
+        Title="Enter Simulator Coordinates"
+        Width="500" Height="350"
+        WindowStartupLocation="CenterOwner"
+        CanResize="false"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.Label">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style Selector="TextBlock.Hint">
+            <Setter Property="Foreground" Value="#AAA"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#555"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="Button.DialogButton">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.DialogButton:pointerover">
+            <Setter Property="Background" Value="#1084D8"/>
+        </Style>
+        <Style Selector="Button.CancelButton">
+            <Setter Property="Background" Value="#555"/>
+        </Style>
+        <Style Selector="Button.CancelButton:pointerover">
+            <Setter Property="Background" Value="#666"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="24">
+        <!-- Title -->
+        <TextBlock Grid.Row="0"
+                   Text="Enter GPS Coordinates for Simulator"
+                   FontSize="18"
+                   FontWeight="Bold"
+                   Foreground="White"
+                   Margin="0,0,0,24"/>
+
+        <!-- Input Fields -->
+        <StackPanel Grid.Row="1" Spacing="16">
+            <!-- Latitude -->
+            <StackPanel>
+                <TextBlock Classes="Label" Text="Latitude"/>
+                <TextBlock Classes="Hint" Text="( +90 to -90 )"/>
+                <NumericUpDown x:Name="LatitudeInput"
+                               Minimum="-90"
+                               Maximum="90"
+                               Increment="0.0000001"
+                               FormatString="F7"
+                               Value="40.7128"/>
+            </StackPanel>
+
+            <!-- Longitude -->
+            <StackPanel>
+                <TextBlock Classes="Label" Text="Longitude"/>
+                <TextBlock Classes="Hint" Text="( +180 to -180 )"/>
+                <NumericUpDown x:Name="LongitudeInput"
+                               Minimum="-180"
+                               Maximum="180"
+                               Increment="0.0000001"
+                               FormatString="F7"
+                               Value="-74.0060"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,24,0,0">
+            <Button Grid.Column="1"
+                    Classes="DialogButton CancelButton"
+                    Content="Cancel"
+                    Click="CancelButton_Click"
+                    Margin="0,0,12,0"/>
+            <Button Grid.Column="2"
+                    Classes="DialogButton"
+                    Content="OK"
+                    Click="OkButton_Click"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -16,6 +16,26 @@ namespace AgValoniaGPS.Desktop.Controls;
 
 public class OpenGLMapControl : OpenGlControlBase
 {
+    // Avalonia property for grid visibility
+    public static readonly StyledProperty<bool> IsGridVisibleProperty =
+        AvaloniaProperty.Register<OpenGLMapControl, bool>(
+            nameof(IsGridVisible),
+            defaultValue: false,
+            coerce: (control, value) =>
+            {
+                if (control is OpenGLMapControl mapControl)
+                {
+                    mapControl.RequestNextFrameRendering(); // Trigger re-render when value changes
+                }
+                return value;
+            });
+
+    public bool IsGridVisible
+    {
+        get => GetValue(IsGridVisibleProperty);
+        set => SetValue(IsGridVisibleProperty, value);
+    }
+
     private GL? _gl;
     private uint _gridVao;
     private uint _gridVbo;
@@ -38,7 +58,6 @@ public class OpenGLMapControl : OpenGlControlBase
     private double _cameraPitch = 0.0; // Radians (0 = top-down, positive = tilted up)
     private double _cameraDistance = 100.0; // Distance from target in 3D mode
     private bool _is3DMode = false;
-    private bool _isGridVisible = false; // Grid display toggle
 
     // GPS/Vehicle position
     private double _vehicleX = 0.0;      // Meters (world coordinates)
@@ -502,7 +521,7 @@ void main()
         }
 
         // Draw grid (if visible)
-        if (_isGridVisible)
+        if (IsGridVisible)
         {
             _gl.BindVertexArray(_gridVao);
             _gl.DrawArrays(PrimitiveType.Lines, 0, (uint)_gridVertexCount);
@@ -802,8 +821,7 @@ void main()
 
     public void SetGridVisible(bool visible)
     {
-        _isGridVisible = visible;
-        RequestNextFrameRendering();
+        IsGridVisible = visible;
     }
 
     // Public methods for external mouse control

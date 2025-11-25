@@ -7,6 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using AgValoniaGPS.Desktop.Views;
 using AgValoniaGPS.Desktop.DependencyInjection;
+using AgValoniaGPS.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -35,6 +36,10 @@ public partial class App : Application
 
         Services = _host.Services;
 
+        // Load settings
+        var settingsService = Services.GetRequiredService<ISettingsService>();
+        settingsService.Load();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // Avoid duplicate validations from both Avalonia and the CommunityToolkit.
@@ -45,6 +50,8 @@ public partial class App : Application
 
             desktop.Exit += (sender, args) =>
             {
+                // Save settings on exit
+                settingsService.Save();
                 _host?.Dispose();
             };
         }
