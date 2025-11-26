@@ -126,12 +126,16 @@ public class OpenGLMapControl : OpenGlControlBase
         }
     }
 
-    private void InitializeShaders()
-    {
-        if (_gl == null) return;
+    // Shader source code - selected at runtime based on platform
+    private static bool IsOpenGLES => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
-        // Simple vertex shader (2D positions with MVP transform) - OpenGL 3.3+ compatible
-        const string vertexShaderSource = @"#version 330
+    private static string GetColorVertexShaderSource()
+    {
+        if (IsOpenGLES)
+        {
+            // OpenGL ES 3.0 for Android/iOS
+            return @"#version 300 es
+precision mediump float;
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec4 aColor;
 
@@ -144,9 +148,33 @@ void main()
     gl_Position = uMVP * vec4(aPosition, 0.0, 1.0);
     vColor = aColor;
 }";
+        }
+        else
+        {
+            // OpenGL 3.3 for Windows/macOS/Linux
+            return @"#version 330
+layout (location = 0) in vec2 aPosition;
+layout (location = 1) in vec4 aColor;
 
-        // Simple fragment shader (pass through color) - OpenGL 3.3+ compatible
-        const string fragmentShaderSource = @"#version 330
+uniform mat4 uMVP;
+
+out vec4 vColor;
+
+void main()
+{
+    gl_Position = uMVP * vec4(aPosition, 0.0, 1.0);
+    vColor = aColor;
+}";
+        }
+    }
+
+    private static string GetColorFragmentShaderSource()
+    {
+        if (IsOpenGLES)
+        {
+            // OpenGL ES 3.0 for Android/iOS
+            return @"#version 300 es
+precision mediump float;
 in vec4 vColor;
 out vec4 FragColor;
 
@@ -154,6 +182,27 @@ void main()
 {
     FragColor = vColor;
 }";
+        }
+        else
+        {
+            // OpenGL 3.3 for Windows/macOS/Linux
+            return @"#version 330
+in vec4 vColor;
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vColor;
+}";
+        }
+    }
+
+    private void InitializeShaders()
+    {
+        if (_gl == null) return;
+
+        string vertexShaderSource = GetColorVertexShaderSource();
+        string fragmentShaderSource = GetColorFragmentShaderSource();
 
         // Compile vertex shader
         uint vertexShader = _gl.CreateShader(ShaderType.VertexShader);
@@ -197,11 +246,13 @@ void main()
         _gl.DeleteShader(fragmentShader);
     }
 
-    private void InitializeTextureShaders()
+    private static string GetTextureVertexShaderSource()
     {
-        if (_gl == null) return;
-
-        const string textureVertexShaderSource = @"#version 330
+        if (IsOpenGLES)
+        {
+            // OpenGL ES 3.0 for Android/iOS
+            return @"#version 300 es
+precision mediump float;
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec2 aTexCoord;
 
@@ -214,8 +265,33 @@ void main()
     gl_Position = uTransform * vec4(aPosition, 0.0, 1.0);
     TexCoord = aTexCoord;
 }";
+        }
+        else
+        {
+            // OpenGL 3.3 for Windows/macOS/Linux
+            return @"#version 330
+layout (location = 0) in vec2 aPosition;
+layout (location = 1) in vec2 aTexCoord;
 
-        const string textureFragmentShaderSource = @"#version 330
+out vec2 TexCoord;
+
+uniform mat4 uTransform;
+
+void main()
+{
+    gl_Position = uTransform * vec4(aPosition, 0.0, 1.0);
+    TexCoord = aTexCoord;
+}";
+        }
+    }
+
+    private static string GetTextureFragmentShaderSource()
+    {
+        if (IsOpenGLES)
+        {
+            // OpenGL ES 3.0 for Android/iOS
+            return @"#version 300 es
+precision mediump float;
 in vec2 TexCoord;
 out vec4 FragColor;
 
@@ -225,6 +301,29 @@ void main()
 {
     FragColor = texture(uTexture, TexCoord);
 }";
+        }
+        else
+        {
+            // OpenGL 3.3 for Windows/macOS/Linux
+            return @"#version 330
+in vec2 TexCoord;
+out vec4 FragColor;
+
+uniform sampler2D uTexture;
+
+void main()
+{
+    FragColor = texture(uTexture, TexCoord);
+}";
+        }
+    }
+
+    private void InitializeTextureShaders()
+    {
+        if (_gl == null) return;
+
+        string textureVertexShaderSource = GetTextureVertexShaderSource();
+        string textureFragmentShaderSource = GetTextureFragmentShaderSource();
 
         uint vertexShader = _gl.CreateShader(ShaderType.VertexShader);
         _gl.ShaderSource(vertexShader, textureVertexShaderSource);
