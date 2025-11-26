@@ -49,6 +49,7 @@ public class OpenGLMapControl : OpenGlControlBase
     private int _gridVertexCount;
     private List<(int offset, int count)> _boundarySegments = new(); // Track separate boundary loops
     private Boundary? _pendingBoundary;
+    private bool _hasPendingBoundaryUpdate;
 
     // Camera/viewport properties
     private double _cameraX = 0.0;
@@ -440,9 +441,17 @@ void main()
         if (_gl == null) return;
 
         // Process pending boundary on render thread
-        if (_pendingBoundary != null)
+        if (_hasPendingBoundaryUpdate)
         {
-            InitializeBoundary(_pendingBoundary);
+            _hasPendingBoundaryUpdate = false;
+            if (_pendingBoundary != null)
+            {
+                InitializeBoundary(_pendingBoundary);
+            }
+            else
+            {
+                ClearBoundary();
+            }
             _pendingBoundary = null;
         }
 
@@ -1022,13 +1031,14 @@ void main()
     public void SetBoundary(Boundary? boundary)
     {
         _pendingBoundary = boundary;
+        _hasPendingBoundaryUpdate = true;
     }
 
-    private void InitializeBoundary(Boundary boundary)
+    private void ClearBoundary()
     {
         if (_gl == null) return;
 
-        // Clear existing boundary data
+        // Delete boundary VAO and VBO
         if (_boundaryVao != 0)
         {
             _gl.DeleteVertexArray(_boundaryVao);
@@ -1037,6 +1047,14 @@ void main()
             _boundaryVbo = 0;
         }
         _boundarySegments.Clear();
+    }
+
+    private void InitializeBoundary(Boundary boundary)
+    {
+        if (_gl == null) return;
+
+        // Clear existing boundary data
+        ClearBoundary();
 
         // Build vertex data for boundary (position + color: x, y, r, g, b, a)
         List<float> vertices = new List<float>();

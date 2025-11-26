@@ -597,6 +597,384 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void BtnIsoXml_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Open file picker for XML files
+        var storageProvider = GetTopLevel(this)?.StorageProvider;
+        if (storageProvider == null) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "Select ISO-XML File",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("XML Files") { Patterns = new[] { "*.xml", "*.XML" } }
+            }
+        });
+
+        if (files.Count == 0) return;
+
+        var xmlFilePath = files[0].Path.LocalPath;
+
+        // Show the import dialog
+        var dialog = new IsoXmlImportDialog(settingsService.Settings.FieldsDirectory);
+        dialog.LoadXmlFile(xmlFilePath);
+
+        var dialogResult = await dialog.ShowDialog<bool?>(this);
+
+        if (dialogResult == true && dialog.Result != null)
+        {
+            try
+            {
+                var result = dialog.Result;
+
+                // Create the field directory
+                Directory.CreateDirectory(result.NewFieldPath);
+
+                // Create Field.txt with origin coordinates
+                var fieldFilePath = Path.Combine(result.NewFieldPath, "Field.txt");
+                using (var writer = new StreamWriter(fieldFilePath))
+                {
+                    writer.WriteLine(DateTime.Now.ToString("yyyy-MMMM-dd hh:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture));
+                    writer.WriteLine("$FieldDir");
+                    writer.WriteLine("XML Derived");
+                    writer.WriteLine("$Offsets");
+                    writer.WriteLine("0,0");
+                    writer.WriteLine("Convergence");
+                    writer.WriteLine("0");
+                    writer.WriteLine("StartFix");
+                    writer.WriteLine($"{result.Origin.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)},{result.Origin.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                }
+
+                // Convert Core boundaries to our Boundary model and save
+                var boundary = new Models.Boundary();
+                foreach (var coreBoundary in result.Boundaries)
+                {
+                    var polygon = new Models.BoundaryPolygon
+                    {
+                        IsDriveThrough = coreBoundary.IsDriveThru
+                    };
+
+                    foreach (var pt in coreBoundary.FenceLine)
+                    {
+                        polygon.Points.Add(new Models.BoundaryPoint(pt.Easting, pt.Northing, pt.Heading));
+                    }
+
+                    if (boundary.OuterBoundary == null)
+                    {
+                        boundary.OuterBoundary = polygon;
+                    }
+                    else
+                    {
+                        boundary.InnerBoundaries.Add(polygon);
+                    }
+                }
+
+                // Save boundary
+                if (boundary.OuterBoundary != null)
+                {
+                    boundaryFileService.SaveBoundary(boundary, result.NewFieldPath);
+                }
+                else
+                {
+                    boundaryFileService.CreateEmptyBoundary(result.NewFieldPath);
+                }
+
+                // Save headland if available
+                if (result.Headland.Count > 0)
+                {
+                    var headlandFilePath = Path.Combine(result.NewFieldPath, "Headland.txt");
+                    using (var writer = new StreamWriter(headlandFilePath))
+                    {
+                        writer.WriteLine("$Headland");
+                        writer.WriteLine("False"); // isDriveThru
+                        writer.WriteLine(result.Headland.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        foreach (var pt in result.Headland)
+                        {
+                            writer.WriteLine($"{pt.Easting:F3},{pt.Northing:F3},{pt.Heading:F5}");
+                        }
+                    }
+                }
+
+                // TODO: Save guidance lines when AB line support is implemented
+
+                // Open the new field
+                ViewModel.CurrentFieldName = result.NewFieldName;
+                ViewModel.IsFieldOpen = true;
+
+                // Save to settings
+                settingsService.Settings.LastOpenedField = result.NewFieldName;
+                settingsService.Settings.CurrentFieldName = result.NewFieldName;
+                settingsService.Save();
+
+                // Update map
+                if (MapControl != null && boundary.OuterBoundary != null)
+                {
+                    MapControl.SetBoundary(boundary);
+
+                    // Center on boundary
+                    if (boundary.OuterBoundary.Points.Count > 0)
+                    {
+                        double sumE = 0, sumN = 0;
+                        foreach (var pt in boundary.OuterBoundary.Points)
+                        {
+                            sumE += pt.Easting;
+                            sumN += pt.Northing;
+                        }
+                        MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                       sumN / boundary.OuterBoundary.Points.Count);
+                    }
+                }
+
+                ViewModel.StatusMessage = $"Imported field from ISO-XML: {result.NewFieldName}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error importing ISO-XML: {ex.Message}";
+            }
+        }
+    }
+
+    private async void BtnKml_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Open file picker for KML files
+        var storageProvider = GetTopLevel(this)?.StorageProvider;
+        if (storageProvider == null) return;
+
+        var files = await storageProvider.OpenFilePickerAsync(new Avalonia.Platform.Storage.FilePickerOpenOptions
+        {
+            Title = "Select KML File",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new Avalonia.Platform.Storage.FilePickerFileType("KML Files") { Patterns = new[] { "*.kml", "*.KML" } }
+            }
+        });
+
+        if (files.Count == 0) return;
+
+        var kmlFilePath = files[0].Path.LocalPath;
+
+        // Show the import dialog
+        var dialog = new KmlImportDialog(settingsService.Settings.FieldsDirectory);
+        dialog.LoadKmlFile(kmlFilePath);
+
+        var dialogResult = await dialog.ShowDialog<bool?>(this);
+
+        if (dialogResult == true && dialog.Result != null)
+        {
+            try
+            {
+                var result = dialog.Result;
+
+                // Create the field directory
+                Directory.CreateDirectory(result.NewFieldPath);
+
+                // Create Field.txt with origin coordinates
+                var fieldFilePath = Path.Combine(result.NewFieldPath, "Field.txt");
+                using (var writer = new StreamWriter(fieldFilePath))
+                {
+                    writer.WriteLine(DateTime.Now.ToString("yyyy-MMMM-dd hh:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture));
+                    writer.WriteLine("$FieldDir");
+                    writer.WriteLine("KML Derived");
+                    writer.WriteLine("$Offsets");
+                    writer.WriteLine("0,0");
+                    writer.WriteLine("Convergence");
+                    writer.WriteLine("0");
+                    writer.WriteLine("StartFix");
+                    writer.WriteLine($"{result.CenterLatitude.ToString(System.Globalization.CultureInfo.InvariantCulture)},{result.CenterLongitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+                }
+
+                // Convert WGS84 boundary points to local coordinates
+                var origin = new AgOpenGPS.Core.Models.Wgs84(result.CenterLatitude, result.CenterLongitude);
+                var sharedProps = new AgOpenGPS.Core.Models.SharedFieldProperties();
+                var localPlane = new AgOpenGPS.Core.Models.LocalPlane(origin, sharedProps);
+
+                var boundary = new Models.Boundary();
+                var outerPolygon = new Models.BoundaryPolygon();
+
+                foreach (var (lat, lon) in result.BoundaryPoints)
+                {
+                    var wgs84 = new AgOpenGPS.Core.Models.Wgs84(lat, lon);
+                    var geoCoord = localPlane.ConvertWgs84ToGeoCoord(wgs84);
+                    outerPolygon.Points.Add(new Models.BoundaryPoint(geoCoord.Easting, geoCoord.Northing, 0));
+                }
+
+                boundary.OuterBoundary = outerPolygon;
+
+                // Save boundary
+                boundaryFileService.SaveBoundary(boundary, result.NewFieldPath);
+
+                // Open the new field
+                ViewModel.CurrentFieldName = result.NewFieldName;
+                ViewModel.IsFieldOpen = true;
+
+                // Save to settings
+                settingsService.Settings.LastOpenedField = result.NewFieldName;
+                settingsService.Settings.CurrentFieldName = result.NewFieldName;
+                settingsService.Save();
+
+                // Update map
+                if (MapControl != null && boundary.OuterBoundary != null)
+                {
+                    MapControl.SetBoundary(boundary);
+
+                    // Center on boundary
+                    if (boundary.OuterBoundary.Points.Count > 0)
+                    {
+                        double sumE = 0, sumN = 0;
+                        foreach (var pt in boundary.OuterBoundary.Points)
+                        {
+                            sumE += pt.Easting;
+                            sumN += pt.Northing;
+                        }
+                        MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                       sumN / boundary.OuterBoundary.Points.Count);
+                    }
+                }
+
+                ViewModel.StatusMessage = $"Imported field from KML: {result.NewFieldName}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error importing KML: {ex.Message}";
+            }
+        }
+    }
+
+    private void BtnDriveIn_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Get current GPS position
+        double currentLat = ViewModel.Latitude;
+        double currentLon = ViewModel.Longitude;
+
+        // Check if we have a valid GPS position
+        if (currentLat == 0 && currentLon == 0)
+        {
+            ViewModel.StatusMessage = "No GPS position available - cannot find nearby field";
+            return;
+        }
+
+        var fieldsDir = settingsService.Settings.FieldsDirectory;
+        if (!Directory.Exists(fieldsDir))
+        {
+            ViewModel.StatusMessage = "Fields directory not found";
+            return;
+        }
+
+        // Find nearest field
+        string? nearestFieldName = null;
+        double nearestDistance = double.MaxValue;
+
+        foreach (var fieldDir in Directory.GetDirectories(fieldsDir))
+        {
+            var fieldFilePath = Path.Combine(fieldDir, "Field.txt");
+            if (!File.Exists(fieldFilePath)) continue;
+
+            // Read Field.txt and find StartFix line
+            try
+            {
+                var lines = File.ReadAllLines(fieldFilePath);
+                for (int i = 0; i < lines.Length - 1; i++)
+                {
+                    if (lines[i].Trim() == "StartFix")
+                    {
+                        var coords = lines[i + 1].Split(',');
+                        if (coords.Length >= 2 &&
+                            double.TryParse(coords[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double fieldLat) &&
+                            double.TryParse(coords[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double fieldLon))
+                        {
+                            // Calculate distance using simple Euclidean approximation (good enough for nearby fields)
+                            double dLat = (currentLat - fieldLat) * 111132.92; // meters per degree lat
+                            double dLon = (currentLon - fieldLon) * 111412.84 * Math.Cos(currentLat * Math.PI / 180); // meters per degree lon
+                            double distance = Math.Sqrt(dLat * dLat + dLon * dLon);
+
+                            if (distance < nearestDistance)
+                            {
+                                nearestDistance = distance;
+                                nearestFieldName = Path.GetFileName(fieldDir);
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // Skip fields with invalid Field.txt
+            }
+        }
+
+        if (nearestFieldName == null)
+        {
+            ViewModel.StatusMessage = "No fields found with valid coordinates";
+            return;
+        }
+
+        // Check if field is within reasonable distance (5km)
+        if (nearestDistance > 5000)
+        {
+            ViewModel.StatusMessage = $"Nearest field '{nearestFieldName}' is {nearestDistance / 1000:F1} km away - too far";
+            return;
+        }
+
+        // Open the nearest field
+        var fieldPath = Path.Combine(fieldsDir, nearestFieldName);
+        var boundary = boundaryFileService.LoadBoundary(fieldPath);
+
+        ViewModel.CurrentFieldName = nearestFieldName;
+        ViewModel.IsFieldOpen = true;
+
+        // Save to settings
+        settingsService.Settings.LastOpenedField = nearestFieldName;
+        settingsService.Settings.CurrentFieldName = nearestFieldName;
+        settingsService.Save();
+
+        // Update map
+        if (MapControl != null)
+        {
+            if (boundary != null)
+            {
+                MapControl.SetBoundary(boundary);
+
+                // Center on boundary
+                if (boundary.OuterBoundary?.Points != null && boundary.OuterBoundary.Points.Count > 0)
+                {
+                    double sumE = 0, sumN = 0;
+                    foreach (var pt in boundary.OuterBoundary.Points)
+                    {
+                        sumE += pt.Easting;
+                        sumN += pt.Northing;
+                    }
+                    MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                   sumN / boundary.OuterBoundary.Points.Count);
+                }
+            }
+            else
+            {
+                MapControl.SetBoundary(null);
+            }
+        }
+
+        ViewModel.StatusMessage = $"Opened nearest field: {nearestFieldName} ({nearestDistance:F0}m away)";
+    }
+
     private void BtnResumeField_Click(object? sender, RoutedEventArgs e)
     {
         if (App.Services == null || ViewModel == null) return;
