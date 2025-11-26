@@ -129,9 +129,8 @@ public class OpenGLMapControl : OpenGlControlBase
     {
         if (_gl == null) return;
 
-        // Simple vertex shader (2D positions with MVP transform) - OpenGL ES 3.0 compatible
-        const string vertexShaderSource = @"#version 300 es
-precision highp float;
+        // Simple vertex shader (2D positions with MVP transform) - OpenGL 3.3+ compatible
+        const string vertexShaderSource = @"#version 330
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec4 aColor;
 
@@ -145,9 +144,8 @@ void main()
     vColor = aColor;
 }";
 
-        // Simple fragment shader (pass through color) - OpenGL ES 3.0 compatible
-        const string fragmentShaderSource = @"#version 300 es
-precision highp float;
+        // Simple fragment shader (pass through color) - OpenGL 3.3+ compatible
+        const string fragmentShaderSource = @"#version 330
 in vec4 vColor;
 out vec4 FragColor;
 
@@ -202,9 +200,7 @@ void main()
     {
         if (_gl == null) return;
 
-        const string textureVertexShaderSource = @"#version 300 es
-precision highp float;
-
+        const string textureVertexShaderSource = @"#version 330
 layout (location = 0) in vec2 aPosition;
 layout (location = 1) in vec2 aTexCoord;
 
@@ -218,9 +214,7 @@ void main()
     TexCoord = aTexCoord;
 }";
 
-        const string textureFragmentShaderSource = @"#version 300 es
-precision highp float;
-
+        const string textureFragmentShaderSource = @"#version 330
 in vec2 TexCoord;
 out vec4 FragColor;
 

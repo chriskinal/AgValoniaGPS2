@@ -710,8 +710,8 @@
 
                     <Separator Background="#404040" Height="1" Margin="0,0,0,4"/>
 
-                    <!-- Menu Items: 2-column layout (5 rows × 2 columns) -->
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="4">
+                    <!-- Menu Items: 2-column layout (6 rows × 2 columns) -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="4">
                         <!-- Row 0: ISO-XML, Close -->
                         <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
                             <StackPanel Orientation="Horizontal" Spacing="6">
@@ -743,7 +743,8 @@
                         </Button>
 
                         <!-- Row 2: From Existing, Open -->
-                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="0" Grid.Row="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnFromExisting_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/FileExisting.png" Width="28" Height="28"/>
                                 <TextBlock Text="From Existing" VerticalAlignment="Center" FontSize="12"/>
@@ -765,9 +766,10 @@
                                 <TextBlock Text="New From Default" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="1" Grid.Row="3" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnResumeField_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
-                                <Image Source="/Assets/Icons/pathResumeLast.png" Width="28" Height="28"/>
+                                <Image Source="/Assets/Icons/FilePrevious.png" Width="28" Height="28"/>
                                 <TextBlock Text="Resume" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
@@ -783,6 +785,15 @@
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
                                 <TextBlock Text="AgShare Upload" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Row 5: Test OSK (temporary for testing) -->
+                        <Button Grid.Column="0" Grid.Row="5" Grid.ColumnSpan="2" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnTestOSK_Click">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="🔢" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Test Keyboard" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
                     </Grid>

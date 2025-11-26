@@ -48,7 +48,7 @@ public partial class FieldSelectionDialog : Window
 
         if (string.IsNullOrWhiteSpace(_fieldsRootDirectory) || !Directory.Exists(_fieldsRootDirectory))
         {
-            FieldsGrid.ItemsSource = _fields;
+            FieldsListBox.ItemsSource = _fields;
             return;
         }
 
@@ -67,7 +67,7 @@ public partial class FieldSelectionDialog : Window
             _fields.Add(fieldInfo);
         }
 
-        FieldsGrid.ItemsSource = _fields;
+        FieldsListBox.ItemsSource = _fields;
     }
 
     private double CalculateFieldArea(string fieldDirectory)
@@ -113,7 +113,7 @@ public partial class FieldSelectionDialog : Window
 
     private async void BtnDeleteField_Click(object? sender, RoutedEventArgs e)
     {
-        if (FieldsGrid.SelectedItem is FieldInfo selectedField)
+        if (FieldsListBox.SelectedItem is FieldInfo selectedField)
         {
             // Create buttons with click handlers
             var btnYes = new Button { Content = "Yes", Width = 80 };
@@ -180,7 +180,7 @@ public partial class FieldSelectionDialog : Window
 
     private async void BtnOpen_Click(object? sender, RoutedEventArgs e)
     {
-        if (FieldsGrid.SelectedItem is FieldInfo selectedField)
+        if (FieldsListBox.SelectedItem is FieldInfo selectedField)
         {
             try
             {

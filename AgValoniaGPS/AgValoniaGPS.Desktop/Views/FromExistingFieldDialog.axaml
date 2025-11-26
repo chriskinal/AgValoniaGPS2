@@ -1,0 +1,199 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:AgValoniaGPS.Desktop.Views"
+        x:Class="AgValoniaGPS.Desktop.Views.FromExistingFieldDialog"
+        Title="Create Field From Existing"
+        Width="700"
+        Height="550"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#2C3E50">
+
+    <Window.Styles>
+        <Style Selector="Button.ToolButton">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="60"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pointerover">
+            <Setter Property="Background" Value="#4A6278"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pressed">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+
+        <Style Selector="Button.ToggleOn">
+            <Setter Property="Background" Value="#27AE60"/>
+        </Style>
+        <Style Selector="Button.ToggleOn:pointerover">
+            <Setter Property="Background" Value="#2ECC71"/>
+        </Style>
+
+        <Style Selector="Button.CancelButton">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="60"/>
+        </Style>
+        <Style Selector="Button.CancelButton:pointerover">
+            <Setter Property="Background" Value="#E74C3C"/>
+        </Style>
+
+        <Style Selector="Button.OkButton">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="60"/>
+        </Style>
+        <Style Selector="Button.OkButton:pointerover">
+            <Setter Property="Background" Value="#2ECC71"/>
+        </Style>
+
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="#ECF0F1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#7F8C8D"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="8,6"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#3498DB"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#3498DB"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto" Margin="10">
+        <!-- Header row with column titles -->
+        <Border Grid.Row="0" Background="#34495E" CornerRadius="4,4,0,0" Padding="10,8">
+            <Grid ColumnDefinitions="*,80,80">
+                <TextBlock Grid.Column="0" Text="Field" Foreground="#E74C3C" FontWeight="Bold" FontSize="16"/>
+                <TextBlock Grid.Column="1" Text="Distance" Foreground="#E74C3C" FontWeight="Bold" FontSize="16" TextAlignment="Right"/>
+                <TextBlock Grid.Column="2" Text="Area" Foreground="#E74C3C" FontWeight="Bold" FontSize="16" TextAlignment="Right"/>
+            </Grid>
+        </Border>
+
+        <!-- Fields list -->
+        <ListBox x:Name="FieldsListBox" Grid.Row="1" SelectionMode="Single" Background="#B0BEC5">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:FieldInfo">
+                    <Grid ColumnDefinitions="*,80,80">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="Black" FontWeight="Bold" FontSize="14"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Distance, StringFormat='{}{0:F2}'}" Foreground="Black" TextAlignment="Right" FontSize="14"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Area, StringFormat='{}{0:F1}'}" Foreground="Black" TextAlignment="Right" FontSize="14"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Separator and edit field name section -->
+        <StackPanel Grid.Row="2" Margin="0,10,0,0">
+            <TextBlock Text="---" Foreground="#7F8C8D" FontSize="12"/>
+
+            <!-- Name input with clear button -->
+            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,5,0,0">
+                <Border Grid.Column="0" Background="White" CornerRadius="4" Padding="8,6"
+                        Cursor="Hand" PointerPressed="FieldNameBorder_PointerPressed">
+                    <TextBlock x:Name="FieldNameTextBlock"
+                               Foreground="Black" FontSize="14"
+                               VerticalAlignment="Center"
+                               Text=""/>
+                </Border>
+                <Button Grid.Column="1" Classes="ToolButton" Width="50" Height="40" Margin="5,0,0,0"
+                        Click="BtnBackspace_Click" ToolTip.Tip="Backspace">
+                    <Image Source="/Assets/Icons/BackSpace.png" Width="28" Height="28"/>
+                </Button>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
+                    <Image Source="/Assets/Icons/ABTracks.png" Width="28" Height="28"/>
+                    <TextBlock Text="Sort" Foreground="White" VerticalAlignment="Center" Margin="5,0,0,0" FontSize="14"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="Edit Field Name" Foreground="#BDC3C7" FontSize="11" Margin="0,3,0,0"/>
+        </StackPanel>
+
+        <!-- Name append buttons and data selection -->
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto,Auto" Margin="0,10,0,0">
+            <!-- Name append buttons -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="+" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <Button x:Name="BtnAppendVehicle" Classes="ToolButton" Width="55" Height="55"
+                        Click="BtnAppendVehicle_Click" ToolTip.Tip="Append vehicle name">
+                    <Image Source="/Assets/Icons/vehiclePageTractor.png" Width="40" Height="40"/>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="5,0,0,0">
+                <TextBlock Text="+" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <Button x:Name="BtnAppendDate" Classes="ToolButton" Width="55" Height="55"
+                        Click="BtnAppendDate_Click" ToolTip.Tip="Append date (yyyy-MMM-dd)">
+                    <Image Source="/Assets/Icons/JobNameCalendar.png" Width="40" Height="40"/>
+                </Button>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="5,0,0,0">
+                <TextBlock Text="+" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <Button x:Name="BtnAppendTime" Classes="ToolButton" Width="55" Height="55"
+                        Click="BtnAppendTime_Click" ToolTip.Tip="Append time (HH-mm)">
+                    <Image Source="/Assets/Icons/JobNameTime.png" Width="40" Height="40"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Spacer -->
+            <Border Grid.Column="3"/>
+
+            <!-- Data selection toggles -->
+            <Button x:Name="BtnToggleFlags" Grid.Column="4" Classes="ToolButton" Width="70" Height="55" Margin="5,0"
+                    Click="BtnToggleFlags_Click" ToolTip.Tip="Include Flags">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="/Assets/Icons/FlagRed.png" Width="32" Height="32"/>
+                    <TextBlock Text="Flags" Foreground="White" FontSize="10" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="BtnToggleMapping" Grid.Column="5" Classes="ToolButton" Width="70" Height="55" Margin="5,0"
+                    Click="BtnToggleMapping_Click" ToolTip.Tip="Include Mapping">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="/Assets/Icons/MappingOn.png" Width="32" Height="32"/>
+                    <TextBlock Text="Mapping" Foreground="White" FontSize="10" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="BtnToggleHeadland" Grid.Column="6" Classes="ToolButton" Width="70" Height="55" Margin="5,0"
+                    Click="BtnToggleHeadland_Click" ToolTip.Tip="Include Headland">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="/Assets/Icons/HeadlandOn.png" Width="32" Height="32"/>
+                    <TextBlock Text="Headland" Foreground="White" FontSize="10" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+
+            <Button x:Name="BtnToggleLines" Grid.Column="7" Classes="ToolButton" Width="70" Height="55" Margin="5,0,0,0"
+                    Click="BtnToggleLines_Click" ToolTip.Tip="Include AB Lines">
+                <StackPanel HorizontalAlignment="Center">
+                    <Image Source="/Assets/Icons/ABLineCycle.png" Width="32" Height="32"/>
+                    <TextBlock Text="Lines" Foreground="White" FontSize="10" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- Bottom buttons: Cancel and OK -->
+        <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto" Margin="0,15,0,0">
+            <Border Grid.Column="0"/>
+            <Button Grid.Column="1" Classes="CancelButton" Width="60" Height="60" Margin="0,0,10,0"
+                    Click="BtnCancel_Click" ToolTip.Tip="Cancel">
+                <Image Source="/Assets/Icons/FileClose.png" Width="40" Height="40"/>
+            </Button>
+            <Button Grid.Column="2" Classes="OkButton" Width="60" Height="60"
+                    Click="BtnOk_Click" ToolTip.Tip="Create field">
+                <TextBlock Text="OK" FontSize="18" FontWeight="Bold" Foreground="White"/>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>

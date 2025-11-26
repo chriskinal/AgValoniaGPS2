@@ -3,20 +3,28 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AgValoniaGPS.Desktop.Views"
-        mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="AgValoniaGPS.Desktop.Views.FieldSelectionDialog"
-        Title="Load Field"
-        Width="700" Height="500"
+        Title="Select Field"
+        Width="600" Height="500"
         WindowStartupLocation="CenterOwner"
-        Background="#E8E8E8"
+        Background="#2C3E50"
         CanResize="True">
 
     <Window.Styles>
+        <!-- Modern Panel Style -->
+        <Style Selector="Border.Panel">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+        </Style>
+
+        <!-- Modern Button Style -->
         <Style Selector="Button.ModernButton">
             <Setter Property="Background" Value="#3498DB"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="16,10"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
@@ -27,129 +35,110 @@
             <Setter Property="Background" Value="#21618C"/>
         </Style>
 
+        <!-- Danger Button Style -->
         <Style Selector="Button.DangerButton">
             <Setter Property="Background" Value="#E74C3C"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Padding" Value="16,10"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.DangerButton:pointerover">
             <Setter Property="Background" Value="#C0392B"/>
         </Style>
+        <Style Selector="Button.DangerButton:pressed">
+            <Setter Property="Background" Value="#922B21"/>
+        </Style>
 
+        <!-- Secondary Button Style -->
+        <Style Selector="Button.SecondaryButton">
+            <Setter Property="Background" Value="#5D6D7E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.SecondaryButton:pointerover">
+            <Setter Property="Background" Value="#4A5A6A"/>
+        </Style>
+        <Style Selector="Button.SecondaryButton:pressed">
+            <Setter Property="Background" Value="#3A4A5A"/>
+        </Style>
+
+        <!-- Header Style -->
+        <Style Selector="TextBlock.Header">
+            <Setter Property="Foreground" Value="#3498DB"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+        </Style>
+
+        <!-- ListBox Styling -->
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="#1E2930"/>
+            <Setter Property="BorderBrush" Value="#4A5F73"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
         <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="12"/>
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#2C3E50"/>
         </Style>
         <Style Selector="ListBoxItem:selected">
             <Setter Property="Background" Value="#3498DB"/>
         </Style>
-        <Style Selector="ListBoxItem:pointerover">
-            <Setter Property="Background" Value="#34495E"/>
-        </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto" Margin="0">
-        <!-- Header: Load File button -->
-        <Button Grid.Row="0" Content="Load File"
-                Background="#D0D0D0"
-                Foreground="Black"
-                BorderBrush="#A0A0A0"
-                BorderThickness="0,0,0,1"
-                CornerRadius="0"
-                Padding="10"
-                HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Left"/>
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="20">
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Classes="Header" Text="Select Field to Open"/>
 
-        <!-- Fields DataGrid -->
-        <DataGrid x:Name="FieldsGrid"
-                  x:FieldModifier="private"
-                  x:DataType="local:FieldInfo"
-                  Grid.Row="1"
-                  Margin="6"
-                  Background="#C8D8E8"
-                  BorderThickness="1"
-                  BorderBrush="#A0A0A0"
-                  GridLinesVisibility="All"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  AutoGenerateColumns="False"
-                  RowBackground="#C8D8E8">
+        <!-- Column Headers -->
+        <Border Grid.Row="1" Background="#34495E" CornerRadius="4,4,0,0" Padding="12,8" Margin="0,0,0,0">
+            <Grid ColumnDefinitions="*,100,100">
+                <TextBlock Grid.Column="0" Text="Field Name" Foreground="#BDC3C7" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="1" Text="Distance" Foreground="#BDC3C7" FontWeight="SemiBold" TextAlignment="Right"/>
+                <TextBlock Grid.Column="2" Text="Area (ha)" Foreground="#BDC3C7" FontWeight="SemiBold" TextAlignment="Right"/>
+            </Grid>
+        </Border>
 
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Field"
-                                    Binding="{Binding Name}"
-                                    Width="*"
-                                    FontSize="14"
-                                    FontWeight="SemiBold"/>
-                <DataGridTextColumn Header="Distance"
-                                    Binding="{Binding Distance, StringFormat=\{0:F2\}}"
-                                    Width="120"
-                                    FontSize="14"/>
-                <DataGridTextColumn Header="Area"
-                                    Binding="{Binding Area, StringFormat=\{0:F1\}}"
-                                    Width="120"
-                                    FontSize="14"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Fields ListBox -->
+        <ListBox x:Name="FieldsListBox"
+                 Grid.Row="2"
+                 SelectionMode="Single">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:FieldInfo">
+                    <Grid ColumnDefinitions="*,100,100">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" Foreground="White" FontSize="14"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Distance, StringFormat='{}{0:F2}'}" Foreground="#BDC3C7" TextAlignment="Right" FontSize="14"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Area, StringFormat='{}{0:F1}'}" Foreground="#BDC3C7" TextAlignment="Right" FontSize="14"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <!-- Action Buttons -->
-        <Grid Grid.Row="2"
-              ColumnDefinitions="Auto,Auto,*,Auto,Auto"
-              Background="#D0D0D0"
-              Height="80">
-
+        <Grid Grid.Row="3" ColumnDefinitions="Auto,Auto,*,Auto,Auto" Margin="0,15,0,0">
             <!-- Delete Field Button -->
-            <Button Grid.Column="0" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
-                    Click="BtnDeleteField_Click">
-                <StackPanel Spacing="4">
-                    <Image Source="/Assets/Icons/TrashApplied.png" Width="32" Height="32"/>
-                    <TextBlock Text="Delete Field" FontSize="10" TextAlignment="Center" Foreground="Black"/>
-                </StackPanel>
-            </Button>
+            <Button Grid.Column="0" Classes="DangerButton" Content="Delete" Click="BtnDeleteField_Click"/>
 
             <!-- Sort Button -->
-            <Button Grid.Column="1" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
-                    Click="BtnSort_Click">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="A" FontSize="16" FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Z ↓" FontSize="14" FontWeight="Bold" Foreground="Orange" HorizontalAlignment="Center" Margin="0,-8,0,0"/>
-                    <TextBlock Text="Sort" FontSize="10" TextAlignment="Center" Foreground="Black"/>
-                </StackPanel>
-            </Button>
+            <Button Grid.Column="1" Classes="SecondaryButton" Content="Sort A-Z" Click="BtnSort_Click" Margin="10,0,0,0"/>
 
             <!-- Spacer -->
             <Border Grid.Column="2"/>
 
             <!-- Cancel Button -->
-            <Button Grid.Column="3" Margin="10" Width="80" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
-                    Click="BtnCancel_Click">
-                <StackPanel Spacing="4">
-                    <Ellipse Width="32" Height="32" Fill="#E74C3C">
-                        <Ellipse.OpacityMask>
-                            <RadialGradientBrush>
-                                <GradientStop Color="White" Offset="0"/>
-                                <GradientStop Color="White" Offset="1"/>
-                            </RadialGradientBrush>
-                        </Ellipse.OpacityMask>
-                    </Ellipse>
-                    <TextBlock Text="✕" FontSize="20" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,-40,0,0"/>
-                    <TextBlock Text="Cancel" FontSize="10" TextAlignment="Center" Foreground="Black" Margin="0,8,0,0"/>
-                </StackPanel>
-            </Button>
+            <Button Grid.Column="3" Classes="SecondaryButton" Content="Cancel" Click="BtnCancel_Click"/>
 
-            <!-- Use Selected Button -->
-            <Button Grid.Column="4" Margin="10" Width="120" Height="60" Background="White" BorderBrush="#A0A0A0" BorderThickness="1"
-                    Click="BtnOpen_Click">
-                <StackPanel Spacing="4">
-                    <Image Source="/Assets/Icons/FileOpen.png" Width="32" Height="32"/>
-                    <TextBlock Text="Use Selected" FontSize="10" TextAlignment="Center" Foreground="Black"/>
-                </StackPanel>
-            </Button>
+            <!-- Open Button -->
+            <Button Grid.Column="4" Classes="ModernButton" Content="Open Field" Click="BtnOpen_Click" Margin="10,0,0,0"/>
         </Grid>
     </Grid>
 </Window>

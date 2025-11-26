@@ -487,6 +487,227 @@ public partial class MainWindow : Window
         ViewModel.StatusMessage = "Field closed";
     }
 
+    private async void BtnFromExisting_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var fieldService = App.Services.GetRequiredService<IFieldService>();
+
+        // Get vehicle name from settings (for appending to field name)
+        // TODO: Add VehicleName to AppSettings when vehicle config is implemented
+        var vehicleName = "Tractor";
+
+        var dialog = new FromExistingFieldDialog(
+            fieldService,
+            settingsService.Settings.FieldsDirectory,
+            vehicleName);
+
+        var dialogResult = await dialog.ShowDialog<bool?>(this);
+
+        if (dialogResult == true && dialog.Result != null)
+        {
+            try
+            {
+                // Create the new field by copying from existing
+                var result = dialog.Result;
+                var newFieldPath = Path.Combine(settingsService.Settings.FieldsDirectory, result.NewFieldName);
+
+                // Create directory
+                Directory.CreateDirectory(newFieldPath);
+
+                // Copy boundary file (always copy)
+                var sourceBoundaryFile = Path.Combine(result.SourceFieldPath, "Boundary.txt");
+                var destBoundaryFile = Path.Combine(newFieldPath, "Boundary.txt");
+                if (File.Exists(sourceBoundaryFile))
+                {
+                    File.Copy(sourceBoundaryFile, destBoundaryFile, true);
+                }
+
+                // Copy optional data based on selections
+                if (result.CopyOptions.IncludeFlags)
+                {
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "Flags.txt");
+                }
+
+                if (result.CopyOptions.IncludeMapping)
+                {
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "Mapping.txt");
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "Coverage.txt");
+                }
+
+                if (result.CopyOptions.IncludeHeadland)
+                {
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "Headland.txt");
+                }
+
+                if (result.CopyOptions.IncludeLines)
+                {
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "ABLines.txt");
+                    CopyFileIfExists(result.SourceFieldPath, newFieldPath, "CurveLines.txt");
+                }
+
+                // Open the new field
+                var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+                var boundary = boundaryFileService.LoadBoundary(newFieldPath);
+
+                ViewModel.CurrentFieldName = result.NewFieldName;
+                ViewModel.IsFieldOpen = true;
+
+                // Save to settings
+                settingsService.Settings.LastOpenedField = result.NewFieldName;
+                settingsService.Settings.CurrentFieldName = result.NewFieldName;
+                settingsService.Save();
+
+                // Update map
+                if (MapControl != null && boundary != null)
+                {
+                    MapControl.SetBoundary(boundary);
+
+                    // Center on boundary
+                    if (boundary.OuterBoundary?.Points != null && boundary.OuterBoundary.Points.Count > 0)
+                    {
+                        double sumE = 0, sumN = 0;
+                        foreach (var pt in boundary.OuterBoundary.Points)
+                        {
+                            sumE += pt.Easting;
+                            sumN += pt.Northing;
+                        }
+                        MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                       sumN / boundary.OuterBoundary.Points.Count);
+                    }
+                }
+
+                ViewModel.StatusMessage = $"Created new field: {result.NewFieldName}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error creating field: {ex.Message}";
+            }
+        }
+    }
+
+    private void CopyFileIfExists(string sourceDir, string destDir, string fileName)
+    {
+        var sourceFile = Path.Combine(sourceDir, fileName);
+        var destFile = Path.Combine(destDir, fileName);
+        if (File.Exists(sourceFile))
+        {
+            File.Copy(sourceFile, destFile, true);
+        }
+    }
+
+    private void BtnResumeField_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Get the last opened field name from settings
+        var lastFieldName = settingsService.Settings.LastOpenedField;
+
+        if (string.IsNullOrWhiteSpace(lastFieldName))
+        {
+            ViewModel.StatusMessage = "No previous field to resume";
+            return;
+        }
+
+        // Build field directory path
+        var fieldDirectory = Path.Combine(settingsService.Settings.FieldsDirectory, lastFieldName);
+
+        if (!Directory.Exists(fieldDirectory))
+        {
+            ViewModel.StatusMessage = $"Field '{lastFieldName}' not found";
+            return;
+        }
+
+        try
+        {
+            // Load boundary if it exists
+            var boundary = boundaryFileService.LoadBoundary(fieldDirectory);
+
+            // Update view model
+            ViewModel.CurrentFieldName = lastFieldName;
+            ViewModel.IsFieldOpen = true;
+
+            // Save to settings
+            settingsService.Settings.CurrentFieldName = lastFieldName;
+
+            // Render boundary on map
+            if (MapControl != null && boundary != null)
+            {
+                MapControl.SetBoundary(boundary);
+
+                // Center camera on boundary
+                if (boundary.OuterBoundary != null && boundary.OuterBoundary.Points.Count > 0)
+                {
+                    double sumE = 0, sumN = 0;
+                    foreach (var point in boundary.OuterBoundary.Points)
+                    {
+                        sumE += point.Easting;
+                        sumN += point.Northing;
+                    }
+                    double centerE = sumE / boundary.OuterBoundary.Points.Count;
+                    double centerN = sumN / boundary.OuterBoundary.Points.Count;
+
+                    MapControl.Pan(centerE, centerN);
+                }
+            }
+
+            ViewModel.StatusMessage = $"Resumed field: {lastFieldName}";
+        }
+        catch (Exception ex)
+        {
+            ViewModel.StatusMessage = $"Error resuming field: {ex.Message}";
+        }
+    }
+
+    private async void BtnTestOSK_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+
+        // Test alphanumeric keyboard (for field names, etc.)
+        var textResult = await AlphanumericKeyboard.ShowAsync(
+            this,
+            description: "Enter field name:",
+            initialValue: "My Field",
+            maxLength: 50);
+
+        if (textResult != null)
+        {
+            ViewModel.StatusMessage = $"Text entered: {textResult}";
+        }
+        else
+        {
+            ViewModel.StatusMessage = "Keyboard cancelled";
+        }
+    }
+
+    private async void BtnTestNumericOSK_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel == null) return;
+
+        // Test numeric keyboard (for values)
+        var numResult = await OnScreenKeyboard.ShowAsync(
+            this,
+            description: "Enter vehicle width (meters):",
+            initialValue: 6.5,
+            minValue: 0.5,
+            maxValue: 50.0,
+            maxDecimalPlaces: 2,
+            allowNegative: false);
+
+        if (numResult.HasValue)
+        {
+            ViewModel.StatusMessage = $"Value entered: {numResult.Value:F2} meters";
+        }
+        else
+        {
+            ViewModel.StatusMessage = "Keyboard cancelled";
+        }
+    }
+
     // Drag functionality for Section Control
     private void SectionControl_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
