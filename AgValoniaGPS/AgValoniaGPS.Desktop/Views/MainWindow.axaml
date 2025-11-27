@@ -404,7 +404,8 @@
 
                 <!-- Info & Help -->
                 <Button Classes="ModernButton" Content="ℹ️ About" HorizontalAlignment="Stretch" Margin="0,2"/>
-                <Button Classes="ModernButton" Content="🌐 AgShare API" HorizontalAlignment="Stretch" Margin="0,2"/>
+                <Button Classes="ModernButton" Content="🌐 AgShare API" HorizontalAlignment="Stretch" Margin="0,2"
+                                Click="BtnAgShareSettings_Click"/>
                 <Button Classes="ModernButton" Content="❓ Help" HorizontalAlignment="Stretch" Margin="0,2"/>
             </StackPanel>
         </Border>
@@ -778,13 +779,15 @@
                         </Button>
 
                         <!-- Row 4: AgShare Download, AgShare Upload -->
-                        <Button Grid.Column="0" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="0" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnAgShareDownload_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
                                 <TextBlock Text="AgShare Download" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
                         </Button>
-                        <Button Grid.Column="1" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="1" Grid.Row="4" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnAgShareUpload_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/AgShare.png" Width="28" Height="28"/>
                                 <TextBlock Text="AgShare Upload" VerticalAlignment="Center" FontSize="12"/>

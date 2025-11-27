@@ -55,5 +55,10 @@ namespace AgValoniaGPS.Models
         // First run
         public bool IsFirstRun { get; set; } = true;
         public DateTime LastRunDate { get; set; } = DateTime.MinValue;
+
+        // AgShare settings
+        public string AgShareServer { get; set; } = "https://agshare.agopengps.com";
+        public string AgShareApiKey { get; set; } = string.Empty;
+        public bool AgShareEnabled { get; set; } = false;
     }
 }

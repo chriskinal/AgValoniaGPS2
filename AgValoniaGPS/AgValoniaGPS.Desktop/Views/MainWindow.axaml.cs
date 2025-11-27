@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Avalonia;
 using Avalonia.Controls;
@@ -11,6 +12,8 @@ using AgValoniaGPS.ViewModels;
 using AgValoniaGPS.Services;
 using AgValoniaGPS.Services.Interfaces;
 using AgValoniaGPS.Models;
+using AgOpenGPS.Core.Models;
+using AgOpenGPS.Core.Models.Base;
 
 namespace AgValoniaGPS.Desktop.Views;
 
@@ -2016,5 +2019,126 @@ public partial class MainWindow : Window
         }
 
         return false;
+    }
+
+    // AgShare Settings button click
+    private async void BtnAgShareSettings_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var settings = settingsService.Settings;
+
+        var dialog = new AgShareSettingsDialog();
+        dialog.LoadSettings(
+            settings.AgShareServer,
+            settings.AgShareApiKey,
+            settings.AgShareEnabled);
+
+        var result = await dialog.ShowDialog<bool>(this);
+
+        if (result && dialog.Result != null)
+        {
+            // Save the new settings
+            settings.AgShareServer = dialog.Result.ServerUrl;
+            settings.AgShareApiKey = dialog.Result.ApiKey;
+            settings.AgShareEnabled = dialog.Result.Enabled;
+            settingsService.Save();
+
+            if (ViewModel != null)
+            {
+                ViewModel.StatusMessage = "AgShare settings saved";
+            }
+        }
+    }
+
+    // AgShare Download button click
+    private async void BtnAgShareDownload_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var settings = settingsService.Settings;
+
+        // Check if AgShare is configured
+        if (string.IsNullOrEmpty(settings.AgShareApiKey))
+        {
+            ViewModel.StatusMessage = "Please configure AgShare API key first (hamburger menu > AgShare API)";
+            return;
+        }
+
+        var dialog = new AgShareDownloadDialog(
+            settings.FieldsDirectory,
+            settings.AgShareServer,
+            settings.AgShareApiKey);
+
+        var result = await dialog.ShowDialog<bool>(this);
+
+        if (result && dialog.Result != null)
+        {
+            // Field was downloaded - open it
+            var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+            var boundary = boundaryFileService.LoadBoundary(dialog.Result.FieldPath);
+
+            ViewModel.CurrentFieldName = dialog.Result.FieldName;
+            ViewModel.IsFieldOpen = true;
+
+            // Save to settings
+            settings.CurrentFieldName = dialog.Result.FieldName;
+            settings.LastOpenedField = dialog.Result.FieldName;
+            settingsService.Save();
+
+            // Update map
+            if (MapControl != null && boundary != null)
+            {
+                MapControl.SetBoundary(boundary);
+
+                // Center on boundary
+                if (boundary.OuterBoundary?.Points != null && boundary.OuterBoundary.Points.Count > 0)
+                {
+                    double sumE = 0, sumN = 0;
+                    foreach (var pt in boundary.OuterBoundary.Points)
+                    {
+                        sumE += pt.Easting;
+                        sumN += pt.Northing;
+                    }
+                    MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                   sumN / boundary.OuterBoundary.Points.Count);
+                }
+            }
+
+            ViewModel.StatusMessage = $"Downloaded and opened field: {dialog.Result.FieldName}";
+        }
+    }
+
+    // AgShare Upload button click
+    private async void BtnAgShareUpload_Click(object? sender, RoutedEventArgs e)
+    {
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var settings = settingsService.Settings;
+
+        // Check if AgShare is configured
+        if (string.IsNullOrEmpty(settings.AgShareApiKey))
+        {
+            ViewModel.StatusMessage = "Please configure AgShare API key first (hamburger menu > AgShare API)";
+            return;
+        }
+
+        var dialog = new AgShareUploadDialog(
+            settings.FieldsDirectory,
+            settings.AgShareServer,
+            settings.AgShareApiKey);
+
+        var result = await dialog.ShowDialog<bool>(this);
+
+        if (result && dialog.Result != null)
+        {
+            if (dialog.Result.UploadedCount > 0)
+            {
+                ViewModel.StatusMessage = $"Uploaded {dialog.Result.UploadedCount} field(s) to AgShare";
+            }
+        }
     }
 }

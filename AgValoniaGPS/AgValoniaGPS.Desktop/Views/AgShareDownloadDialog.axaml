@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:AgValoniaGPS.Desktop.Views"
+        x:Class="AgValoniaGPS.Desktop.Views.AgShareDownloadDialog"
+        Title="AgShare Download"
+        Width="650"
+        Height="550"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="#2C3E50">
+
+    <Window.Styles>
+        <Style Selector="Button.ToolButton">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="40"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pointerover">
+            <Setter Property="Background" Value="#4A6278"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pressed">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+
+        <Style Selector="Button.CancelButton">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="60"/>
+        </Style>
+        <Style Selector="Button.CancelButton:pointerover">
+            <Setter Property="Background" Value="#E74C3C"/>
+        </Style>
+
+        <Style Selector="Button.OkButton">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="60"/>
+            <Setter Property="MinHeight" Value="60"/>
+        </Style>
+        <Style Selector="Button.OkButton:pointerover">
+            <Setter Property="Background" Value="#2ECC71"/>
+        </Style>
+
+        <Style Selector="Button.DownloadAllButton">
+            <Setter Property="Background" Value="#9B59B6"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="MinHeight" Value="40"/>
+        </Style>
+        <Style Selector="Button.DownloadAllButton:pointerover">
+            <Setter Property="Background" Value="#A569BD"/>
+        </Style>
+
+        <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="8,4"/>
+        </Style>
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="#4A6278"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="15">
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#34495E" CornerRadius="4,4,0,0" Padding="10,8">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Image Source="/Assets/Icons/AgShare.png" Width="24" Height="24" Margin="0,0,10,0"/>
+                    <TextBlock Text="Download from AgShare" Foreground="#1ABC9C" FontWeight="Bold" FontSize="16"/>
+                </StackPanel>
+                <Button Grid.Column="2" Classes="ToolButton" Click="BtnRefresh_Click" ToolTip.Tip="Refresh list">
+                    <TextBlock Text="🔄" FontSize="18"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Field List -->
+        <Border Grid.Row="1" Background="#34495E" Margin="0,5,0,0" CornerRadius="4" Padding="5">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Column Headers -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,80" Margin="8,4">
+                    <TextBlock Grid.Column="0" Text="Field Name" Foreground="#BDC3C7" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Text="Area (Ha)" Foreground="#BDC3C7" FontWeight="SemiBold" HorizontalAlignment="Right"/>
+                </Grid>
+
+                <ListBox x:Name="FieldListBox" Grid.Row="1" Background="Transparent"
+                         SelectionChanged="FieldListBox_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="views:AgShareFieldListItem">
+                            <Grid ColumnDefinitions="*,80">
+                                <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding AreaDisplay}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <!-- Status and Download All -->
+        <Border Grid.Row="2" Background="#34495E" Padding="10" Margin="0,5,0,0" CornerRadius="4">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock x:Name="StatusLabel" Text="Loading fields..." Foreground="#BDC3C7" FontSize="12"/>
+                    <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Value="0"
+                                 Height="6" Margin="0,5,0,0" IsVisible="False"/>
+                </StackPanel>
+                <CheckBox x:Name="ForceOverwriteCheckBox" Grid.Column="1"
+                          Content="Overwrite existing" Foreground="White"
+                          VerticalAlignment="Center" Margin="10,0"/>
+                <Button Grid.Column="2" Classes="DownloadAllButton" Click="BtnDownloadAll_Click">
+                    <TextBlock Text="Download All" VerticalAlignment="Center"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Bottom buttons: Cancel and Download Selected -->
+        <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto" Margin="0,15,0,0" VerticalAlignment="Bottom">
+            <Border Grid.Column="0"/>
+            <Button Grid.Column="1" Classes="CancelButton" Width="60" Height="60" Margin="0,0,10,0"
+                    Click="BtnCancel_Click" ToolTip.Tip="Cancel">
+                <Image Source="/Assets/Icons/FileClose.png" Width="40" Height="40"/>
+            </Button>
+            <Button x:Name="BtnDownload" Grid.Column="2" Classes="OkButton" Width="120" Height="60"
+                    Click="BtnDownload_Click" ToolTip.Tip="Download selected field" IsEnabled="False">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="Get Selected" FontSize="14" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>
