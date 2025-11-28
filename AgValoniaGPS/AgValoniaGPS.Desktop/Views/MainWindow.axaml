@@ -97,13 +97,13 @@
 
     <!-- Main Grid with OpenGL as background -->
     <Grid>
-        <!-- OpenGL Map Render Area (fills entire window) with pointer events -->
-        <controls:OpenGLMapControl x:Name="MapControl" ZIndex="0"
-                                   IsGridVisible="{Binding IsGridOn}"
-                                   PointerPressed="MapOverlay_PointerPressed"
-                                   PointerMoved="MapOverlay_PointerMoved"
-                                   PointerReleased="MapOverlay_PointerReleased"
-                                   PointerWheelChanged="MapOverlay_PointerWheelChanged" />
+        <!-- Map Render Area (fills entire window) with pointer events -->
+        <!-- Platform-specific map control is created at runtime in code-behind -->
+        <ContentControl x:Name="MapControlContainer" ZIndex="0"
+                        PointerPressed="MapOverlay_PointerPressed"
+                        PointerMoved="MapOverlay_PointerMoved"
+                        PointerReleased="MapOverlay_PointerReleased"
+                        PointerWheelChanged="MapOverlay_PointerWheelChanged" />
 
         <!-- TOP STATUS BAR: RTK Status -->
         <Border Classes="FloatingPanel"

@@ -14,7 +14,7 @@ using AgValoniaGPS.Models;
 
 namespace AgValoniaGPS.Desktop.Controls;
 
-public class OpenGLMapControl : OpenGlControlBase
+public class OpenGLMapControl : OpenGlControlBase, IMapControl
 {
     // Avalonia property for grid visibility
     public static readonly StyledProperty<bool> IsGridVisibleProperty =

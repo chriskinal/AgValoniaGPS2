@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="AgValoniaGPS.iOS.iOSMainView">
+
+    <Grid Background="#1a1a2e">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="20">
+            <TextBlock Text="AgValoniaGPS"
+                       FontSize="32"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"/>
+
+            <TextBlock Text="iOS Build Successful!"
+                       FontSize="18"
+                       Foreground="#4a9eff"
+                       HorizontalAlignment="Center"/>
+
+            <TextBlock Text="This is a minimal iOS test view."
+                       FontSize="14"
+                       Foreground="Gray"
+                       HorizontalAlignment="Center"/>
+
+            <TextBlock Text="Full UI implementation pending."
+                       FontSize="12"
+                       Foreground="Gray"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

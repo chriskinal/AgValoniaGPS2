@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-ios</TargetFramework>
+    <RuntimeIdentifier>iossimulator-arm64</RuntimeIdentifier>
+    <SupportedOSPlatformVersion>13.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ProvisioningType>manual</ProvisioningType>
+    <!-- Use interpreter mode for simulator to avoid AOT compilation issues -->
+    <UseInterpreter>true</UseInterpreter>
+    <MtouchInterpreter>all</MtouchInterpreter>
+    <!-- Disable linker/trimming to avoid issues with desktop-only assemblies -->
+    <MtouchLink>None</MtouchLink>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <!-- Disable AOT for simulator -->
+    <MtouchUseLlvm>false</MtouchUseLlvm>
+    <!-- Build output to /tmp to avoid iCloud sync adding xattrs that break codesign -->
+    <!-- The app bundle will be at /tmp/AgValoniaGPS.iOS/bin/Debug/net10.0-ios/iossimulator-arm64/AgValoniaGPS.iOS.app -->
+    <BaseOutputPath>/tmp/AgValoniaGPS.iOS/bin/</BaseOutputPath>
+    <BaseIntermediateOutputPath>/tmp/AgValoniaGPS.iOS/obj/</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.9" />
+    <PackageReference Include="Avalonia.iOS" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.9" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.6" />
+    <PackageReference Include="Mapsui.Avalonia" Version="5.0.0" />
+    <PackageReference Include="ReactiveUI" Version="20.1.1" />
+    <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="StbImageSharp" Version="2.30.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Note: Only including Core and Models to avoid SourceCode dependencies -->
+    <!-- Services and ViewModels reference SourceCode/AgOpenGPS.Core which has incompatible native dependencies -->
+    <!-- iOS uses its own minimal App and View for now -->
+    <ProjectReference Include="..\AgValoniaGPS.Core\AgValoniaGPS.Core.csproj" />
+    <ProjectReference Include="..\AgValoniaGPS.Models\AgValoniaGPS.Models.csproj" />
+  </ItemGroup>
+
+  <!-- Use BeforeCodesign target which runs right before the actual codesign -->
+  <Target Name="BeforeCodesign">
+    <PropertyGroup>
+      <_AppBundlePath>$([System.IO.Path]::GetFullPath('$(AppBundleDir)'))</_AppBundlePath>
+    </PropertyGroup>
+    <Message Text="=== STRIPPING XATTRS BEFORE CODESIGN ===" Importance="High" />
+    <!-- Strip xattrs directly - simpler approach -->
+    <Exec Command="/usr/bin/xattr -cr &quot;$(_AppBundlePath)&quot;" ContinueOnError="true" />
+    <Exec Command="/usr/bin/find &quot;$(_AppBundlePath)&quot; -name '*.framework' -type d -exec /usr/bin/xattr -cr {} \;" ContinueOnError="true" />
+    <Message Text="=== DONE STRIPPING XATTRS ===" Importance="High" />
+  </Target>
+
+</Project>

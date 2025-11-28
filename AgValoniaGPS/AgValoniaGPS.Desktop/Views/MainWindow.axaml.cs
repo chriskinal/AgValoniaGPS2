@@ -16,12 +16,14 @@ using AgValoniaGPS.Services.Interfaces;
 using AgValoniaGPS.Models;
 using AgOpenGPS.Core.Models;
 using AgOpenGPS.Core.Models.Base;
+using AgValoniaGPS.Desktop.Controls;
 
 namespace AgValoniaGPS.Desktop.Views;
 
 public partial class MainWindow : Window
 {
     private MainViewModel? ViewModel => DataContext as MainViewModel;
+    private IMapControl? MapControl;
     private bool _isDraggingSection = false;
     private bool _isDraggingLeftPanel = false;
     private bool _isDraggingFileMenu = false;
@@ -48,6 +50,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // Create platform-specific map control
+        CreateMapControl();
+
         // Set DataContext from DI
         if (App.Services != null)
         {
@@ -71,6 +76,36 @@ public partial class MainWindow : Window
 
         // Save window settings on close
         this.Closing += MainWindow_Closing;
+    }
+
+    private void CreateMapControl()
+    {
+        // Check if running on iOS/mobile platform - use SkiaMapControl
+        // On desktop platforms, use OpenGLMapControl for better 3D support
+        bool useSoftwareRenderer = OperatingSystem.IsIOS() || OperatingSystem.IsAndroid();
+
+        Control mapControl;
+        if (useSoftwareRenderer)
+        {
+            var skiaControl = new SkiaMapControl();
+            MapControl = skiaControl;
+            mapControl = skiaControl;
+        }
+        else
+        {
+            var glControl = new OpenGLMapControl();
+            MapControl = glControl;
+            mapControl = glControl;
+        }
+
+        // Set the map control as the content of the container
+        MapControlContainer.Content = mapControl;
+
+        // Apply initial grid visibility from ViewModel binding
+        if (ViewModel != null)
+        {
+            MapControl.IsGridVisible = ViewModel.IsGridOn;
+        }
     }
 
     private void MainWindow_Opened(object? sender, EventArgs e)
