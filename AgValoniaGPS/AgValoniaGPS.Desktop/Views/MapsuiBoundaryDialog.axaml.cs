@@ -126,6 +126,9 @@ public partial class MapsuiBoundaryDialog : Window
 
         MapControl.Map = map;
 
+        // Disable all debug/performance overlays and widgets
+        map.Widgets.Clear();
+
         // Handle map clicks via pointer events
         MapControl.PointerPressed += OnMapPointerPressed;
 

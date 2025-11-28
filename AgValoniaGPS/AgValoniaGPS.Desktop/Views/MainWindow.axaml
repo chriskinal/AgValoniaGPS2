@@ -1109,7 +1109,7 @@
                         </Button>
                         <Button x:Name="BtnBingMap" Grid.Column="2" Classes="ModernButton" Margin="2" Height="50"
                                 Click="BtnBingMap_Click" ToolTip.Tip="Draw boundary on satellite map">
-                            <Image Source="/Assets/Icons/bing.png" Width="32" Height="32"/>
+                            <Image Source="/Assets/Icons/BoundaryByMap.png" Width="32" Height="32"/>
                         </Button>
                         <Button x:Name="BtnBuildFromTracks" Grid.Column="3" Classes="ModernButton" Margin="2" Height="50"
                                 Click="BtnBuildFromTracks_Click" ToolTip.Tip="Build boundary from driven tracks">
