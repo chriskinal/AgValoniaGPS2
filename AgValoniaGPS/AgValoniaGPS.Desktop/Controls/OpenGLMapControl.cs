@@ -43,13 +43,28 @@ public class OpenGLMapControl : OpenGlControlBase
     private uint _vehicleVbo;
     private uint _boundaryVao;
     private uint _boundaryVbo;
+    private uint _recordingVao;
+    private uint _recordingVbo;
+    private uint _recordingPointsVao;
+    private uint _recordingPointsVbo;
     private uint _shaderProgram;
     private uint _textureShaderProgram;
     private uint _vehicleTexture;
     private int _gridVertexCount;
+    private int _recordingLineVertexCount;
+    private int _recordingPointVertexCount;
     private List<(int offset, int count)> _boundarySegments = new(); // Track separate boundary loops
     private Boundary? _pendingBoundary;
     private bool _hasPendingBoundaryUpdate;
+    private List<(double Easting, double Northing)>? _pendingRecordingPoints;
+    private bool _hasPendingRecordingUpdate;
+
+    // Boundary offset indicator (shows where point will be dropped)
+    private double _boundaryOffsetMeters = 0.0; // Offset in meters (perpendicular to heading)
+    private bool _showBoundaryOffsetIndicator = false;
+
+    // Runtime OpenGL ES detection (ANGLE on Windows uses OpenGL ES)
+    private bool _isOpenGLES = false;
 
     // Camera/viewport properties
     private double _cameraX = 0.0;
@@ -99,9 +114,16 @@ public class OpenGLMapControl : OpenGlControlBase
         // Initialize Silk.NET OpenGL context
         _gl = GL.GetApi(gl.GetProcAddress);
 
-        Console.WriteLine($"OpenGL Version: {_gl.GetStringS(StringName.Version)}");
+        string versionString = _gl.GetStringS(StringName.Version) ?? "";
+        Console.WriteLine($"OpenGL Version: {versionString}");
         Console.WriteLine($"OpenGL Vendor: {_gl.GetStringS(StringName.Vendor)}");
         Console.WriteLine($"OpenGL Renderer: {_gl.GetStringS(StringName.Renderer)}");
+
+        // Detect OpenGL ES at runtime (ANGLE on Windows reports "OpenGL ES 3.0" in version string)
+        _isOpenGLES = versionString.Contains("OpenGL ES", StringComparison.OrdinalIgnoreCase)
+                      || OperatingSystem.IsAndroid()
+                      || OperatingSystem.IsIOS();
+        Console.WriteLine($"Using OpenGL ES shaders: {_isOpenGLES}");
 
         // Set clear color (dark background for grid visibility)
         _gl.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -126,12 +148,9 @@ public class OpenGLMapControl : OpenGlControlBase
         }
     }
 
-    // Shader source code - selected at runtime based on platform
-    private static bool IsOpenGLES => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-
-    private static string GetColorVertexShaderSource()
+    private string GetColorVertexShaderSource()
     {
-        if (IsOpenGLES)
+        if (_isOpenGLES)
         {
             // OpenGL ES 3.0 for Android/iOS
             return @"#version 300 es
@@ -168,9 +187,9 @@ void main()
         }
     }
 
-    private static string GetColorFragmentShaderSource()
+    private string GetColorFragmentShaderSource()
     {
-        if (IsOpenGLES)
+        if (_isOpenGLES)
         {
             // OpenGL ES 3.0 for Android/iOS
             return @"#version 300 es
@@ -246,9 +265,9 @@ void main()
         _gl.DeleteShader(fragmentShader);
     }
 
-    private static string GetTextureVertexShaderSource()
+    private string GetTextureVertexShaderSource()
     {
-        if (IsOpenGLES)
+        if (_isOpenGLES)
         {
             // OpenGL ES 3.0 for Android/iOS
             return @"#version 300 es
@@ -285,9 +304,9 @@ void main()
         }
     }
 
-    private static string GetTextureFragmentShaderSource()
+    private string GetTextureFragmentShaderSource()
     {
-        if (IsOpenGLES)
+        if (_isOpenGLES)
         {
             // OpenGL ES 3.0 for Android/iOS
             return @"#version 300 es
@@ -554,6 +573,21 @@ void main()
             _pendingBoundary = null;
         }
 
+        // Process pending recording points update on render thread
+        if (_hasPendingRecordingUpdate)
+        {
+            _hasPendingRecordingUpdate = false;
+            if (_pendingRecordingPoints != null && _pendingRecordingPoints.Count > 0)
+            {
+                UpdateRecordingBuffers(_pendingRecordingPoints);
+            }
+            else
+            {
+                ClearRecordingBuffers();
+            }
+            _pendingRecordingPoints = null;
+        }
+
         // Set viewport
         _gl.Viewport(0, 0, (uint)Bounds.Width, (uint)Bounds.Height);
 
@@ -646,6 +680,26 @@ void main()
             _gl.LineWidth(1.0f);
         }
 
+        // Draw recording boundary lines (cyan color, LINE_STRIP)
+        if (_recordingVao != 0 && _recordingLineVertexCount > 1)
+        {
+            _gl.BindVertexArray(_recordingVao);
+            _gl.LineWidth(3.0f);
+            _gl.DrawArrays(GLEnum.LineStrip, 0, (uint)_recordingLineVertexCount);
+            _gl.BindVertexArray(0);
+            _gl.LineWidth(1.0f);
+        }
+
+        // Draw recording boundary points (red markers)
+        if (_recordingPointsVao != 0 && _recordingPointVertexCount > 0)
+        {
+            _gl.BindVertexArray(_recordingPointsVao);
+            _gl.PointSize(4.0f); // Small markers
+            _gl.DrawArrays(GLEnum.Points, 0, (uint)_recordingPointVertexCount);
+            _gl.BindVertexArray(0);
+            _gl.PointSize(1.0f);
+        }
+
         // Draw vehicle with position and heading
         float[] vehicleModel;
         if (_is3DMode)
@@ -686,6 +740,12 @@ void main()
 
         _gl.DrawArrays(PrimitiveType.TriangleFan, 0, 4);
         _gl.BindVertexArray(0);
+
+        // Draw boundary offset indicator on top of vehicle (reference point and arrow showing offset direction)
+        if (_showBoundaryOffsetIndicator)
+        {
+            DrawBoundaryOffsetIndicator(mvp);
+        }
     }
 
     private float[] CreateOrthographicMatrix(float left, float right, float bottom, float top)
@@ -1231,6 +1291,281 @@ void main()
         }
 
         _gl.BindBuffer(BufferTargetARB.ArrayBuffer, 0);
+        _gl.BindVertexArray(0);
+    }
+
+    /// <summary>
+    /// Set the recording boundary points to display (deferred to render thread)
+    /// </summary>
+    public void SetRecordingPoints(IReadOnlyList<(double Easting, double Northing)> points)
+    {
+        _pendingRecordingPoints = points.ToList();
+        _hasPendingRecordingUpdate = true;
+    }
+
+    /// <summary>
+    /// Clear the recording boundary display
+    /// </summary>
+    public void ClearRecordingPoints()
+    {
+        _pendingRecordingPoints = null;
+        _hasPendingRecordingUpdate = true;
+    }
+
+    /// <summary>
+    /// Set the boundary offset indicator visibility and offset value
+    /// </summary>
+    /// <param name="show">Whether to show the indicator</param>
+    /// <param name="offsetMeters">Offset in meters (positive = right of vehicle heading, negative = left)</param>
+    public void SetBoundaryOffsetIndicator(bool show, double offsetMeters = 0.0)
+    {
+        _showBoundaryOffsetIndicator = show;
+        _boundaryOffsetMeters = offsetMeters;
+    }
+
+    /// <summary>
+    /// Draw the boundary offset indicator (teal reference point + yellow arrow showing offset)
+    /// </summary>
+    private void DrawBoundaryOffsetIndicator(float[] mvp)
+    {
+        if (_gl == null) return;
+
+        // Calculate reference point (vehicle position) and offset point
+        // Offset is perpendicular to heading (positive = right)
+        float refX = (float)_vehicleX;
+        float refY = (float)_vehicleY;
+
+        // Calculate perpendicular direction (90 degrees clockwise from heading for "right")
+        // heading is in radians, 0 = North, clockwise positive
+        float perpAngle = (float)_vehicleHeading + (float)(Math.PI / 2.0); // 90 degrees right
+        float offsetX = refX + (float)(_boundaryOffsetMeters * Math.Sin(perpAngle));
+        float offsetY = refY + (float)(_boundaryOffsetMeters * Math.Cos(perpAngle));
+
+        // Build vertex data for the indicator
+        // Format: x, y, r, g, b, a (6 floats per vertex)
+        List<float> vertices = new List<float>();
+
+        // Teal reference square (4 vertices for a small filled quad at vehicle position)
+        float squareSize = 0.3f; // meters
+        // Cyan/teal color (0, 0.8, 0.8)
+        float tR = 0.0f, tG = 0.8f, tB = 0.8f, tA = 1.0f;
+
+        // Square vertices (triangle fan: center + 4 corners)
+        vertices.AddRange(new float[] { refX, refY, tR, tG, tB, tA }); // center
+        vertices.AddRange(new float[] { refX - squareSize, refY - squareSize, tR, tG, tB, tA });
+        vertices.AddRange(new float[] { refX + squareSize, refY - squareSize, tR, tG, tB, tA });
+        vertices.AddRange(new float[] { refX + squareSize, refY + squareSize, tR, tG, tB, tA });
+        vertices.AddRange(new float[] { refX - squareSize, refY + squareSize, tR, tG, tB, tA });
+        vertices.AddRange(new float[] { refX - squareSize, refY - squareSize, tR, tG, tB, tA }); // close
+
+        int squareVertexCount = 6;
+
+        // Yellow arrow line (from ref point to offset point) - only if offset is non-zero
+        float yR = 1.0f, yG = 0.9f, yB = 0.0f, yA = 1.0f; // Yellow
+        int arrowLineVertexCount = 0;
+        int arrowHeadVertexCount = 0;
+
+        if (Math.Abs(_boundaryOffsetMeters) > 0.01)
+        {
+            // Arrow line
+            vertices.AddRange(new float[] { refX, refY, yR, yG, yB, yA });
+            vertices.AddRange(new float[] { offsetX, offsetY, yR, yG, yB, yA });
+            arrowLineVertexCount = 2;
+
+            // Arrowhead at offset point (triangle pointing in offset direction)
+            float arrowSize = 0.4f;
+            // Direction from ref to offset
+            float dx = offsetX - refX;
+            float dy = offsetY - refY;
+            float len = (float)Math.Sqrt(dx * dx + dy * dy);
+            if (len > 0.001f)
+            {
+                dx /= len;
+                dy /= len;
+                // Perpendicular to arrow direction
+                float px = -dy;
+                float py = dx;
+
+                // Arrow tip is at offset point, base is behind it
+                float tipX = offsetX;
+                float tipY = offsetY;
+                float baseX = offsetX - dx * arrowSize;
+                float baseY = offsetY - dy * arrowSize;
+
+                // Triangle vertices
+                vertices.AddRange(new float[] { tipX, tipY, yR, yG, yB, yA });
+                vertices.AddRange(new float[] { baseX + px * arrowSize * 0.5f, baseY + py * arrowSize * 0.5f, yR, yG, yB, yA });
+                vertices.AddRange(new float[] { baseX - px * arrowSize * 0.5f, baseY - py * arrowSize * 0.5f, yR, yG, yB, yA });
+                arrowHeadVertexCount = 3;
+            }
+        }
+
+        // Create temporary VAO/VBO for this frame
+        uint vao = _gl.GenVertexArray();
+        uint vbo = _gl.GenBuffer();
+
+        _gl.BindVertexArray(vao);
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, vbo);
+
+        float[] vertexArray = vertices.ToArray();
+        unsafe
+        {
+            fixed (float* v = vertexArray)
+            {
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertexArray.Length * sizeof(float)), v, BufferUsageARB.StreamDraw);
+            }
+        }
+
+        int stride = 6 * sizeof(float);
+        unsafe
+        {
+            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint)stride, (void*)0);
+            _gl.EnableVertexAttribArray(0);
+            _gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, (uint)stride, (void*)(2 * sizeof(float)));
+            _gl.EnableVertexAttribArray(1);
+        }
+
+        // Use color shader with identity MVP (world coordinates already in vertices)
+        _gl.UseProgram(_shaderProgram);
+        unsafe
+        {
+            fixed (float* m = mvp)
+            {
+                _gl.UniformMatrix4(_gl.GetUniformLocation(_shaderProgram, "uMVP"), 1, false, m);
+            }
+        }
+
+        // Draw reference square (triangle fan)
+        _gl.DrawArrays(PrimitiveType.TriangleFan, 0, (uint)squareVertexCount);
+
+        // Draw arrow line
+        if (arrowLineVertexCount > 0)
+        {
+            _gl.LineWidth(3.0f);
+            _gl.DrawArrays(PrimitiveType.Lines, (int)squareVertexCount, (uint)arrowLineVertexCount);
+            _gl.LineWidth(1.0f);
+        }
+
+        // Draw arrowhead
+        if (arrowHeadVertexCount > 0)
+        {
+            _gl.DrawArrays(PrimitiveType.Triangles, (int)(squareVertexCount + arrowLineVertexCount), (uint)arrowHeadVertexCount);
+        }
+
+        // Cleanup
+        _gl.BindVertexArray(0);
+        _gl.DeleteVertexArray(vao);
+        _gl.DeleteBuffer(vbo);
+    }
+
+    private void ClearRecordingBuffers()
+    {
+        if (_gl == null) return;
+
+        if (_recordingVao != 0)
+        {
+            _gl.DeleteVertexArray(_recordingVao);
+            _gl.DeleteBuffer(_recordingVbo);
+            _recordingVao = 0;
+            _recordingVbo = 0;
+        }
+
+        if (_recordingPointsVao != 0)
+        {
+            _gl.DeleteVertexArray(_recordingPointsVao);
+            _gl.DeleteBuffer(_recordingPointsVbo);
+            _recordingPointsVao = 0;
+            _recordingPointsVbo = 0;
+        }
+
+        _recordingLineVertexCount = 0;
+        _recordingPointVertexCount = 0;
+    }
+
+    private void UpdateRecordingBuffers(List<(double Easting, double Northing)> points)
+    {
+        if (_gl == null || points.Count == 0) return;
+
+        // Clear existing buffers
+        ClearRecordingBuffers();
+
+        // Build vertex data for lines (cyan color: x, y, r, g, b, a)
+        List<float> lineVertices = new List<float>();
+        foreach (var point in points)
+        {
+            lineVertices.Add((float)point.Easting);   // x
+            lineVertices.Add((float)point.Northing);  // y
+            lineVertices.Add(0.0f);                    // r (cyan)
+            lineVertices.Add(1.0f);                    // g
+            lineVertices.Add(1.0f);                    // b
+            lineVertices.Add(1.0f);                    // a
+        }
+
+        _recordingLineVertexCount = points.Count;
+
+        // Create VAO and VBO for lines
+        _recordingVao = _gl.GenVertexArray();
+        _gl.BindVertexArray(_recordingVao);
+
+        _recordingVbo = _gl.GenBuffer();
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _recordingVbo);
+
+        unsafe
+        {
+            fixed (float* v = lineVertices.ToArray())
+            {
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(lineVertices.Count * sizeof(float)), v, BufferUsageARB.DynamicDraw);
+            }
+        }
+
+        int stride = 6 * sizeof(float);
+        unsafe
+        {
+            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint)stride, (void*)0);
+            _gl.EnableVertexAttribArray(0);
+            _gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, (uint)stride, (void*)(2 * sizeof(float)));
+            _gl.EnableVertexAttribArray(1);
+        }
+
+        _gl.BindVertexArray(0);
+
+        // Build vertex data for points (red/orange markers)
+        List<float> pointVertices = new List<float>();
+        foreach (var point in points)
+        {
+            pointVertices.Add((float)point.Easting);   // x
+            pointVertices.Add((float)point.Northing);  // y
+            pointVertices.Add(1.0f);                    // r (red/orange)
+            pointVertices.Add(0.5f);                    // g
+            pointVertices.Add(0.0f);                    // b
+            pointVertices.Add(1.0f);                    // a
+        }
+
+        _recordingPointVertexCount = points.Count;
+
+        // Create VAO and VBO for points
+        _recordingPointsVao = _gl.GenVertexArray();
+        _gl.BindVertexArray(_recordingPointsVao);
+
+        _recordingPointsVbo = _gl.GenBuffer();
+        _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _recordingPointsVbo);
+
+        unsafe
+        {
+            fixed (float* v = pointVertices.ToArray())
+            {
+                _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(pointVertices.Count * sizeof(float)), v, BufferUsageARB.DynamicDraw);
+            }
+        }
+
+        unsafe
+        {
+            _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, (uint)stride, (void*)0);
+            _gl.EnableVertexAttribArray(0);
+            _gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, (uint)stride, (void*)(2 * sizeof(float)));
+            _gl.EnableVertexAttribArray(1);
+        }
+
         _gl.BindVertexArray(0);
     }
 }

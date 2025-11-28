@@ -36,6 +36,17 @@
             <Setter Property="Background" Value="#21618C"/>
         </Style>
 
+        <!-- Toggle On Style - overrides ModernButton when active -->
+        <Style Selector="Button.ModernButton.ToggleOn">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+        <Style Selector="Button.ModernButton.ToggleOn:pointerover">
+            <Setter Property="Background" Value="#16A085"/>
+        </Style>
+        <Style Selector="Button.ModernButton.ToggleOn:pressed">
+            <Setter Property="Background" Value="#138D75"/>
+        </Style>
+
         <!-- Icon Button Style -->
         <Style Selector="Button.IconButton">
             <Setter Property="Background" Value="#DD34495E"/>
@@ -853,7 +864,8 @@
                     <!-- Menu Items: 2-column layout (5 rows × 2 columns) -->
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="4">
                         <!-- Row 0: Boundary, (Blank) -->
-                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44">
+                        <Button Grid.Column="0" Grid.Row="0" Classes="ModernButton" HorizontalAlignment="Stretch" Margin="0,2" Height="44"
+                                Click="BtnBoundary_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <Image Source="/Assets/Icons/Boundary.png" Width="28" Height="28"/>
                                 <TextBlock Text="Boundary" VerticalAlignment="Center" FontSize="12"/>
@@ -1057,6 +1069,270 @@
                 <Button Classes="ModernButton" Content="🔄 Reset" Width="80"/>
             </StackPanel>
         </Border>
+
+        <!-- Boundary Management Panel (Draggable) - Styled like AgOpenGPS -->
+        <Canvas>
+            <Border x:Name="BoundaryRecordingPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="20"
+                    Canvas.Left="200" Canvas.Top="150"
+                    IsVisible="{Binding IsBoundaryPanelVisible}"
+                    IsHitTestVisible="True"
+                    MinWidth="420">
+                <StackPanel Spacing="4">
+                    <!-- Header: Drag handle + Title + Close button -->
+                    <Grid ColumnDefinitions="Auto,*,Auto" Height="32" Margin="0,0,0,4"
+                          Background="#DD2C3E50" Cursor="Hand"
+                          PointerPressed="BoundaryPanel_PointerPressed"
+                          PointerMoved="BoundaryPanel_PointerMoved"
+                          PointerReleased="BoundaryPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <TextBlock Grid.Column="1" Text="Start or Delete A Boundary" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#1ABC9C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button Grid.Column="2" Content="✕" Width="28" Height="28" Margin="0,0,4,0"
+                                Background="Transparent" BorderThickness="0" Foreground="#FFFFFF"
+                                Click="BtnCloseBoundaryPanel_Click" Cursor="Hand"
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Toolbar Row: Delete, KML Import, Bing, Build From Tracks, Drive Around, Accept -->
+                    <Grid ColumnDefinitions="*,*,*,*,*,*" Margin="4,4,4,8">
+                        <Button x:Name="BtnDeleteBoundary" Grid.Column="0" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnDeleteBoundary_Click" ToolTip.Tip="Delete selected boundary">
+                            <Image Source="/Assets/Icons/Trash.png" Width="32" Height="32"/>
+                        </Button>
+                        <Button x:Name="BtnKmlImport" Grid.Column="1" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnKmlImportBoundary_Click" ToolTip.Tip="Import boundary from KML file">
+                            <Image Source="/Assets/Icons/BoundaryLoadFromGE.png" Width="32" Height="32"/>
+                        </Button>
+                        <Button x:Name="BtnBingMap" Grid.Column="2" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnBingMap_Click" ToolTip.Tip="Draw on Bing Map" IsEnabled="False">
+                            <Image Source="/Assets/Icons/bing.png" Width="32" Height="32"/>
+                        </Button>
+                        <Button x:Name="BtnBuildFromTracks" Grid.Column="3" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnBuildFromTracks_Click" ToolTip.Tip="Build boundary from driven tracks">
+                            <Image Source="/Assets/Icons/BoundaryFromTracks.png" Width="32" Height="32"/>
+                        </Button>
+                        <Button x:Name="BtnDriveAroundField" Grid.Column="4" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnDriveAroundField_Click" ToolTip.Tip="Drive around field to record boundary">
+                            <Image Source="/Assets/Icons/ST_SteerTab.png" Width="32" Height="32"/>
+                        </Button>
+                        <Button x:Name="BtnAcceptBoundary" Grid.Column="5" Classes="ModernButton" Margin="2" Height="50"
+                                Click="BtnCloseBoundaryPanel_Click" ToolTip.Tip="Accept and close">
+                            <Image Source="/Assets/Icons/OK64.png" Width="32" Height="32"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Column Headers -->
+                    <Grid ColumnDefinitions="*,*,*" Background="#3498DB" Margin="4,0,4,0">
+                        <TextBlock Grid.Column="0" Text="Boundary" HorizontalAlignment="Center"
+                                   FontWeight="Bold" Foreground="White" Padding="8,6"/>
+                        <TextBlock Grid.Column="1" Text="Area" HorizontalAlignment="Center"
+                                   FontWeight="Bold" Foreground="White" Padding="8,6"/>
+                        <TextBlock Grid.Column="2" Text="Drive Thru" HorizontalAlignment="Center"
+                                   FontWeight="Bold" Foreground="White" Padding="8,6"/>
+                    </Grid>
+
+                    <!-- Boundary List -->
+                    <Border Background="#DD1a252f" Margin="4,0,4,4" MinHeight="60" MaxHeight="150">
+                        <ScrollViewer>
+                            <StackPanel x:Name="BoundaryListPanel" Spacing="1">
+                                <!-- Boundary items will be populated dynamically -->
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <!-- Recording Status (shown when recording) -->
+                    <Border x:Name="RecordingStatusPanel" Background="#DD2C3E50" CornerRadius="4"
+                            Padding="8" Margin="4,0,4,4" IsVisible="False">
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status: " Foreground="#888" FontSize="12"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="BoundaryStatusLabel" Text="Idle"
+                                       Foreground="#1ABC9C" FontSize="12" FontWeight="Bold"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Points: " Foreground="#888" FontSize="12"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="BoundaryPointsLabel" Text="0"
+                                       Foreground="White" FontSize="12" FontWeight="Bold"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Area: " Foreground="#888" FontSize="12"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="BoundaryAreaLabel" Text="0.00 Ha"
+                                       Foreground="White" FontSize="12" FontWeight="Bold"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Recording Controls (shown when recording) -->
+                    <Grid x:Name="RecordingControlsPanel" ColumnDefinitions="*,*,*,*" Margin="4,0,4,4" IsVisible="False">
+                        <Button Grid.Column="0" Classes="ModernButton" Margin="2" Height="40"
+                                Click="BtnOuterBoundary_Click" ToolTip.Tip="Outer boundary">
+                            <TextBlock Text="Outer" FontWeight="Bold"/>
+                        </Button>
+                        <Button Grid.Column="1" Classes="ModernButton" Margin="2" Height="40"
+                                Click="BtnInnerBoundary_Click" ToolTip.Tip="Inner boundary">
+                            <TextBlock Text="Inner" FontWeight="Bold"/>
+                        </Button>
+                        <Button Grid.Column="2" Classes="ModernButton" Margin="2" Height="40"
+                                Click="BtnPauseBoundary_Click" ToolTip.Tip="Pause recording">
+                            <Image Source="/Assets/Icons/boundaryPause.png" Width="24" Height="24"/>
+                        </Button>
+                        <Button Grid.Column="3" Classes="ModernButton" Margin="2" Height="40"
+                                Click="BtnUndoBoundaryPoint_Click" ToolTip.Tip="Undo last point">
+                            <TextBlock Text="↩" FontSize="18"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Add Boundary Choice Panel (shown when Add button is clicked) -->
+                    <Border x:Name="AddBoundaryChoicePanel" Background="#DDf0f0f0" CornerRadius="4"
+                            Padding="12" Margin="4,0,4,4" IsVisible="False">
+                        <StackPanel Spacing="12">
+                            <!-- Title -->
+                            <TextBlock Text="Start or Delete A Boundary" HorizontalAlignment="Center"
+                                       FontSize="14" FontWeight="Bold" Foreground="#333"/>
+
+                            <!-- Import KML Button -->
+                            <Button Classes="ModernButton" Height="80" Background="#FFFFFF"
+                                    Click="BtnImportKml_Click" HorizontalAlignment="Center" Width="90"
+                                    ToolTip.Tip="Import boundary from KML file">
+                                <Image Source="/Assets/Icons/BoundaryLoadFromGE.png" Width="64" Height="64"/>
+                            </Button>
+
+                            <!-- Drive/Record Button -->
+                            <Button Classes="ModernButton" Height="80" Background="#FFFFFF"
+                                    Click="BtnDriveRecord_Click" HorizontalAlignment="Center" Width="90"
+                                    ToolTip.Tip="Drive around the field to record boundary">
+                                <Image Source="/Assets/Icons/SteerRight.png" Width="64" Height="64"/>
+                            </Button>
+
+                            <!-- Cancel Button -->
+                            <Button Classes="ModernButton" Height="60" Background="#FFFFFF"
+                                    Click="BtnCancelAddBoundary_Click" HorizontalAlignment="Right" Width="70"
+                                    ToolTip.Tip="Cancel">
+                                <Image Source="/Assets/Icons/Cancel64.png" Width="48" Height="48"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Canvas>
+
+        <!-- Boundary Player Panel (FormBoundaryPlayer equivalent - Drive/Record mode) -->
+        <Canvas>
+            <Border x:Name="BoundaryPlayerPanel"
+                    Classes="FloatingPanel"
+                    ZIndex="25"
+                    Canvas.Left="100" Canvas.Top="100"
+                    IsVisible="False"
+                    IsHitTestVisible="True"
+                    MinWidth="250">
+                <StackPanel Spacing="4">
+                    <!-- Header: Drag handle + Title -->
+                    <Grid ColumnDefinitions="Auto,*" Height="32" Margin="0,0,0,4"
+                          Background="#DD2C3E50" Cursor="Hand"
+                          PointerPressed="BoundaryPlayerPanel_PointerPressed"
+                          PointerMoved="BoundaryPlayerPanel_PointerMoved"
+                          PointerReleased="BoundaryPlayerPanel_PointerReleased"
+                          ToolTip.Tip="Drag to move">
+                        <TextBlock Grid.Column="0" Text="≡" FontSize="18" FontWeight="Bold"
+                                   Foreground="#FFFFFF" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                        <TextBlock Grid.Column="1" Text="Stop Record Pause Boundary" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="#1ABC9C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Offset Distance Input (clickable to open numeric keypad) -->
+                    <Grid ColumnDefinitions="Auto,*" Margin="8,4">
+                        <Button Grid.Column="0" Background="AliceBlue" CornerRadius="4" Padding="8,4" MinWidth="100"
+                                Click="BtnBoundaryOffset_Click" Cursor="Hand"
+                                ToolTip.Tip="Click to enter offset distance">
+                            <TextBlock x:Name="BoundaryOffsetValue" Text="0" FontSize="22" FontWeight="Bold"
+                                       Foreground="Black" HorizontalAlignment="Center"/>
+                        </Button>
+                        <TextBlock Grid.Column="1" x:Name="BoundaryOffsetUnit" Text="cm" FontSize="14" FontWeight="Bold"
+                                   Foreground="White" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                    </Grid>
+
+                    <!-- Two Column Layout -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" Margin="4">
+                        <!-- Row 0: Trash (restart) | Section Control -->
+                        <Button x:Name="BtnBoundaryRestart" Grid.Column="0" Grid.Row="0" Classes="ModernButton"
+                                Margin="2" Height="56" Click="BtnBoundaryRestart_Click"
+                                ToolTip.Tip="Delete all points and restart">
+                            <Image Source="/Assets/Icons/Trash.png" Width="40" Height="40"/>
+                        </Button>
+                        <ToggleButton x:Name="BtnBoundarySectionControl" Grid.Column="1" Grid.Row="0"
+                                      Margin="2" Height="56" Checked="BtnBoundarySectionControl_Checked"
+                                      Unchecked="BtnBoundarySectionControl_Unchecked"
+                                      ToolTip.Tip="Record boundary when section is on">
+                            <ToggleButton.Styles>
+                                <Style Selector="ToggleButton">
+                                    <Setter Property="Background" Value="#3498DB"/>
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding" Value="12,6"/>
+                                </Style>
+                                <Style Selector="ToggleButton:pointerover">
+                                    <Setter Property="Background" Value="#2980B9"/>
+                                </Style>
+                                <Style Selector="ToggleButton:checked">
+                                    <Setter Property="Background" Value="#1ABC9C"/>
+                                </Style>
+                                <Style Selector="ToggleButton:checked:pointerover">
+                                    <Setter Property="Background" Value="#16A085"/>
+                                </Style>
+                            </ToggleButton.Styles>
+                            <Image Source="/Assets/Icons/BoundarySectionControlOnOff.png" Width="40" Height="40"/>
+                        </ToggleButton>
+
+                        <!-- Row 1: Delete Last Point | Add Point -->
+                        <Button x:Name="BtnBoundaryDeleteLast" Grid.Column="0" Grid.Row="1" Classes="ModernButton"
+                                Margin="2" Height="56" Click="BtnBoundaryDeleteLast_Click"
+                                ToolTip.Tip="Delete last point">
+                            <Image Source="/Assets/Icons/PointDelete.png" Width="40" Height="40"/>
+                        </Button>
+                        <Button x:Name="BtnBoundaryAddPoint" Grid.Column="1" Grid.Row="1" Classes="ModernButton"
+                                Margin="2" Height="56" Click="BtnBoundaryAddPoint_Click"
+                                ToolTip.Tip="Add point manually">
+                            <Image Source="/Assets/Icons/PointAdd.png" Width="40" Height="40"/>
+                        </Button>
+
+                        <!-- Row 2: Left/Right toggle | Antenna/Tool toggle -->
+                        <Button x:Name="BtnBoundaryLeftRight" Grid.Column="0" Grid.Row="2" Classes="ModernButton"
+                                Margin="2" Height="56" Click="BtnBoundaryLeftRight_Click"
+                                ToolTip.Tip="Toggle left/right side">
+                            <Image x:Name="BoundaryLeftRightImage" Source="/Assets/Icons/BoundaryLeft.png" Width="40" Height="40"/>
+                        </Button>
+                        <Button x:Name="BtnBoundaryAntennaTool" Grid.Column="1" Grid.Row="2" Classes="ModernButton"
+                                Margin="2" Height="56" Click="BtnBoundaryAntennaTool_Click"
+                                ToolTip.Tip="Toggle antenna/tool position">
+                            <Image x:Name="BoundaryAntennaToolImage" Source="/Assets/Icons/BoundaryRecordTool.png" Width="40" Height="40"/>
+                        </Button>
+
+                        <!-- Row 3: Points display | Area display -->
+                        <StackPanel Grid.Column="0" Grid.Row="3" Margin="4">
+                            <TextBlock Text="Points:" Foreground="#888" FontSize="12"/>
+                            <TextBlock x:Name="BoundaryPlayerPointsLabel" Text="0" Foreground="White"
+                                       FontSize="16" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Grid.Row="3" Margin="4">
+                            <TextBlock Text="Area:" Foreground="#888" FontSize="12"/>
+                            <TextBlock x:Name="BoundaryPlayerAreaLabel" Text="0" Foreground="White"
+                                       FontSize="16" FontWeight="Bold"/>
+                        </StackPanel>
+
+                        <!-- Row 4: OK (stop/accept) | Record/Pause toggle -->
+                        <Button x:Name="BtnBoundaryStop" Grid.Column="0" Grid.Row="4" Classes="ModernButton"
+                                Margin="2" Height="64" Click="BtnBoundaryStop_Click"
+                                ToolTip.Tip="Stop recording and save boundary">
+                            <Image Source="/Assets/Icons/OK64.png" Width="48" Height="48"/>
+                        </Button>
+                        <Button x:Name="BtnBoundaryPausePlay" Grid.Column="1" Grid.Row="4" Classes="ModernButton"
+                                Margin="2" Height="64" Click="BtnBoundaryPausePlay_Click"
+                                ToolTip.Tip="Start/Pause recording">
+                            <Image x:Name="BoundaryPausePlayImage" Source="/Assets/Icons/BoundaryRecord.png" Width="48" Height="48"/>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Canvas>
 
         <!-- Draggable Section Control (using Canvas for absolute positioning) -->
         <Canvas>

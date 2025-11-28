@@ -37,6 +37,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<FieldPlaneFileService>();
         services.AddSingleton<BoundaryFileService>();
 
+        // Boundary recording service
+        services.AddSingleton<IBoundaryRecordingService, BoundaryRecordingService>();
+
         return services;
     }
 

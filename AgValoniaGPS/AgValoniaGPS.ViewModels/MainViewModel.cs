@@ -701,6 +701,13 @@ public class MainViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _isSimulatorPanelVisible, value);
     }
 
+    private bool _isBoundaryPanelVisible;
+    public bool IsBoundaryPanelVisible
+    {
+        get => _isBoundaryPanelVisible;
+        set => this.RaiseAndSetIfChanged(ref _isBoundaryPanelVisible, value);
+    }
+
     // Field management properties
     private bool _isFieldOpen;
     public bool IsFieldOpen
