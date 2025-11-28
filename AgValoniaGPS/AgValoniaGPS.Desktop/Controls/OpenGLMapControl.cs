@@ -59,6 +59,19 @@ public class OpenGLMapControl : OpenGlControlBase
     private List<(double Easting, double Northing)>? _pendingRecordingPoints;
     private bool _hasPendingRecordingUpdate;
 
+    // Background satellite image
+    private uint _backgroundTexture;
+    private uint _backgroundVao;
+    private uint _backgroundVbo;
+    private bool _hasBackgroundImage;
+    private double _backgroundMinX; // Easting min (west edge)
+    private double _backgroundMaxX; // Easting max (east edge)
+    private double _backgroundMinY; // Northing min (south edge)
+    private double _backgroundMaxY; // Northing max (north edge)
+    private string? _pendingBackgroundImagePath;
+    private double _pendingBgMinX, _pendingBgMaxX, _pendingBgMinY, _pendingBgMaxY;
+    private bool _hasPendingBackgroundUpdate;
+
     // Boundary offset indicator (shows where point will be dropped)
     private double _boundaryOffsetMeters = 0.0; // Offset in meters (perpendicular to heading)
     private bool _showBoundaryOffsetIndicator = false;
@@ -588,6 +601,21 @@ void main()
             _pendingRecordingPoints = null;
         }
 
+        // Process pending background image update on render thread
+        if (_hasPendingBackgroundUpdate)
+        {
+            _hasPendingBackgroundUpdate = false;
+            if (!string.IsNullOrEmpty(_pendingBackgroundImagePath))
+            {
+                LoadBackgroundTexture(_pendingBackgroundImagePath, _pendingBgMinX, _pendingBgMaxX, _pendingBgMinY, _pendingBgMaxY);
+            }
+            else
+            {
+                ClearBackgroundImage();
+            }
+            _pendingBackgroundImagePath = null;
+        }
+
         // Set viewport
         _gl.Viewport(0, 0, (uint)Bounds.Width, (uint)Bounds.Height);
 
@@ -648,6 +676,37 @@ void main()
 
         // Set MVP uniform
         int mvpLocation = _gl.GetUniformLocation(_shaderProgram, "uMVP");
+        unsafe
+        {
+            fixed (float* m = mvp)
+            {
+                _gl.UniformMatrix4(_gl.GetUniformLocation(_shaderProgram, "uMVP"), 1, false, m);
+            }
+        }
+
+        // Draw background satellite image first (behind everything)
+        if (_hasBackgroundImage && _backgroundTexture != 0)
+        {
+            _gl.UseProgram(_textureShaderProgram);
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundTexture);
+            _gl.BindVertexArray(_backgroundVao);
+
+            int bgTransformLoc = _gl.GetUniformLocation(_textureShaderProgram, "uTransform");
+            unsafe
+            {
+                fixed (float* m = mvp)
+                {
+                    _gl.UniformMatrix4(bgTransformLoc, 1, false, m);
+                }
+            }
+
+            _gl.DrawArrays(PrimitiveType.TriangleFan, 0, 4);
+            _gl.BindVertexArray(0);
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        // Use color shader for grid and other elements
+        _gl.UseProgram(_shaderProgram);
         unsafe
         {
             fixed (float* m = mvp)
@@ -924,6 +983,15 @@ void main()
             if (_vehicleTexture != 0)
             {
                 _gl.DeleteTexture(_vehicleTexture);
+            }
+            if (_backgroundTexture != 0)
+            {
+                _gl.DeleteTexture(_backgroundTexture);
+            }
+            if (_backgroundVao != 0)
+            {
+                _gl.DeleteVertexArray(_backgroundVao);
+                _gl.DeleteBuffer(_backgroundVbo);
             }
             if (_textureShaderProgram != 0)
             {
@@ -1567,5 +1635,157 @@ void main()
         }
 
         _gl.BindVertexArray(0);
+    }
+
+    /// <summary>
+    /// Set the background satellite image to display (deferred to render thread)
+    /// </summary>
+    /// <param name="imagePath">Path to the PNG image file</param>
+    /// <param name="minX">West edge easting (meters)</param>
+    /// <param name="maxY">North edge northing (meters)</param>
+    /// <param name="maxX">East edge easting (meters)</param>
+    /// <param name="minY">South edge northing (meters)</param>
+    public void SetBackgroundImage(string imagePath, double minX, double maxY, double maxX, double minY)
+    {
+        _pendingBackgroundImagePath = imagePath;
+        _pendingBgMinX = minX;
+        _pendingBgMaxX = maxX;
+        _pendingBgMinY = minY;
+        _pendingBgMaxY = maxY;
+        _hasPendingBackgroundUpdate = true;
+        Console.WriteLine($"SetBackgroundImage: {imagePath}");
+        Console.WriteLine($"  Bounds: minX={minX:F2}, maxX={maxX:F2}, minY={minY:F2}, maxY={maxY:F2}");
+    }
+
+    /// <summary>
+    /// Clear the background satellite image
+    /// </summary>
+    public void ClearBackground()
+    {
+        _pendingBackgroundImagePath = null;
+        _hasPendingBackgroundUpdate = true;
+    }
+
+    private void ClearBackgroundImage()
+    {
+        if (_gl == null) return;
+
+        if (_backgroundTexture != 0)
+        {
+            _gl.DeleteTexture(_backgroundTexture);
+            _backgroundTexture = 0;
+        }
+
+        if (_backgroundVao != 0)
+        {
+            _gl.DeleteVertexArray(_backgroundVao);
+            _gl.DeleteBuffer(_backgroundVbo);
+            _backgroundVao = 0;
+            _backgroundVbo = 0;
+        }
+
+        _hasBackgroundImage = false;
+    }
+
+    private void LoadBackgroundTexture(string imagePath, double minX, double maxX, double minY, double maxY)
+    {
+        if (_gl == null) return;
+
+        // Clear any existing background
+        ClearBackgroundImage();
+
+        if (!File.Exists(imagePath))
+        {
+            Console.WriteLine($"Background image not found: {imagePath}");
+            return;
+        }
+
+        try
+        {
+            // Load image using StbImageSharp
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            using var stream = File.OpenRead(imagePath);
+            ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+
+            Console.WriteLine($"Loaded background image: {image.Width}x{image.Height}");
+
+            // Create OpenGL texture
+            _backgroundTexture = _gl.GenTexture();
+            _gl.BindTexture(TextureTarget.Texture2D, _backgroundTexture);
+
+            unsafe
+            {
+                fixed (byte* ptr = image.Data)
+                {
+                    _gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba,
+                        (uint)image.Width, (uint)image.Height, 0,
+                        PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+                }
+            }
+
+            // Set texture parameters
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)GLEnum.ClampToEdge);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)GLEnum.ClampToEdge);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)GLEnum.Linear);
+            _gl.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)GLEnum.Linear);
+
+            _gl.BindTexture(TextureTarget.Texture2D, 0);
+
+            // Store geo-reference bounds
+            _backgroundMinX = minX;
+            _backgroundMaxX = maxX;
+            _backgroundMinY = minY;
+            _backgroundMaxY = maxY;
+
+            // Create VAO/VBO for background quad
+            // Vertices: position (x, y), texcoord (u, v)
+            // The quad spans from (minX, minY) to (maxX, maxY) in world coordinates
+            float[] vertices = new float[]
+            {
+                // Position (x, y), TexCoord (u, v)
+                (float)minX, (float)minY,  0.0f, 0.0f,  // Bottom-left (SW)
+                (float)maxX, (float)minY,  1.0f, 0.0f,  // Bottom-right (SE)
+                (float)maxX, (float)maxY,  1.0f, 1.0f,  // Top-right (NE)
+                (float)minX, (float)maxY,  0.0f, 1.0f   // Top-left (NW)
+            };
+
+            _backgroundVao = _gl.GenVertexArray();
+            _gl.BindVertexArray(_backgroundVao);
+
+            _backgroundVbo = _gl.GenBuffer();
+            _gl.BindBuffer(BufferTargetARB.ArrayBuffer, _backgroundVbo);
+
+            unsafe
+            {
+                fixed (float* v = vertices)
+                {
+                    _gl.BufferData(BufferTargetARB.ArrayBuffer, (nuint)(vertices.Length * sizeof(float)), v, BufferUsageARB.StaticDraw);
+                }
+            }
+
+            // Position attribute (location 0)
+            unsafe
+            {
+                _gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), (void*)0);
+            }
+            _gl.EnableVertexAttribArray(0);
+
+            // Texture coordinate attribute (location 1)
+            unsafe
+            {
+                _gl.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+            }
+            _gl.EnableVertexAttribArray(1);
+
+            _gl.BindVertexArray(0);
+
+            _hasBackgroundImage = true;
+            Console.WriteLine("Background image loaded successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading background image: {ex.Message}");
+            ClearBackgroundImage();
+        }
     }
 }

@@ -1108,7 +1108,7 @@
                             <Image Source="/Assets/Icons/BoundaryLoadFromGE.png" Width="32" Height="32"/>
                         </Button>
                         <Button x:Name="BtnBingMap" Grid.Column="2" Classes="ModernButton" Margin="2" Height="50"
-                                Click="BtnBingMap_Click" ToolTip.Tip="Draw on Bing Map" IsEnabled="False">
+                                Click="BtnBingMap_Click" ToolTip.Tip="Draw boundary on satellite map">
                             <Image Source="/Assets/Icons/bing.png" Width="32" Height="32"/>
                         </Button>
                         <Button x:Name="BtnBuildFromTracks" Grid.Column="3" Classes="ModernButton" Margin="2" Height="50"

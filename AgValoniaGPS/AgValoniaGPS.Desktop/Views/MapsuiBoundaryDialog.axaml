@@ -1,0 +1,113 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
+        x:Class="AgValoniaGPS.Desktop.Views.MapsuiBoundaryDialog"
+        Title="Draw Field Boundary"
+        Width="900"
+        Height="700"
+        WindowStartupLocation="CenterOwner"
+        Background="#2C3E50">
+
+    <Window.Styles>
+        <Style Selector="Button.ToolButton">
+            <Setter Property="Background" Value="#34495E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="MinHeight" Value="40"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pointerover">
+            <Setter Property="Background" Value="#4A6278"/>
+        </Style>
+        <Style Selector="Button.ToolButton:pressed">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+        <Style Selector="Button.ToolButton.active">
+            <Setter Property="Background" Value="#1ABC9C"/>
+        </Style>
+
+        <Style Selector="Button.CancelButton">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="MinHeight" Value="40"/>
+        </Style>
+        <Style Selector="Button.CancelButton:pointerover">
+            <Setter Property="Background" Value="#E74C3C"/>
+        </Style>
+
+        <Style Selector="Button.OkButton">
+            <Setter Property="Background" Value="#27AE60"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="MinHeight" Value="40"/>
+        </Style>
+        <Style Selector="Button.OkButton:pointerover">
+            <Setter Property="Background" Value="#2ECC71"/>
+        </Style>
+        <Style Selector="Button.OkButton:disabled">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header with instructions -->
+        <Border Grid.Row="0" Background="#34495E" Padding="15">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Draw Field Boundary" Foreground="#1ABC9C" FontWeight="Bold" FontSize="18"/>
+                    <TextBlock Text="Click on the map to add boundary points. Pan with drag, zoom with scroll wheel."
+                               Foreground="#BDC3C7" FontSize="13" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                    <TextBlock x:Name="PointCountLabel" Text="Points: 0" Foreground="#1ABC9C" FontSize="14"
+                               FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="CoordinateLabel" Text="" Foreground="#BDC3C7" FontSize="12"
+                               VerticalAlignment="Center" MinWidth="200"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Map Control -->
+        <mapsui:MapControl x:Name="MapControl" Grid.Row="1"/>
+
+        <!-- Bottom toolbar -->
+        <Border Grid.Row="2" Background="#34495E" Padding="15">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
+                <Button x:Name="BtnDraw" Grid.Column="0" Classes="ToolButton"
+                        Click="BtnDraw_Click" ToolTip.Tip="Toggle drawing mode">
+                    <TextBlock Text="Draw" Foreground="White"/>
+                </Button>
+
+                <Button x:Name="BtnUndo" Grid.Column="1" Classes="ToolButton" Margin="10,0,0,0"
+                        Click="BtnUndo_Click" ToolTip.Tip="Remove last point" IsEnabled="False">
+                    <TextBlock Text="Undo" Foreground="White"/>
+                </Button>
+
+                <Button x:Name="BtnClear" Grid.Column="2" Classes="ToolButton" Margin="10,0,0,0"
+                        Click="BtnClear_Click" ToolTip.Tip="Clear all points" IsEnabled="False">
+                    <TextBlock Text="Clear" Foreground="White"/>
+                </Button>
+
+                <Border Grid.Column="3"/>
+
+                <CheckBox x:Name="ChkSaveBackground" Grid.Column="4" Content="Include Background"
+                          Foreground="White" VerticalAlignment="Center" Margin="0,0,15,0"
+                          IsChecked="True"/>
+
+                <Button Grid.Column="5" Classes="CancelButton" Margin="0,0,10,0"
+                        Click="BtnCancel_Click" ToolTip.Tip="Cancel">
+                    <TextBlock Text="Cancel" Foreground="White"/>
+                </Button>
+
+                <Button x:Name="BtnSave" Grid.Column="6" Classes="OkButton"
+                        Click="BtnSave_Click" ToolTip.Tip="Save boundary" IsEnabled="False">
+                    <TextBlock Text="Save" Foreground="White" FontWeight="Bold"/>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

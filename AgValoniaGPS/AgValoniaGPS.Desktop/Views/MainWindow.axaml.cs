@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Avalonia;
@@ -2521,12 +2522,158 @@ public partial class MainWindow : Window
         }
     }
 
-    // Bing Map button (placeholder)
-    private void BtnBingMap_Click(object? sender, RoutedEventArgs e)
+    // Bing Map button - opens browser-based map boundary drawing
+    private async void BtnBingMap_Click(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel != null)
+        if (App.Services == null || ViewModel == null) return;
+
+        var settingsService = App.Services.GetRequiredService<ISettingsService>();
+        var boundaryFileService = App.Services.GetRequiredService<BoundaryFileService>();
+
+        // Must have a field open
+        if (!ViewModel.IsFieldOpen)
         {
-            ViewModel.StatusMessage = "Bing Map drawing not yet implemented";
+            ViewModel.StatusMessage = "Open a field first to add boundary";
+            return;
+        }
+
+        // Get current GPS position for map centering
+        double currentLat = ViewModel.Latitude;
+        double currentLon = ViewModel.Longitude;
+
+        // Show the map dialog
+        var dialog = new MapsuiBoundaryDialog(currentLat, currentLon);
+        var dialogResult = await dialog.ShowDialog<bool?>(this);
+
+        if (dialogResult == true && dialog.Result != null &&
+            (dialog.Result.BoundaryPoints.Count >= 3 || dialog.Result.HasBackgroundImage))
+        {
+            try
+            {
+                var result = dialog.Result;
+
+                // Get field path
+                var fieldPath = Path.Combine(settingsService.Settings.FieldsDirectory, ViewModel.CurrentFieldName);
+
+                // Get LocalPlane - use boundary center or background center
+                AgOpenGPS.Core.Models.LocalPlane? localPlane = null;
+
+                if (result.BoundaryPoints.Count >= 3)
+                {
+                    // Calculate center of boundary points
+                    double sumLat = 0, sumLon = 0;
+                    foreach (var point in result.BoundaryPoints)
+                    {
+                        sumLat += point.Latitude;
+                        sumLon += point.Longitude;
+                    }
+                    double centerLat = sumLat / result.BoundaryPoints.Count;
+                    double centerLon = sumLon / result.BoundaryPoints.Count;
+
+                    var origin = new AgOpenGPS.Core.Models.Wgs84(centerLat, centerLon);
+                    var sharedProps = new AgOpenGPS.Core.Models.SharedFieldProperties();
+                    localPlane = new AgOpenGPS.Core.Models.LocalPlane(origin, sharedProps);
+                }
+                else if (result.HasBackgroundImage)
+                {
+                    // Use background image center as origin
+                    double centerLat = (result.NorthWestLat + result.SouthEastLat) / 2;
+                    double centerLon = (result.NorthWestLon + result.SouthEastLon) / 2;
+
+                    var origin = new AgOpenGPS.Core.Models.Wgs84(centerLat, centerLon);
+                    var sharedProps = new AgOpenGPS.Core.Models.SharedFieldProperties();
+                    localPlane = new AgOpenGPS.Core.Models.LocalPlane(origin, sharedProps);
+                }
+
+                // Process boundary points if present
+                if (result.BoundaryPoints.Count >= 3 && localPlane != null)
+                {
+                    var boundary = new Models.Boundary();
+                    var outerPolygon = new Models.BoundaryPolygon();
+
+                    foreach (var point in result.BoundaryPoints)
+                    {
+                        var wgs84 = new AgOpenGPS.Core.Models.Wgs84(point.Latitude, point.Longitude);
+                        var geoCoord = localPlane.ConvertWgs84ToGeoCoord(wgs84);
+                        outerPolygon.Points.Add(new Models.BoundaryPoint(geoCoord.Easting, geoCoord.Northing, 0));
+                    }
+
+                    boundary.OuterBoundary = outerPolygon;
+
+                    // Save boundary
+                    boundaryFileService.SaveBoundary(boundary, fieldPath);
+
+                    // Update map
+                    if (MapControl != null)
+                    {
+                        MapControl.SetBoundary(boundary);
+
+                        // Center on boundary
+                        if (boundary.OuterBoundary.Points.Count > 0)
+                        {
+                            double sumE = 0, sumN = 0;
+                            foreach (var pt in boundary.OuterBoundary.Points)
+                            {
+                                sumE += pt.Easting;
+                                sumN += pt.Northing;
+                            }
+                            MapControl.Pan(sumE / boundary.OuterBoundary.Points.Count,
+                                           sumN / boundary.OuterBoundary.Points.Count);
+                        }
+                    }
+
+                    // Refresh the boundary list
+                    RefreshBoundaryList();
+                }
+
+                // Process background image if present
+                if (result.HasBackgroundImage && !string.IsNullOrEmpty(result.BackgroundImagePath) && localPlane != null)
+                {
+                    // Convert WGS84 corners to local coordinates
+                    var nwWgs84 = new AgOpenGPS.Core.Models.Wgs84(result.NorthWestLat, result.NorthWestLon);
+                    var seWgs84 = new AgOpenGPS.Core.Models.Wgs84(result.SouthEastLat, result.SouthEastLon);
+
+                    var nwLocal = localPlane.ConvertWgs84ToGeoCoord(nwWgs84);
+                    var seLocal = localPlane.ConvertWgs84ToGeoCoord(seWgs84);
+
+                    // Copy background image to field directory
+                    var destPngPath = Path.Combine(fieldPath, "BackPic.png");
+                    File.Copy(result.BackgroundImagePath, destPngPath, overwrite: true);
+
+                    // Save geo-reference file in WinForms format for compatibility
+                    var geoFilePath = Path.Combine(fieldPath, "BackPic.txt");
+                    using (var writer = new StreamWriter(geoFilePath))
+                    {
+                        writer.WriteLine("$BackPic");
+                        writer.WriteLine("true");
+                        writer.WriteLine(seLocal.Easting.ToString(CultureInfo.InvariantCulture));  // eastingMax
+                        writer.WriteLine(nwLocal.Easting.ToString(CultureInfo.InvariantCulture));  // eastingMin
+                        writer.WriteLine(nwLocal.Northing.ToString(CultureInfo.InvariantCulture)); // northingMax
+                        writer.WriteLine(seLocal.Northing.ToString(CultureInfo.InvariantCulture)); // northingMin
+                    }
+
+                    // Set the background image in the map control
+                    if (MapControl != null)
+                    {
+                        MapControl.SetBackgroundImage(destPngPath,
+                            nwLocal.Easting, nwLocal.Northing,  // NW corner (minX, maxY)
+                            seLocal.Easting, seLocal.Northing); // SE corner (maxX, minY)
+                    }
+                }
+
+                // Build status message
+                var msgParts = new List<string>();
+                if (result.BoundaryPoints.Count >= 3)
+                    msgParts.Add($"boundary ({result.BoundaryPoints.Count} pts)");
+                if (result.HasBackgroundImage)
+                    msgParts.Add("background image");
+
+                ViewModel.StatusMessage = $"Imported from satellite map: {string.Join(" + ", msgParts)}";
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Error importing: {ex.Message}";
+            }
         }
     }
 
